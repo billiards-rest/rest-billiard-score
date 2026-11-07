@@ -918,7 +918,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 <script>
 (function(){
 const GAMES={
-  "9":{label:"9ボール",tag:"9-BALL · POINT GAME",mode:"balls",n:9,val:n=>n===9?5:1,endBall:9,def:30,hint:"ポイント制。1〜8番は1点、9番は5点。9番が落ちたらラック終了。"},
+  "9":{label:"9ボール",tag:"9-BALL · POINT GAME",mode:"balls",n:9,val:n=>n===9?10:1,endBall:9,def:30,hint:"ポイント制。1〜8番は1点、9番は10点。9番が落ちたらラック終了。"},
 };
 const BALLS=["#e2b53b","#2457a6","#c2412d","#5b3a8c","#e0752b","#1f7a4d","#7a2a2a","#151515"];
 const $=id=>document.getElementById(id);
@@ -1210,8 +1210,8 @@ function updateHandicap(){
   const lo=3-hi,H=rs[hi-1],Lo=rs[lo-1];
   const p=rackP(H.r,Lo.r);
   const base=Math.max(1,parseInt($("t"+hi).value)||GAMES[cfg.game].def);
-  /* expected points per rack: rack winner ≈ 5 (9-ball) + 5 balls, loser ≈ 3 balls */
-  const weak=Math.max(1,Math.round(base*(3+7*(1-p))/(3+7*p)));
+  /* expected points per rack: rack winner ≈ 10 (9-ball) + 5 balls, loser ≈ 3 balls */
+  const weak=Math.max(1,Math.round(base*(3+12*(1-p))/(3+12*p)));
   $("t"+lo).value=weak;
   msg.textContent=weak===base
     ?`レート差が ${Math.round(H.r-Lo.r)} 点と小さいので、ハンデなし（${base}点ずつ）です。`
@@ -1697,11 +1697,11 @@ $("schedView").addEventListener("click",e=>{const b=e.target.closest("button");i
 /* ---------- rules ---------- */
 const RULES={
   "9":{ready:true,title:"9ボール（RESTルール制）",lead:"このアプリで使っている、RESTルールです。",sections:[
-    ["点数",["1〜8番は1点、9番は5点。","落とした人に点が入ります。ボールを落とした人のスコアへドラッグして記録します。","目標点に先に届いた人の勝ちです。"]],
+    ["点数",["1〜8番は1点、9番は10点。","落とした人に点が入ります。ボールを落とした人のスコアへドラッグして記録します。","目標点に先に届いた人の勝ちです。"]],
     ["ラック",["9番が落ちたらそのラックは終わりで、次のラックに進みます。","9番を落とした人が、そのラックを取ったことになります（レートの計算に使います）。","ブレイクは「交互ブレイク」か「勝者ブレイク」を試合の前に選びます。"]],
     ["デッドボール",["スコア画面でボールをダブルタップすると、デッドボール（得点にならない球）にできます。もう一度ダブルタップで戻せます。"]],
     ["相手0点でラックを取ったとき",["ブレイクから1人で取り切った：ブレイクランアウト","ブレイクで9番が入った：ブレイクエース","それ以外で相手を0点のまま取った：ウィンジップ","ラックの終わりに出る画面で、どれかを選びます。ランキングで回数を競えます。"]],
-    ["ハンデ",["2人ともレートがあると、上手の目標点を基準に下手の目標点を自動で決めます。","レート差50でおよそ30点対25点、100で30点対21点、200で30点対15点が目安です。","手動で決めたいときは、試合タブのチェックを外します。"]],
+    ["ハンデ",["2人ともレートがあると、上手の目標点を基準に下手の目標点を自動で決めます。","レート差50でおよそ30点対24点、100で30点対19点、200で30点対13点が目安です。","手動で決めたいときは、試合タブのチェックを外します。"]],
     ["記録の確定",["試合が終わると記録は「承認待ち」になります。","記録した人以外（対戦相手や第三者）が承認すると確定し、ランキングとレートに入ります。"]]
   ]},
   "10":{ready:false,title:"10ボール",lead:"一般的なルールの概要です。細かい扱いはお店のハウスルールに従ってください。",sections:[
