@@ -86,7 +86,22 @@ button{cursor:pointer}
 .sheet h2::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--cue);flex:none}
 .versus{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:12px;align-items:stretch}
 .vs{align-self:center;width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:900 17px/1 var(--f-display);letter-spacing:.04em}
-@media (max-width:600px){.versus{grid-template-columns:minmax(0,1fr)}.vs{justify-self:center;margin-block:-4px}}
+.pblock *{box-sizing:border-box}
+.pblock .field input,.pblock .field select{max-width:100%}
+/* phones: keep the two players side by side, just tighter */
+@media (max-width:600px){
+  .versus{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px}
+  .vs{width:30px;height:30px;font-size:12px;margin-top:84px;align-self:start}
+  .pblock{padding:10px 8px 10px;gap:8px;border-top-width:5px;border-radius:14px}
+  .ptag{font-size:11px;letter-spacing:.12em}
+  .pblock .field{gap:4px}
+  .pblock .field label{font-size:11px}
+  .pblock .field input,.pblock .field select{padding:8px 6px;font-size:14px;border-radius:8px}
+  .name-row{flex-direction:column;align-items:stretch;gap:6px}
+  .prate{align-self:flex-start;font-size:15px;padding:4px 9px}
+  .prate.none{font-size:10px;padding:5px 8px}
+  .field.target input{font-size:32px;padding:2px 4px}
+}
 .pblock{--pc:var(--p1);display:flex;flex-direction:column;gap:12px;min-width:0;background:var(--bg);border:1px solid var(--line);border-top:6px solid var(--pc);border-radius:16px;padding:12px 14px 14px}
 .pblock.b{--pc:var(--p2)}
 .ptag{font:800 13px/1 var(--f-display);letter-spacing:.2em;color:var(--pc)}
