@@ -61,7 +61,7 @@ export default async (req: Request, _context: Context) => {
         if (!isObj(body.data)) return fail("invalid_argument", "document must be an object");
         if (JSON.stringify(body.data).length > MAX_DOC) return fail("invalid_argument", "document too large");
         const r = await store.setJSON(body.key, body.data);
-        return json({ etag: r.etag ?? null });
+        return json({ etag: (r as any)?.etag ?? null });
       }
 
       case "update": {
@@ -72,7 +72,7 @@ export default async (req: Request, _context: Context) => {
         const next = merge(cur, body.data);
         if (JSON.stringify(next).length > MAX_DOC) return fail("invalid_argument", "document too large");
         const r = await store.setJSON(body.key, next);
-        return json({ etag: r.etag ?? null, data: next });
+        return json({ etag: (r as any)?.etag ?? null, data: next });
       }
 
       case "delete": {
