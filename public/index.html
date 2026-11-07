@@ -305,6 +305,30 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .sc-step button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;font-weight:700}
 .sc-step input{box-sizing:border-box;min-width:0;width:100%;text-align:center;font:800 22px/1 var(--f-display);font-variant-numeric:tabular-nums}
 
+/* shot clock effects */
+.sc-card{position:relative;overflow:hidden}
+.sc-pop{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;z-index:4}
+.sc-pop b{position:relative;font:900 clamp(64px,22vw,120px)/1 var(--f-display);color:#fff;-webkit-text-stroke:3px var(--red);text-shadow:0 6px 18px rgba(0,0,0,.35);animation:scPop .95s cubic-bezier(.2,1.5,.4,1) forwards}
+.sc-pop.ten b{white-space:nowrap;font:900 clamp(20px,5.5vw,32px)/1.1 var(--f-body);-webkit-text-stroke:0;color:#fff;background:var(--red);padding:10px 16px;border-radius:14px;text-shadow:none;box-shadow:0 8px 20px rgba(0,0,0,.3);animation:scBanner 1s ease-out forwards}
+.sc-pop.over b{white-space:nowrap;font:900 clamp(22px,6vw,34px)/1 var(--f-body);-webkit-text-stroke:0;color:#fff;background:var(--red);padding:12px 18px;border-radius:12px;border:4px solid #fff;outline:3px solid var(--red);text-shadow:none;animation:scStamp 1.8s cubic-bezier(.2,1.6,.4,1) forwards}
+.sc-ring{position:absolute;width:90px;height:90px;border-radius:50%;border:6px solid var(--red);animation:scRing .8s ease-out forwards}
+.sc-pop.over .sc-ring{border-color:#fff;animation-duration:1s}
+@keyframes scPop{0%{transform:scale(2.4);opacity:0}25%{transform:scale(.9);opacity:1}55%{transform:scale(1.05)}100%{transform:scale(.8);opacity:0}}
+@keyframes scBanner{0%{transform:translateY(20px) scale(.6);opacity:0}20%{transform:translateY(0) scale(1.08);opacity:1}75%{transform:scale(1);opacity:1}100%{transform:translateY(-14px);opacity:0}}
+@keyframes scStamp{0%{transform:scale(3) rotate(-18deg);opacity:0}20%{transform:scale(.92) rotate(-8deg);opacity:1}30%{transform:scale(1.04) rotate(-8deg)}80%{transform:scale(1) rotate(-8deg);opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:0}}
+@keyframes scRing{0%{transform:scale(.3);opacity:1}100%{transform:scale(3.2);opacity:0}}
+.sc-card.fx-count{animation:scKick .35s ease-out}
+.sc-card.fx-ten{animation:scKick .35s ease-out,scFlash .9s ease-out}
+.sc-card.fx-over{animation:scShake .6s ease-out}
+@keyframes scKick{0%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes scFlash{0%{background:color-mix(in srgb,var(--red) 40%,var(--bg))}100%{background:var(--bg)}}
+@keyframes scShake{0%,100%{transform:translateX(0)}15%{transform:translateX(-10px) rotate(-1deg)}30%{transform:translateX(9px) rotate(1deg)}45%{transform:translateX(-7px)}60%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+.sc-screen{position:fixed;inset:0;z-index:40;pointer-events:none;box-shadow:inset 0 0 0 0 var(--red);animation:scEdge .9s ease-out forwards}
+.sc-screen.over{background:color-mix(in srgb,var(--red) 22%,transparent);animation:scEdgeOver 1.4s ease-out forwards}
+@keyframes scEdge{0%{box-shadow:inset 0 0 0 14px color-mix(in srgb,var(--red) 80%,transparent)}100%{box-shadow:inset 0 0 0 0 transparent}}
+@keyframes scEdgeOver{0%,30%,60%{opacity:1;box-shadow:inset 0 0 0 18px var(--red)}15%,45%{opacity:.3}100%{opacity:0;box-shadow:inset 0 0 0 0 transparent}}
+@media (prefers-reduced-motion:reduce){.sc-card.fx-count,.sc-card.fx-ten,.sc-card.fx-over{animation:none}}
+
 /* schedule / league */
 .field textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%;resize:vertical;line-height:1.6}
 .plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -1949,19 +1973,51 @@ function scBeep(freq,ms){
   try{scAudio=scAudio||new (window.AudioContext||window.webkitAudioContext)();const o=scAudio.createOscillator(),g=scAudio.createGain();
     o.frequency.value=freq;o.type="square";g.gain.value=.08;o.connect(g);g.connect(scAudio.destination);o.start();o.stop(scAudio.currentTime+ms/1000)}catch(e){}
 }
+/* voice calls: a Japanese voice through the browser's speech engine, female where the device offers one; beep if no speech */
+let scVoice=null,scVoiceReady=false;
+function scPickVoice(){
+  try{const vs=(speechSynthesis.getVoices()||[]).filter(v=>/^ja/i.test(v.lang));
+    const fem=/female|女性|kyoko|haruka|nanami|ayumi|o-ren|sayaka|mizuki|aoi|mei|nana|google 日本語/i;
+    scVoice=vs.find(v=>fem.test(v.name))||vs[0]||null;scVoiceReady=true}catch(e){}
+}
+try{if("speechSynthesis" in window){scPickVoice();speechSynthesis.onvoiceschanged=scPickVoice}}catch(e){}
+function scPrimeVoice(){ /* iOS needs speech to start from a tap once */
+  try{if(!("speechSynthesis" in window)||scPrimeVoice.done)return;scPrimeVoice.done=1;const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}catch(e){}
+}
+function scSay(text,beepFreq,beepMs){
+  try{
+    if("speechSynthesis" in window){
+      if(!scVoiceReady)scPickVoice();
+      speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(text);u.lang="ja-JP";if(scVoice)u.voice=scVoice;
+      u.rate=text.length<=1?1.1:1.05;u.pitch=1.25;u.volume=1;speechSynthesis.speak(u);return;
+    }
+  }catch(e){}
+  scBeep(beepFreq||880,beepMs||120);
+}
+function scFx(i,text,kind){
+  const card=document.querySelector(`.sc-card[data-p="${i}"]`);if(!card)return;
+  card.classList.remove("fx-ten","fx-count","fx-over");void card.offsetWidth;card.classList.add("fx-"+kind);
+  if(matchMedia("(prefers-reduced-motion:reduce)").matches)return;
+  const o=document.createElement("div");o.className="sc-pop "+kind;o.setAttribute("aria-hidden","true");
+  o.innerHTML=`<span class="sc-ring"></span><b></b>`;o.querySelector("b").textContent=text;card.appendChild(o);
+  setTimeout(()=>o.remove(),kind==="over"?1800:1000);
+  if(kind==="over"||kind==="ten"){const f=document.createElement("div");f.className="sc-screen "+kind;document.body.appendChild(f);setTimeout(()=>f.remove(),kind==="over"?1400:900)}
+}
 function scNow(c){return c.run?Math.max(0,c.left-(performance.now()-c.at)):c.left}
 function scPause(i){const c=SC.c[i];if(!c.run)return;c.left=scNow(c);c.run=false}
-function scStart(i){const c=SC.c[i];if(c.run||scNow(c)<=0)return;scPause(1-i);c.at=performance.now();c.run=true;scLoop()}
+function scStart(i){scPrimeVoice();const c=SC.c[i];if(c.run||scNow(c)<=0)return;scPause(1-i);c.at=performance.now();c.run=true;scLoop()}
 function scReset(i){const c=SC.c[i];c.run=false;c.left=SC_BASE*1000;c.max=c.left;c.warned=false;c.over=false;scDraw()}
 function scEx(i){const c=SC.c[i];const now=scNow(c);c.left=now+SC_EX*1000;c.max=Math.max(c.max,c.left);if(c.run)c.at=performance.now();c.ex++;c.over=false;if(c.left>10000)c.warned=false;
   const el=$("scTime"+i);el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump");scDraw()}
 function scLoop(){if(SC.timer)return;SC.timer=setInterval(()=>{let any=false;
   SC.c.forEach((c,i)=>{if(!c.run)return;any=true;const t=scNow(c);
     const sec=Math.ceil(t/1000);
-    if(t<=10000&&!c.warned){c.warned=true}
-    if(c.run&&sec<=5&&sec>0&&c._lastSec!==sec){scBeep(880,90)}
+    if(t<=10000&&t>5000&&!c.warned){c.warned=true;scSay("残り10秒",880);scFx(i,"残り10秒","ten")}
+    if(t<=10000)c.warned=true;
+    if(sec<=5&&sec>0&&c._lastSec!==sec){scSay(String(sec),sec<=3?1040:880);scFx(i,String(sec),"count")}
     c._lastSec=sec;
-    if(t<=0){c.run=false;c.left=0;c.over=true;scBeep(440,600);try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}}});
+    if(t<=0){c.run=false;c.left=0;c.over=true;scSay("時間切れです",440,600);scFx(i,"時間切れ","over");try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}}});
   scDraw();if(!any){clearInterval(SC.timer);SC.timer=null}},100)}
 function scDraw(){
   SC.c.forEach((c,i)=>{const t=scNow(c),sec=Math.ceil(t/1000);
