@@ -268,6 +268,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 @keyframes moreShout{0%{transform:translate(-50%,-50%) scale(.2) rotate(-12deg);opacity:0}25%{transform:translate(-50%,-50%) scale(1.15) rotate(3deg);opacity:1}70%{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1}100%{transform:translate(-50%,-90%) scale(1);opacity:0}}
 @media (prefers-reduced-motion:reduce){.side.more,.more-badge,.side.more .score-btn::after{animation:none!important}}
 
+.mstart{font-size:11px;color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+.addrow .start-rate{flex:0 0 110px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 10px;font-variant-numeric:tabular-nums}
+.start-hint{font-size:12px}
+
 /* schedule / league */
 .field textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%;resize:vertical;line-height:1.6}
 .plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -1044,16 +1048,30 @@ function renderRoster(){
     const ms=document.createElement("div");ms.className="members";
     if(!t.members.length){const e=document.createElement("span");e.className="empty";e.textContent="メンバーがまだいません";ms.appendChild(e)}
     t.members.forEach((m,mi)=>{const c=document.createElement("span");c.className="mchip";c.append(m);
+      const iv=roster.init&&roster.init[m];
+      if(iv!=null&&iv!==""){const st=document.createElement("small");st.className="mstart";st.textContent=`開始 ${iv}`;c.appendChild(st)}
       const x=document.createElement("button");x.type="button";x.textContent="✕";x.setAttribute("aria-label",`${m} を外す`);
-      x.onclick=()=>{t.members.splice(mi,1);saveRoster();renderRoster();renderPickers()};c.appendChild(x);ms.appendChild(c)});
+      x.onclick=()=>{t.members.splice(mi,1);if(roster.init&&!roster.teams.some(tt=>tt.members.includes(m)))delete roster.init[m];saveRoster();renderRoster();renderPickers();renderRate(lastHist)};c.appendChild(x);ms.appendChild(c)});
     card.appendChild(ms);
     const f=document.createElement("form");f.className="addrow";
     const inp=document.createElement("input");inp.maxLength=16;inp.placeholder="メンバーの名前";inp.autocomplete="off";inp.id="addm"+ti;
+    const rt=document.createElement("input");rt.type="number";rt.inputMode="numeric";rt.min="100";rt.max="1000";rt.step="10";rt.placeholder="開始レート";rt.id="addr"+ti;rt.className="start-rate";
+    rt.setAttribute("aria-label","開始の目安レーティング");
     const btn=document.createElement("button");btn.className="primary";btn.type="submit";btn.textContent="メンバーを追加";
-    f.append(inp,btn);f.onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;
+    const hint=document.createElement("p");hint.className="hint start-hint";
+    hint.textContent="開始レートは新しく登録するときだけ入れられます。目安：初心者 300〜400、ふつう 500、上級 600〜700。空欄なら500から始まり、試合を重ねると実力に近づきます。";
+    f.append(inp,rt,btn);f.onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;
       if(t.members.includes(v)){toast("同じ名前がすでにいます");return}
-      t.members.push(v);saveRoster();renderRoster();renderPickers();const n=$("addm"+ti);n&&n.focus()};
-    card.appendChild(f);el.appendChild(card);
+      const known=roster.teams.some(tt=>tt.members.includes(v))||(rateRows||[]).some(r=>r.n===v);
+      const raw=rt.value.trim();
+      if(raw!==""){
+        const r=Math.round(+raw);
+        if(!Number.isFinite(r)||r<100||r>1000){toast("開始レートは100〜1000で入れてください");return}
+        if(known){toast(`${v} はすでに登録済みなので、開始レートは変えられません`)}
+        else{roster.init=roster.init||{};roster.init[v]=r}
+      }
+      t.members.push(v);saveRoster();renderRoster();renderPickers();renderRate(lastHist);const n=$("addm"+ti);n&&n.focus()};
+    card.appendChild(f);card.appendChild(hint);el.appendChild(card);
   });
 }
 $("addTeamForm").onsubmit=e=>{e.preventDefault();const v=$("newTeam").value.trim();if(!v)return;
@@ -1188,7 +1206,7 @@ function markDots(){const sl=$("rkSlider");rkIndex=sl.clientWidth?Math.round(sl.
 $("rkSlider").addEventListener("scroll",()=>{clearTimeout(markDots.t);markDots.t=setTimeout(markDots,60)},{passive:true});
 $("rkSlider").addEventListener("keydown",e=>{if(e.key==="ArrowRight"){e.preventDefault();goSlide(rkIndex+1)}if(e.key==="ArrowLeft"){e.preventDefault();goSlide(rkIndex-1)}});
 /* ---------- skill rating (Fargo-style, per rack) ---------- */
-const R_SCALE=100,R_BASE=500,R_PRIOR=4,R_PROV=100;
+const R_SCALE=100,R_BASE=500,R_PRIOR=4,R_PRIOR_START=10,R_PROV=100;
 const rackP=(ra,rb)=>1/(1+Math.pow(2,(rb-ra)/R_SCALE));
 var rateRows=[];
 function computeRatings(h){
@@ -1196,15 +1214,21 @@ function computeRatings(h){
     .map(m=>({a:m.names[0],b:m.names[1],ar:+m.rackWins[0]||0,br:+m.rackWins[1]||0,ta:m.teams&&m.teams[0]||"",tb:m.teams&&m.teams[1]||""}));
   const players=new Set(),team={};
   ms.forEach(m=>{players.add(m.a);players.add(m.b);if(m.ta&&!team[m.a])team[m.a]=m.ta;if(m.tb&&!team[m.b])team[m.b]=m.tb});
-  const sB=Math.pow(2,R_BASE/R_SCALE),s={};players.forEach(p=>s[p]=sB);
+  /* start ratings the admin set when registering a member: used as that player's starting point,
+     and registered members appear with it even before their first match */
+  const init=(roster&&roster.init)||{};
+  (roster&&roster.teams||[]).forEach(t=>t.members.forEach(m=>{if(Number.isFinite(+init[m])){players.add(m);if(!team[m])team[m]=t.name}}));
+  const toS=r=>Math.pow(2,r/R_SCALE);
+  const sP={},wP={};players.forEach(p=>{const r=+init[p];const has=Number.isFinite(r)&&init[p]!==null&&init[p]!=="";sP[p]=toS(has?r:R_BASE);wP[p]=has?R_PRIOR_START:R_PRIOR});
+  const s={};players.forEach(p=>s[p]=sP[p]);
   for(let it=0;it<300;it++){
-    const w={},d={};players.forEach(p=>{w[p]=R_PRIOR/2;d[p]=R_PRIOR/(s[p]+sB)});
+    const w={},d={};players.forEach(p=>{w[p]=wP[p]/2;d[p]=wP[p]/(s[p]+sP[p])});
     ms.forEach(m=>{const x=(m.ar+m.br)/(s[m.a]+s[m.b]);w[m.a]+=m.ar;d[m.a]+=x;w[m.b]+=m.br;d[m.b]+=x});
     players.forEach(p=>s[p]=w[p]/d[p]);
   }
   const rk={},won={},g={};players.forEach(p=>{rk[p]=0;won[p]=0;g[p]=0});
   ms.forEach(m=>{const n=m.ar+m.br;rk[m.a]+=n;rk[m.b]+=n;won[m.a]+=m.ar;won[m.b]+=m.br;g[m.a]++;g[m.b]++});
-  return {count:ms.length,rows:[...players].map(p=>({n:p,t:team[p]||"",r:R_SCALE*Math.log2(s[p]),racks:rk[p],won:won[p],g:g[p],prov:rk[p]<R_PROV}))
+  return {count:ms.length,rows:[...players].map(p=>({n:p,t:team[p]||"",r:R_SCALE*Math.log2(s[p]),racks:rk[p],won:won[p],g:g[p],prov:rk[p]<R_PROV,start:wP[p]===R_PRIOR_START?Math.round(+init[p]):null}))
     .sort((x,y)=>y.r-x.r)};
 }
 function renderRate(h){
@@ -1216,7 +1240,7 @@ function renderRate(h){
     li.querySelector(".rk-name b").textContent=r.n;
     li.querySelector(".rk-name small").textContent=[r.t,`${r.g}試合 ${r.won}/${r.racks}ラック`].filter(Boolean).join(" ・ ");
     const vb=li.querySelector(".rk-val b");vb.textContent=Math.round(r.r);if(r.prov)vb.classList.add("prov");
-    li.querySelector(".rk-val small").textContent=r.prov?"暫定":"確定";
+    li.querySelector(".rk-val small").textContent=r.racks===0&&r.start!=null?"開始レート":r.prov?"暫定":"確定";
     ol.appendChild(li)});
   $("rateNote").textContent=rows.length
     ?`ラックの勝敗が記録された ${count} 試合から計算しています。レートを付ける前に終わった試合は入りません。`
@@ -2169,7 +2193,7 @@ $("pushLocal").onclick=async()=>{
   },()=>{});
   rosterDb=db.doc("config/roster");
   rosterDb.onSnapshot(sn=>{
-    if(sn.exists){const d=sn.data();roster={teams:(d.teams||[]).map(t=>({name:t.name,members:[...(t.members||[])]}))}}
+    if(sn.exists){const d=sn.data();roster={teams:(d.teams||[]).map(t=>({name:t.name,members:[...(t.members||[])]})),init:{...(d.init||{})}}}
     else{const local=store.get("cb_roster",{teams:[]});roster=local;if(isOwner&&local.teams.length&&!sn.metadata.fromCache)saveRoster()}
     $("rosterNote").textContent="ここに登録したチームとメンバーは、お店の全員の端末で共通です。変更できるのは管理者（あなた）だけです。";
     if(!$("settings").hidden)renderRoster();renderPickers();renderSched();
