@@ -301,6 +301,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 @media (max-width:420px){.sc-btns{grid-template-columns:1fr 1fr}.sc-btns .sc-go{grid-column:1/-1}}
 @media (prefers-reduced-motion:reduce){.sc-card.warn .sc-time,.sc-time.bump{animation:none}}
 
+.sc-step{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
+.sc-step button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;font-weight:700}
+.sc-step input{box-sizing:border-box;min-width:0;width:100%;text-align:center;font:800 22px/1 var(--f-display);font-variant-numeric:tabular-nums}
+
 /* schedule / league */
 .field textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%;resize:vertical;line-height:1.6}
 .plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -708,6 +712,24 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <button class="primary" type="submit">チームを追加</button>
     </form>
   </section>
+  <section class="sheet" aria-labelledby="h-scset">
+    <h2 id="h-scset">ショットクロック</h2>
+    <p class="hint">スコア画面のショットクロックの秒数です。変えるとお店の全員の端末に反映されます。</p>
+    <div class="grid2">
+      <div class="field"><label for="scBaseIn">持ち時間（秒）</label>
+        <div class="sc-step"><button type="button" data-k="base" data-d="-5" aria-label="持ち時間を5秒減らす">−5</button><input id="scBaseIn" type="number" inputmode="numeric" min="5" max="300" step="1"><button type="button" data-k="base" data-d="5" aria-label="持ち時間を5秒増やす">＋5</button></div></div>
+      <div class="field"><label for="scExIn">EXで足す時間（秒）</label>
+        <div class="sc-step"><button type="button" data-k="ex" data-d="-5" aria-label="EXの時間を5秒減らす">−5</button><input id="scExIn" type="number" inputmode="numeric" min="5" max="300" step="1"><button type="button" data-k="ex" data-d="5" aria-label="EXの時間を5秒増やす">＋5</button></div></div>
+    </div>
+    <div class="seg small" id="scPresets" role="group" aria-label="よく使う設定">
+      <button type="button" data-b="30" data-e="30">30秒 / EX30</button>
+      <button type="button" data-b="35" data-e="25">35秒 / EX25</button>
+      <button type="button" data-b="40" data-e="40">40秒 / EX40</button>
+      <button type="button" data-b="60" data-e="30">60秒 / EX30</button>
+    </div>
+    <p class="hint" id="scSetMsg"></p>
+  </section>
+
   <section class="sheet" id="schedAdmin" aria-labelledby="h-sa">
     <h2 id="h-sa">リーグ戦を組む</h2>
     <p class="hint">期間内で消化する総当たり戦を作ります。各節に消化推奨期間が付き、日程タブで次の対戦相手と期間が見られます。</p>
@@ -781,7 +803,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <button id="endBtn" type="button">試合終了</button>
   </div>
   <section class="shotclock" id="shotclock" aria-label="ショットクロック">
-    <div class="sc-head"><span class="sc-title">ショットクロック</span><span class="sc-note">40秒 ・ EXで＋40秒</span></div>
+    <div class="sc-head"><span class="sc-title">ショットクロック</span><span class="sc-note" id="scNote">40秒 ・ EXで＋40秒</span></div>
     <div class="sc-grid">
       <div class="sc-card" data-p="0">
         <div class="sc-name" id="scName0">プレイヤー1</div>
@@ -790,7 +812,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
         <div class="sc-btns">
           <button type="button" class="sc-go" data-act="toggle">スタート</button>
           <button type="button" data-act="reset">リセット</button>
-          <button type="button" class="sc-ex" data-act="ex">EX <small>+40</small></button>
+          <button type="button" class="sc-ex" data-act="ex">EX <small class="sc-exlab">+40</small></button>
         </div>
         <div class="sc-used" id="scUsed0"></div>
       </div>
@@ -801,7 +823,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
         <div class="sc-btns">
           <button type="button" class="sc-go" data-act="toggle">スタート</button>
           <button type="button" data-act="reset">リセット</button>
-          <button type="button" class="sc-ex" data-act="ex">EX <small>+40</small></button>
+          <button type="button" class="sc-ex" data-act="ex">EX <small class="sc-exlab">+40</small></button>
         </div>
         <div class="sc-used" id="scUsed1"></div>
       </div>
@@ -1901,7 +1923,26 @@ function moreBurst(side,remain){
   try{navigator.vibrate&&navigator.vibrate([60,40,120])}catch(e){}
 }
 /* ---------- shot clock (one per player) ---------- */
-const SC_BASE=40,SC_EX=40;
+let SC_BASE=40,SC_EX=40;
+let appCfgDb=null;
+function scApplyCfg(base,ex,save){
+  base=Math.min(300,Math.max(5,Math.round(+base||40)));ex=Math.min(300,Math.max(5,Math.round(+ex||40)));
+  const old=SC_BASE;SC_BASE=base;SC_EX=ex;
+  $("scBaseIn").value=base;$("scExIn").value=ex;
+  $("scNote").textContent=`${base}秒 ・ EXで＋${ex}秒`;
+  document.querySelectorAll(".sc-exlab").forEach(e=>e.textContent="+"+ex);
+  document.querySelectorAll("#scPresets button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.b===base&&+b.dataset.e===ex));
+  /* clocks that are idle and untouched follow the new length right away */
+  if(typeof SC!=="undefined")SC.c.forEach((c,i)=>{if(!c.run&&c.left===old*1000&&c.max===old*1000){c.left=base*1000;c.max=c.left}});
+  if(typeof scDraw==="function")scDraw();
+  if(save){const v={shotBase:base,shotEx:ex};store.set("cb_appcfg",v);
+    if(appCfgDb)appCfgDb.set(v).then(()=>{$("scSetMsg").textContent=`保存しました：持ち時間 ${base}秒、EX ${ex}秒`}).catch(()=>{$("scSetMsg").textContent="保存できませんでした。通信を確認してください"});
+    else $("scSetMsg").textContent=`この端末に保存しました：持ち時間 ${base}秒、EX ${ex}秒`;}
+}
+document.querySelectorAll(".sc-step button").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.k,d=+b.dataset.d;scApplyCfg(k==="base"?SC_BASE+d:SC_BASE,k==="ex"?SC_EX+d:SC_EX,true)}));
+["scBaseIn","scExIn"].forEach(id=>$(id).addEventListener("change",()=>scApplyCfg($("scBaseIn").value,$("scExIn").value,true)));
+$("scPresets").addEventListener("click",e=>{const b=e.target.closest("button");if(b)scApplyCfg(b.dataset.b,b.dataset.e,true)});
 const SC={timer:null,c:[{left:SC_BASE*1000,max:SC_BASE*1000,run:false,at:0,ex:0,warned:false,over:false},{left:SC_BASE*1000,max:SC_BASE*1000,run:false,at:0,ex:0,warned:false,over:false}]};
 let scAudio=null;
 function scBeep(freq,ms){
@@ -1941,6 +1982,7 @@ document.querySelectorAll(".sc-card").forEach(card=>{const i=+card.dataset.p;
 function scNames(){if(!M)return;[0,1].forEach(i=>{$("scName"+i).textContent=M.names[i]||("プレイヤー"+(i+1));
   document.querySelector(`.sc-card[data-p="${i}"]`).style.setProperty("--pc",i?"var(--p2)":"var(--p1)")})}
 function scStopAll(){scPause(0);scPause(1);scDraw()}
+{const c=store.get("cb_appcfg",null);scApplyCfg(c?c.shotBase:40,c?c.shotEx:40,false)}
 
 function render(){
   const g=GAMES[M.game];
@@ -2290,6 +2332,8 @@ $("pushLocal").onclick=async()=>{
     else{const local=store.get("cb_sched",{league:null,items:[]});sched=local;if(isOwner&&local.items&&local.items.length&&!sn.metadata.fromCache)saveSched()}
     renderSched();
   },()=>{});
+  appCfgDb=db.doc("config/app");
+  appCfgDb.onSnapshot(sn=>{if(sn.exists){const d=sn.data()||{};store.set("cb_appcfg",{shotBase:d.shotBase,shotEx:d.shotEx});scApplyCfg(d.shotBase,d.shotEx,false)}},()=>{});
   rosterDb=db.doc("config/roster");
   rosterDb.onSnapshot(sn=>{
     if(sn.exists){const d=sn.data();roster={teams:(d.teams||[]).map(t=>({name:t.name,members:[...(t.members||[])]})),init:{...(d.init||{})}}}
