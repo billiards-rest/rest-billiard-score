@@ -272,6 +272,35 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .addrow .start-rate{flex:0 0 110px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 10px;font-variant-numeric:tabular-nums}
 .start-hint{font-size:12px}
 
+/* shot clock */
+.shotclock{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.sc-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sc-title{font:800 15px/1 var(--f-display);letter-spacing:.12em;color:var(--felt)}
+.sc-note{font-size:11px;color:var(--muted)}
+.sc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.sc-card{--pc:var(--p1);border:2px solid var(--line);border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0;background:var(--bg);transition:border-color .2s}
+.sc-card.run{border-color:var(--pc)}
+.sc-name{font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--pc)}
+.sc-time{border:0;background:transparent;padding:0;color:var(--ink);font:900 clamp(56px,16vw,84px)/.95 var(--f-display);font-variant-numeric:tabular-nums;text-align:center;cursor:pointer}
+.sc-time.bump{animation:scBump .45s ease-out}
+@keyframes scBump{0%{transform:scale(1.35);color:var(--cue)}100%{transform:scale(1)}}
+.sc-bar{height:8px;border-radius:4px;background:var(--line);overflow:hidden}
+.sc-bar i{display:block;height:100%;background:var(--pc);border-radius:4px;transition:width .1s linear}
+.sc-card.warn .sc-time{color:var(--red);animation:scPulse 1s ease-in-out infinite}
+.sc-card.warn .sc-bar i{background:var(--red)}
+.sc-card.over{border-color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--bg))}
+.sc-card.over .sc-time{color:var(--red)}
+@keyframes scPulse{0%,100%{opacity:1}50%{opacity:.45}}
+.sc-btns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.sc-btns button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 2px;font-size:13px;font-weight:700;min-width:0;white-space:nowrap}
+.sc-btns .sc-go{background:var(--pc);border-color:var(--pc);color:#fff}
+.sc-btns .sc-go:disabled{opacity:.5}
+.sc-btns .sc-ex{background:var(--cue);border-color:var(--cue);color:#1b1b1b}
+.sc-btns .sc-ex small{font-size:10px}
+.sc-used{font-size:11px;color:var(--muted);min-height:1em;text-align:center}
+@media (max-width:420px){.sc-btns{grid-template-columns:1fr 1fr}.sc-btns .sc-go{grid-column:1/-1}}
+@media (prefers-reduced-motion:reduce){.sc-card.warn .sc-time,.sc-time.bump{animation:none}}
+
 /* schedule / league */
 .field textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%;resize:vertical;line-height:1.6}
 .plan-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
@@ -751,6 +780,33 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <button id="newRack" type="button" hidden>次のラック</button>
     <button id="endBtn" type="button">試合終了</button>
   </div>
+  <section class="shotclock" id="shotclock" aria-label="ショットクロック">
+    <div class="sc-head"><span class="sc-title">ショットクロック</span><span class="sc-note">40秒 ・ EXで＋40秒</span></div>
+    <div class="sc-grid">
+      <div class="sc-card" data-p="0">
+        <div class="sc-name" id="scName0">プレイヤー1</div>
+        <button type="button" class="sc-time" id="scTime0" aria-label="タップでスタート／一時停止">40</button>
+        <div class="sc-bar"><i id="scBar0"></i></div>
+        <div class="sc-btns">
+          <button type="button" class="sc-go" data-act="toggle">スタート</button>
+          <button type="button" data-act="reset">リセット</button>
+          <button type="button" class="sc-ex" data-act="ex">EX <small>+40</small></button>
+        </div>
+        <div class="sc-used" id="scUsed0"></div>
+      </div>
+      <div class="sc-card" data-p="1">
+        <div class="sc-name" id="scName1">プレイヤー2</div>
+        <button type="button" class="sc-time" id="scTime1" aria-label="タップでスタート／一時停止">40</button>
+        <div class="sc-bar"><i id="scBar1"></i></div>
+        <div class="sc-btns">
+          <button type="button" class="sc-go" data-act="toggle">スタート</button>
+          <button type="button" data-act="reset">リセット</button>
+          <button type="button" class="sc-ex" data-act="ex">EX <small>+40</small></button>
+        </div>
+        <div class="sc-used" id="scUsed1"></div>
+      </div>
+    </div>
+  </section>
   <div class="log"><ol id="log"></ol></div>
 </div>
 
@@ -1822,6 +1878,7 @@ function openPlay(){setTimeout(()=>{if(M&&M.pending)askRackType()},0);
   render();
 }
 function closePlay(){
+  scStopAll();
   clearInterval(tick);try{wake&&wake.release()}catch(e){}wake=null;
   $("play").hidden=true;$("setup").hidden=false;$("overlay").hidden=true;
   $("resumeBtn").hidden=!store.get("cb_cur",null);renderHistory();
@@ -1843,9 +1900,51 @@ function moreBurst(side,remain){
   side.appendChild(fx);setTimeout(()=>fx.remove(),1700);
   try{navigator.vibrate&&navigator.vibrate([60,40,120])}catch(e){}
 }
+/* ---------- shot clock (one per player) ---------- */
+const SC_BASE=40,SC_EX=40;
+const SC={timer:null,c:[{left:SC_BASE*1000,max:SC_BASE*1000,run:false,at:0,ex:0,warned:false,over:false},{left:SC_BASE*1000,max:SC_BASE*1000,run:false,at:0,ex:0,warned:false,over:false}]};
+let scAudio=null;
+function scBeep(freq,ms){
+  try{scAudio=scAudio||new (window.AudioContext||window.webkitAudioContext)();const o=scAudio.createOscillator(),g=scAudio.createGain();
+    o.frequency.value=freq;o.type="square";g.gain.value=.08;o.connect(g);g.connect(scAudio.destination);o.start();o.stop(scAudio.currentTime+ms/1000)}catch(e){}
+}
+function scNow(c){return c.run?Math.max(0,c.left-(performance.now()-c.at)):c.left}
+function scPause(i){const c=SC.c[i];if(!c.run)return;c.left=scNow(c);c.run=false}
+function scStart(i){const c=SC.c[i];if(c.run||scNow(c)<=0)return;scPause(1-i);c.at=performance.now();c.run=true;scLoop()}
+function scReset(i){const c=SC.c[i];c.run=false;c.left=SC_BASE*1000;c.max=c.left;c.warned=false;c.over=false;scDraw()}
+function scEx(i){const c=SC.c[i];const now=scNow(c);c.left=now+SC_EX*1000;c.max=Math.max(c.max,c.left);if(c.run)c.at=performance.now();c.ex++;c.over=false;if(c.left>10000)c.warned=false;
+  const el=$("scTime"+i);el.classList.remove("bump");void el.offsetWidth;el.classList.add("bump");scDraw()}
+function scLoop(){if(SC.timer)return;SC.timer=setInterval(()=>{let any=false;
+  SC.c.forEach((c,i)=>{if(!c.run)return;any=true;const t=scNow(c);
+    const sec=Math.ceil(t/1000);
+    if(t<=10000&&!c.warned){c.warned=true}
+    if(c.run&&sec<=5&&sec>0&&c._lastSec!==sec){scBeep(880,90)}
+    c._lastSec=sec;
+    if(t<=0){c.run=false;c.left=0;c.over=true;scBeep(440,600);try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}}});
+  scDraw();if(!any){clearInterval(SC.timer);SC.timer=null}},100)}
+function scDraw(){
+  SC.c.forEach((c,i)=>{const t=scNow(c),sec=Math.ceil(t/1000);
+    const card=document.querySelector(`.sc-card[data-p="${i}"]`);if(!card)return;
+    $("scTime"+i).textContent=sec;
+    $("scBar"+i).style.width=(c.max?Math.max(0,t/c.max*100):0).toFixed(1)+"%";
+    card.classList.toggle("run",c.run);card.classList.toggle("warn",t<=10000&&t>0);card.classList.toggle("over",c.over);
+    card.querySelector(".sc-go").textContent=c.run?"一時停止":(t<=0?"時間切れ":"スタート");
+    card.querySelector(".sc-go").disabled=t<=0&&!c.run;
+    $("scUsed"+i).textContent=c.ex?`EX 使用 ${c.ex}回`:"";
+  });
+}
+document.querySelectorAll(".sc-card").forEach(card=>{const i=+card.dataset.p;
+  card.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+    if(b.classList.contains("sc-time")||b.dataset.act==="toggle"){SC.c[i].run?scPause(i):scStart(i);scDraw();return}
+    if(b.dataset.act==="reset"){scReset(i);return}
+    if(b.dataset.act==="ex"){scEx(i)}})});
+function scNames(){if(!M)return;[0,1].forEach(i=>{$("scName"+i).textContent=M.names[i]||("プレイヤー"+(i+1));
+  document.querySelector(`.sc-card[data-p="${i}"]`).style.setProperty("--pc",i?"var(--p2)":"var(--p1)")})}
+function scStopAll(){scPause(0);scPause(1);scDraw()}
+
 function render(){
   const g=GAMES[M.game];
-  $("clock").textContent=fmtDur(Date.now()-M.start);
+  $("clock").textContent=fmtDur(Date.now()-M.start);scNames();scDraw();
   $("meta").innerHTML="";
   const meta=document.createElement("span");
   meta.innerHTML=`<b></b> ・ ${M.mode==="race"?`${M.target[0]}-${M.target[1]} 先取`:`目標 ${M.target[0]} / ${M.target[1]} 点`} ・ ラック ${M.rack}`;
