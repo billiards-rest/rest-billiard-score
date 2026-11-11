@@ -169,8 +169,8 @@ button{cursor:pointer}
 .tab-badge{position:absolute;top:2px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--red);color:#fff;font:700 11px/18px var(--f-body);font-style:normal;text-align:center}
 
 /* game switch */
-.game-switch{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-@media (max-width:760px){.game-switch{grid-template-columns:repeat(2,minmax(0,1fr))}.game-switch .gsw:first-child{grid-column:1/-1}}
+.game-switch{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:760px){.game-switch{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .gsw{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);background:var(--bg);border-radius:14px;padding:10px;text-align:left;min-width:0}
 .gsw[aria-pressed="true"]{border-color:var(--felt);background:color-mix(in srgb,var(--felt) 10%,var(--surface));box-shadow:inset 0 0 0 1px var(--felt)}
 .gsw.soon{cursor:default}
@@ -328,6 +328,50 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 @keyframes scEdge{0%{box-shadow:inset 0 0 0 14px color-mix(in srgb,var(--red) 80%,transparent)}100%{box-shadow:inset 0 0 0 0 transparent}}
 @keyframes scEdgeOver{0%,30%,60%{opacity:1;box-shadow:inset 0 0 0 18px var(--red)}15%,45%{opacity:.3}100%{opacity:0;box-shadow:inset 0 0 0 0 transparent}}
 @media (prefers-reduced-motion:reduce){.sc-card.fx-count,.sc-card.fx-ten,.sc-card.fx-over{animation:none}}
+
+/* bowlliards */
+.versus.solo{grid-template-columns:minmax(0,1fr)}
+.versus.solo .vs,.versus.solo .pblock.b{display:none}
+.gsw-ball.bowlic{background:transparent;box-shadow:none}
+.gsw-ball.bowlic svg{width:30px;height:30px;display:block}
+.gsw-ball.bowlic circle{fill:var(--felt)}
+.gsw-ball.bowlic circle.hd{fill:var(--cue)}
+#bowl{min-height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px 24px;max-width:900px;margin:0 auto;position:relative}
+.bw-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-radius:18px;border:8px solid var(--rail);color:var(--chalk-white);padding:12px 16px;
+  background:radial-gradient(130% 110% at 20% 10%,var(--cloth-hi),var(--cloth) 55%,var(--felt-deep))}
+.bw-who{display:flex;flex-direction:column;min-width:0}
+.bw-who b{font-size:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bw-who .team{color:inherit;opacity:.75}
+.bw-total{display:flex;flex-direction:column;align-items:flex-end}
+.bw-total span{font-size:11px;letter-spacing:.2em;opacity:.75}
+.bw-total b{font:900 clamp(56px,16vw,88px)/.9 var(--f-display);color:var(--cue);font-variant-numeric:tabular-nums}
+.bw-sheet{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));border:2px solid var(--ink);border-radius:10px;overflow:hidden;background:var(--surface)}
+@media (max-width:640px){.bw-sheet{grid-template-columns:repeat(5,minmax(0,1fr))}.bw-frame:nth-child(n+6){border-top:2px solid var(--ink)}.bw-frame:nth-child(5){border-right:0}}
+.bw-frame{display:flex;flex-direction:column;border-right:1px solid var(--ink);min-width:0}
+.bw-frame:last-child{border-right:0}
+.bw-frame.cur{background:color-mix(in srgb,var(--cue) 22%,var(--surface))}
+.bw-no{font:800 12px/1 var(--f-display);text-align:center;padding:4px 0;background:var(--ink);color:var(--bg)}
+.bw-frame.cur .bw-no{background:var(--felt)}
+.bw-boxes{display:flex;justify-content:flex-end}
+.bw-boxes i{flex:0 0 auto;width:clamp(16px,4.6vw,24px);height:clamp(18px,5vw,26px);display:grid;place-items:center;border-left:1px solid var(--line);border-bottom:1px solid var(--line);
+  font:800 clamp(12px,3.4vw,16px)/1 var(--f-display);font-style:normal}
+.bw-boxes i.x{color:#fff;background:var(--red)}
+.bw-boxes i.sp{color:#fff;background:var(--p2)}
+.bw-cum{font:900 clamp(18px,5vw,26px)/1 var(--f-display);text-align:center;padding:6px 0 8px;min-height:2em;font-variant-numeric:tabular-nums}
+.bw-status{margin:0;text-align:center;font-weight:700}
+.bw-pad{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+.bw-k{border:1px solid var(--line);background:var(--surface);border-radius:14px;min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;touch-action:manipulation}
+.bw-k b{font:900 30px/1 var(--f-display);font-variant-numeric:tabular-nums}
+.bw-k small{font-size:10px;color:var(--muted);white-space:nowrap}
+.bw-k.k-x{background:var(--red);border-color:var(--red);color:#fff}
+.bw-k.k-sp{background:var(--p2);border-color:var(--p2);color:#fff}
+.bw-k.k-x small,.bw-k.k-sp small{color:#fff;opacity:.85}
+.bw-k:disabled{opacity:.3}
+.bw-k:not(:disabled):active{transform:scale(.96)}
+.bw-burst{position:fixed;left:50%;top:42%;z-index:30;pointer-events:none;font:900 clamp(48px,14vw,96px)/1 var(--f-display);color:#fff;letter-spacing:.04em;
+  -webkit-text-stroke:3px var(--red);text-shadow:0 8px 24px rgba(0,0,0,.35);animation:bwBurst 1.1s cubic-bezier(.2,1.4,.4,1) forwards}
+.bw-burst.sp{-webkit-text-stroke-color:var(--p2)}
+@keyframes bwBurst{0%{transform:translate(-50%,-50%) scale(.3) rotate(-10deg);opacity:0}25%{transform:translate(-50%,-50%) scale(1.1) rotate(2deg);opacity:1}70%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-80%) scale(1);opacity:0}}
 
 /* schedule / league */
 .field textarea{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%;resize:vertical;line-height:1.6}
@@ -587,12 +631,13 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <div class="game-switch" id="gameSeg" role="group" aria-labelledby="gameLab"></div>
     </div>
 
-    <div class="versus">
+    <p class="hint bowl-intro" id="bowlIntro" hidden>ボーラードは1人で10フレームを撞くゲームです。各フレーム2イニングで、入れたボールの数を入れていきます。点数はボウリングと同じで、最高300点です。</p>
+    <div class="versus" id="versus">
       <div class="pblock">
         <span class="ptag">PLAYER 1</span>
         <div class="field"><label for="tm1">チーム</label><select id="tm1"></select><input id="tm1x" maxlength="20" autocomplete="off" placeholder="チーム名を入力" hidden></div>
         <div class="field"><label for="n1">名前</label><div class="name-row"><select id="n1"></select><span class="prate" id="pr1" aria-live="polite"></span></div><input id="n1x" maxlength="16" autocomplete="off" placeholder="名前を入力" hidden></div>
-        <div class="field target"><label for="t1" id="t1lab">目標点</label><input id="t1" type="number" inputmode="numeric" min="1" max="999" value="5"></div>
+        <div class="field target" id="t1field"><label for="t1" id="t1lab">目標点</label><input id="t1" type="number" inputmode="numeric" min="1" max="999" value="5"></div>
       </div>
       <div class="vs" aria-hidden="true">VS</div>
       <div class="pblock b">
@@ -606,7 +651,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <label class="hc-toggle" for="hcAuto"><input type="checkbox" id="hcAuto" checked><span>レートでハンデ（目標点）を決める</span></label>
       <p class="hc-msg" id="hcMsg"></p>
     </div>
-    <p class="hint">上手の目標点を基準に、下手の目標点をレート差から自動で決めます。自分で決めたいときはチェックを外してください。チーム名は空欄でもかまいません。</p>
+    <p class="hint" id="hcHint">上手の目標点を基準に、下手の目標点をレート差から自動で決めます。自分で決めたいときはチェックを外してください。チーム名は空欄でもかまいません。</p>
 
     <div class="grid2" id="breakRow">
       <div class="field">
@@ -665,12 +710,16 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <p class="hint" id="histNote">履歴はこの端末のブラウザに保存されます。</p>
     <button class="ghost" id="pushLocal" type="button" hidden></button>
   </section>
+  <section class="sheet" id="bowlHistSheet" aria-labelledby="h-bh" hidden>
+    <h2 id="h-bh">ボーラード履歴</h2>
+    <div class="hist" id="bowlHist"></div>
+  </section>
  </div>
 
  <div class="page" data-page="rank" id="pageRank" hidden>
   <h1 class="page-title">ランキング</h1>
   <section class="sheet" id="rankEmpty">
-    <p class="hint">まだ試合はありません。試合を記録すると、ランキングと選手別成績がここに出ます。</p>
+    <p class="hint">9ボールの試合はまだありません。試合を記録すると、ランキングと選手別成績がここに出ます。</p>
   </section>
   <section class="sheet" id="rankSheet" aria-labelledby="h-rk" hidden>
     <div class="row" style="justify-content:space-between">
@@ -682,6 +731,18 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     </div>
     <div class="rk-slider" id="rkSlider" aria-roledescription="スライド" tabindex="0"></div>
     <div class="rk-dots" id="rkDots" role="tablist" aria-label="ランキングの種類"></div>
+  </section>
+
+  <section class="sheet" id="bowlRankSheet" aria-labelledby="h-brk" hidden>
+    <div class="row" style="justify-content:space-between">
+      <h2 id="h-brk">ボーラード ランキング</h2>
+      <div class="seg small" id="bowlRankKey" role="group" aria-label="ランキングの種類">
+        <button type="button" data-v="best" aria-pressed="true">ハイスコア</button>
+        <button type="button" data-v="avg" aria-pressed="false">平均</button>
+      </div>
+    </div>
+    <ol class="rank-list" id="bowlRankList"></ol>
+    <p class="hint" id="bowlRankNote"></p>
   </section>
 
   <section class="sheet" id="playersSheet" aria-labelledby="h-pl" hidden>
@@ -854,6 +915,25 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     </div>
   </section>
   <div class="log"><ol id="log"></ol></div>
+</div>
+
+<!-- BOWLLIARDS -->
+<div id="bowl" hidden>
+  <div class="bar">
+    <button class="ghost" id="bwExit" type="button">← メニュー</button>
+    <div class="meta"><b>ボーラード</b> ・ 10フレーム</div>
+  </div>
+  <section class="bw-head">
+    <div class="bw-who"><span class="team" id="bwTeam"></span><b id="bwName"></b></div>
+    <div class="bw-total"><span>合計</span><b id="bwTotal">0</b></div>
+  </section>
+  <div class="bw-sheet" id="bwSheet" aria-label="スコアシート"></div>
+  <p class="bw-status" id="bwStatus" aria-live="polite"></p>
+  <div class="bw-pad" id="bwPad" aria-label="入れたボールの数"></div>
+  <div class="footer-tools">
+    <button class="undo" id="bwUndo" type="button">↶ ひとつ戻る</button>
+    <button id="bwQuit" type="button">記録せずにやめる</button>
+  </div>
 </div>
 
 <div class="overlay" id="overlay" hidden>
@@ -1052,6 +1132,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 (function(){
 const GAMES={
   "9":{label:"9ボール",tag:"9-BALL · POINT GAME",mode:"balls",n:9,val:n=>n===9?10:1,endBall:9,def:30,hint:"ポイント制。1〜8番は1点、9番を入れた人はそのラック10点（1〜8番の分は数えない）。9番が落ちたらラック終了。"},
+  "bowl":{label:"ボーラード",tag:"BOWLLIARDS · 10 FRAMES",mode:"bowl",def:0,hint:"10フレーム・各2イニング。ボウリングと同じ点数のつけ方で最高300点。"}
 };
 const BALLS=["#e2b53b","#2457a6","#c2412d","#5b3a8c","#e0752b","#1f7a4d","#7a2a2a","#151515"];
 const $=id=>document.getElementById(id);
@@ -1072,12 +1153,14 @@ function seg(el,key,onChange){
 const gs=$("gameSeg");
 /* games that will be added later: shown in the switch, not selectable yet. To enable one, add it to GAMES with its rules. */
 const SOON=[{k:"10",label:"10ボール",sub:"コールショット"},{k:"8",label:"8ボール",sub:"ラック先取"},{k:"trio",label:"トリオマッチ",sub:"3人1チーム"},{k:"3c",label:"スリークッション",sub:"キャロム"}];
-const GAME_SUB={"9":"ポイント制"};
+const GAME_SUB={"9":"RESTルール","bowl":"10フレーム"};
 const GAME_ICON={"9":["#e2b53b",true,"9"],"10":["#2457a6",true,"10"],"8":["#151515",false,"8"],"trio":["#2457a6",false,"3"],"3c":["#f5f3ec",false,""]};
 function gameBtn(k,label,sub,ready){
   const b=document.createElement("button");b.type="button";b.dataset.v=k;b.className="gsw"+(ready?"":" soon");
   const ic=GAME_ICON[k]||["#999",false,""];
-  const ball=k==="trio"
+  const ball=k==="bowl"
+    ?`<span class="gsw-ball bowlic" aria-hidden="true"><svg viewBox="0 0 30 30">${[[15,6],[11,12.5],[19,12.5],[7,19],[15,19],[23,19],[3,25.5],[11,25.5],[19,25.5],[27,25.5]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="3.4" class="${i===0?"hd":""}"/>`).join("")}</svg></span>`
+    :k==="trio"
     ?`<span class="gsw-ball people" aria-hidden="true"><svg viewBox="0 0 30 30"><circle class="pb" cx="8" cy="12" r="3.2"/><path class="pb" d="M2.5 23.5c0-3.4 2.5-5.6 5.5-5.6s5.5 2.2 5.5 5.6z"/><circle class="pb" cx="22" cy="12" r="3.2"/><path class="pb" d="M16.5 23.5c0-3.4 2.5-5.6 5.5-5.6s5.5 2.2 5.5 5.6z"/><circle class="pf" cx="15" cy="9.5" r="3.8"/><path class="pf" d="M8.6 24c0-4 2.9-6.6 6.4-6.6s6.4 2.6 6.4 6.6z"/></svg></span>`
     :k==="3c"
     ?`<span class="gsw-ball carom" aria-hidden="true"><em class="c-red"></em><em class="c-white"></em><em class="c-yellow"></em></span>`
@@ -1094,6 +1177,12 @@ gs.addEventListener("click",e=>{const b=e.target.closest("button.soon");if(b)toa
 seg(gs,"game",syncSetup);seg($("breakSeg"),"breakRule");seg($("firstSeg"),"first");
 function syncSetup(){
   const g=GAMES[cfg.game];
+  const solo=g.mode==="bowl";
+  $("versus").classList.toggle("solo",solo);$("bowlIntro").hidden=!solo;
+  $("hcBox").hidden=solo;$("hcHint").hidden=solo;$("t1field").hidden=solo;
+  document.querySelector("#versus .pblock .ptag").textContent=solo?"PLAYER":"PLAYER 1";
+  $("startBtn").textContent=solo?"ゲーム開始":"試合開始";
+  if(solo){$("gameHint").textContent=g.hint;$("heroTag").textContent=g.tag;$("breakRow").hidden=true;return}
   $("gameHint").textContent=g.hint;$("heroTag").textContent=g.tag||g.label;
   const unit=g.mode==="race"?"先取ラック数":"目標点";
   $("t1lab").textContent=unit;$("t2lab").textContent=unit;
@@ -1201,6 +1290,7 @@ renderPickers();
 
 $("startBtn").onclick=()=>{
   const g=GAMES[cfg.game];
+  if(g.mode==="bowl"){startBowl();return}
   const t=[Math.max(1,parseInt($("t1").value)||g.def),Math.max(1,parseInt($("t2").value)||g.def)];
   M={id:Date.now(),game:cfg.game,mode:g.mode,names:[getName(1)||"プレイヤー1",getName(2)||"プレイヤー2"],teams:[getTeam(1),getTeam(2)],
     target:t,score:[0,0],runouts:[0,0],aces:[0,0],zips:[0,0],fouls:[0,0],consec:[0,0],breakRule:cfg.breakRule,breaker:cfg.first,turn:cfg.first,
@@ -1210,6 +1300,7 @@ $("startBtn").onclick=()=>{
 $("resumeBtn").onclick=()=>{undoStack=[];openPlay()};
 
 function renderHistory(){
+  renderBowlLists();
   const real=(shared||store.get("cb_hist",[])).filter(m=>GAMES[m.game]).sort((a,b)=>b.end-a.end);
   const local=store.get("cb_hist",[]);
   $("pushLocal").hidden=!(shared&&local.length&&canWrite!==false);
@@ -1300,6 +1391,7 @@ function renderRanking(){
     d.onclick=()=>goSlide(si);dots.appendChild(d);
   });
   slider.scrollLeft=keep;markDots();
+  if(typeof renderBowlLists==="function")renderBowlLists();
 }
 function goSlide(i){const sl=$("rkSlider");rkIndex=Math.max(0,Math.min(RK_ORDER.length-1,i));
   sl.scrollTo({left:rkIndex*sl.clientWidth,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"})}
@@ -1880,7 +1972,13 @@ const RULES={
     ["ファウル",["手球以外を打った、球が台の外に出たなどはファウルで、その番は終わりです。"]]
   ]}
 };
-const RULE_ORDER=["9","10","8","trio","3c"];
+RULES.bowl={ready:true,title:"ボーラード",lead:"1人でできるボウリング形式の練習ゲームです。このアプリの点数のつけ方です。",sections:[
+  ["進め方",["10フレームで1ゲーム。各フレームは2イニングまでです。","1イニング目はブレイクのあと（または手球フリーから）始め、ミスするまで続けて入れます。","入れたボールの数をスコア画面のボタンで入れます。"]],
+  ["点数（ボウリングと同じ）",["1イニング目で10個全部入れたらストライク：10点＋次の2イニングで入れた数。","2イニングで10個入れたらスペア：10点＋次の1イニングで入れた数。","それ以外は2イニングで入れた数がそのフレームの点。"]],
+  ["10フレーム目",["ストライクなら、あと2イニングのボーナス。スペアなら、あと1イニングのボーナス。","全部ストライクで300点（パーフェクト）です。"]],
+  ["記録とランキング",["ゲームが終わると記録は承認待ちになり、記録した人以外が承認すると確定します。","ランキングタブで、ハイスコアと平均点の順位が見られます。"]]
+]};
+const RULE_ORDER=["9","bowl","10","8","trio","3c"];
 let ruleGame="9";
 function renderRules(){
   const seg=$("ruleSeg");seg.innerHTML="";
@@ -1898,6 +1996,226 @@ function renderRules(){
     const ul=document.createElement("ul");items.forEach(x=>{const li=document.createElement("li");li.textContent=x;ul.appendChild(li)});sec.appendChild(ul);
     body.appendChild(sec)});
 }
+
+/* ---------- Bowlliards (ボーラード): 10 frames, 2 innings, bowling-style scoring ---------- */
+function bowlCalc(rolls){
+  const frames=[];let i=0;
+  for(let f=0;f<10;f++){
+    const fr={start:i,rolls:[],cum:null,pts:null};
+    if(f<9){
+      if(i<rolls.length){fr.rolls.push(rolls[i]);
+        if(rolls[i]===10){fr.kind="X";i+=1}
+        else if(i+1<rolls.length){fr.rolls.push(rolls[i+1]);fr.kind=rolls[i]+rolls[i+1]===10?"/":"open";i+=2}
+        else{fr.kind=null;i+=1}}
+    }else{while(i<rolls.length&&fr.rolls.length<3){fr.rolls.push(rolls[i]);i++}}
+    frames.push(fr);
+  }
+  const R=k=>rolls[k];
+  let cum=0,ok=true;
+  frames.forEach((fr,f)=>{
+    if(!ok)return;const s=fr.start;let p=null;
+    if(f<9){
+      if(fr.kind==="X"&&R(s+1)!=null&&R(s+2)!=null)p=10+R(s+1)+R(s+2);
+      else if(fr.kind==="/"&&R(s+2)!=null)p=10+R(s+2);
+      else if(fr.kind==="open")p=fr.rolls[0]+fr.rolls[1];
+    }else{
+      const r=fr.rolls;
+      if(r.length===3)p=r[0]+r[1]+r[2];
+      else if(r.length===2&&r[0]!==10&&r[0]+r[1]<10)p=r[0]+r[1];
+    }
+    if(p==null){ok=false;return}
+    cum+=p;fr.pts=p;fr.cum=cum;
+  });
+  /* where the next inning goes and how many balls are possible */
+  let frame=0,inning=0,max=10,done=false;
+  for(let f=0;f<10;f++){
+    const r=frames[f].rolls;
+    if(f<9){
+      if(r.length===0){frame=f;inning=0;max=10;break}
+      if(r[0]!==10&&r.length===1){frame=f;inning=1;max=10-r[0];break}
+      continue;
+    }
+    frame=9;inning=r.length;
+    if(r.length===0)max=10;
+    else if(r.length===1)max=r[0]===10?10:10-r[0];
+    else if(r.length===2){
+      if(r[0]===10)max=r[1]===10?10:10-r[1];
+      else if(r[0]+r[1]===10)max=10;
+      else{done=true;max=0}
+    }else{done=true;max=0}
+  }
+  const total=frames.reduce((a,fr)=>fr.cum!=null?fr.cum:a,0);
+  return {frames,frame,inning,max,done,total};
+}
+function bowlMarks(fr,f){
+  const r=fr.rolls,m=[];
+  const n=v=>v===0?"-":String(v);
+  if(f<9){
+    if(r[0]===10)return ["","X"];
+    m.push(r[0]==null?"":n(r[0]));
+    m.push(r[1]==null?"":(r[0]+r[1]===10?"/":n(r[1])));
+    return m;
+  }
+  const X=v=>v===10?"X":n(v);
+  if(r[0]!=null)m.push(X(r[0]));else m.push("");
+  if(r[1]!=null)m.push(r[0]===10?X(r[1]):(r[0]+r[1]===10?"/":n(r[1])));else m.push("");
+  if(r[2]!=null){
+    if(r[0]===10)m.push(r[1]===10?X(r[2]):(r[1]+r[2]===10?"/":n(r[2])));
+    else m.push(X(r[2]));
+  }else m.push("");
+  return m;
+}
+
+let BW=store.get("cb_bowl_cur",null),bowlShared=null,bowlUndo=[];
+function bowlSave(){store.set("cb_bowl_cur",BW&&!BW.done?BW:null)}
+function startBowl(){
+  BW={id:"b"+Date.now(),game:"bowl",name:getName(1)||"プレイヤー",team:getTeam(1)||"",rolls:[],start:Date.now(),done:false};
+  bowlSave();openBowl();
+}
+function openBowl(){
+  $("setup").hidden=true;$("play").hidden=true;$("bowl").hidden=false;window.scrollTo(0,0);
+  try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{})}catch(e){}
+  renderBowl();
+}
+function closeBowl(){
+  try{wake&&wake.release()}catch(e){}wake=null;
+  $("bowl").hidden=true;$("setup").hidden=false;$("overlay").hidden=true;
+  $("resumeBtn").hidden=!(store.get("cb_cur",null)||store.get("cb_bowl_cur",null));
+  renderHistory();renderBowlLists();
+}
+function renderBowl(){
+  if(!BW)return;
+  const c=bowlCalc(BW.rolls);
+  $("bwName").textContent=BW.name;$("bwTeam").textContent=BW.team||"";$("bwTeam").hidden=!BW.team;
+  $("bwTotal").textContent=c.total;
+  const sheet=$("bwSheet");sheet.innerHTML="";
+  c.frames.forEach((fr,f)=>{
+    const el=document.createElement("div");el.className="bw-frame"+(f===9?" tenth":"")+(!c.done&&f===c.frame?" cur":"")+(fr.kind==="X"?" strike":fr.kind==="/"?" spare":"");
+    const marks=bowlMarks(fr,f);
+    el.innerHTML=`<span class="bw-no">${f+1}</span><span class="bw-boxes">${marks.map(m=>`<i class="${m==="X"?"x":m==="/"?"sp":""}">${m}</i>`).join("")}</span><b class="bw-cum">${fr.cum!=null?fr.cum:""}</b>`;
+    sheet.appendChild(el);
+  });
+  $("bwStatus").textContent=c.done?"ゲーム終了":`第${c.frame+1}フレーム ・ ${c.frame===9&&c.inning===2?"ボーナス":c.inning+1+"イニング目"}`;
+  const pad=$("bwPad");pad.innerHTML="";
+  for(let v=0;v<=10;v++){
+    const b=document.createElement("button");b.type="button";b.dataset.v=v;
+    const isStrike=v===10&&c.max===10&&(c.inning===0||c.frame===9);
+    const isSpare=!c.done&&v===c.max&&v>0&&!isStrike;
+    b.className="bw-k"+(isStrike?" k-x":isSpare?" k-sp":"");
+    b.innerHTML=isStrike?`<b>X</b><small>ストライク</small>`:isSpare?`<b>/</b><small>スペア ${v}</small>`:`<b>${v}</b>`;
+    b.disabled=c.done||v>c.max;
+    b.setAttribute("aria-label",`${v}個入れた`);
+    b.onclick=()=>bowlRoll(v);
+    pad.appendChild(b);
+  }
+  $("bwUndo").disabled=!BW.rolls.length;
+  bowlSave();
+}
+function bowlRoll(v){
+  if(!BW||BW.done)return;const c=bowlCalc(BW.rolls);if(v>c.max)return;
+  BW.rolls.push(v);
+  const n=bowlCalc(BW.rolls);
+  const mark=v===10&&(c.inning===0||c.frame===9)&&c.max===10?"X":(v===c.max&&v>0)?"/":"";
+  if(mark&&!matchMedia("(prefers-reduced-motion:reduce)").matches){
+    const fx=document.createElement("div");fx.className="bw-burst "+(mark==="X"?"x":"sp");fx.setAttribute("aria-hidden","true");
+    fx.textContent=mark==="X"?"STRIKE!":"SPARE!";$("bowl").appendChild(fx);setTimeout(()=>fx.remove(),1100);
+  }
+  if(n.done){BW.done=true;BW.end=Date.now();BW.total=n.total;saveBowlRec();renderBowl();bowlResult();return}
+  renderBowl();
+}
+function bowlStats(rolls){
+  const c=bowlCalc(rolls);let x=0,sp=0;
+  c.frames.forEach((fr,f)=>{if(f<9){if(fr.kind==="X")x++;else if(fr.kind==="/")sp++}else{
+    const r=fr.rolls;if(r[0]===10)x++;if(r[0]===10&&r[1]===10)x++;if(r[0]===10&&r[1]===10&&r[2]===10)x++;
+    if(r[0]!==10&&r[0]+r[1]===10)sp++;}});
+  return {strikes:x,spares:sp};
+}
+function saveBowlRec(){
+  const st=bowlStats(BW.rolls);
+  const rec={id:BW.id,game:"bowl",name:BW.name,team:BW.team||"",rolls:[...BW.rolls],total:BW.total,strikes:st.strikes,spares:st.spares,
+    start:BW.start,end:BW.end,status:"pending",recordedBy:myName||null};
+  if(db){db.collection("bowl").doc(rec.id).set(rec).catch(()=>{bowlLocalPush(rec);toast("共有に保存できませんでした。この端末に保存しました")})}
+  else bowlLocalPush(rec);
+  store.set("cb_bowl_cur",null);
+}
+function bowlLocalPush(rec){const h=store.get("cb_bowl_hist",[]);h.push(rec);store.set("cb_bowl_hist",h.slice(-300));renderBowlLists()}
+function bowlResult(){
+  const st=bowlStats(BW.rolls);
+  $("ovTitle").textContent=BW.total===300?`${BW.name} パーフェクト！`:`${BW.name} のスコア`;
+  $("ovScore").textContent=BW.total;
+  $("ovSub").textContent=`ストライク ${st.strikes} ・ スペア ${st.spares} ・ ${fmtDur(BW.end-BW.start)}。記録した人以外が承認すると確定し、ランキングに入ります。`;
+  const bt=$("ovBtns");bt.innerHTML="";
+  const mk=(t,cls,fn)=>{const b=document.createElement("button");b.type="button";b.className=cls;b.textContent=t;b.onclick=fn;bt.appendChild(b)};
+  const recId=BW.id;
+  mk("この場で承認する","primary",function(){approveBowl(recId,"その場で承認");this.remove();$("ovSub").textContent="承認されました。記録が確定しました。"});
+  mk("もう1ゲーム","ghost",()=>{const n=BW.name,t=BW.team;BW={id:"b"+Date.now(),game:"bowl",name:n,team:t,rolls:[],start:Date.now(),done:false};$("overlay").hidden=true;renderBowl()});
+  mk("メニューへ","ghost",closeBowl);
+  $("overlay").hidden=false;bt.querySelector("button").focus();
+}
+$("bwExit").onclick=closeBowl;
+$("bwUndo").onclick=()=>{if(!BW||!BW.rolls.length||BW.done)return;BW.rolls.pop();renderBowl();toast("1つ前に戻しました")};
+let bwQuitArmed=false;
+$("bwQuit").onclick=()=>{
+  if(!bwQuitArmed){bwQuitArmed=true;$("bwQuit").textContent="もう一度押すと記録せずに終了";setTimeout(()=>{bwQuitArmed=false;$("bwQuit").textContent="記録せずにやめる"},3000);return}
+  bwQuitArmed=false;$("bwQuit").textContent="記録せずにやめる";BW=null;store.set("cb_bowl_cur",null);closeBowl();
+};
+function approveBowl(id,who){
+  const patch={status:"ok",approvedBy:who||myName||null,approvedAt:Date.now()};
+  if(db){db.collection("bowl").doc(id).update(patch).then(()=>toast("承認しました。ボーラードのランキングに反映されます")).catch(()=>toast("承認できませんでした。通信を確認してもう一度押してください"));return}
+  store.set("cb_bowl_hist",store.get("cb_bowl_hist",[]).map(r=>r.id===id?{...r,...patch}:r));renderBowlLists();toast("承認しました");
+}
+function rejectBowl(id){
+  if(db){db.collection("bowl").doc(id).delete().then(()=>toast("否認して記録を削除しました")).catch(()=>toast("削除できませんでした"));return}
+  store.set("cb_bowl_hist",store.get("cb_bowl_hist",[]).filter(r=>r.id!==id));renderBowlLists();toast("否認して記録を削除しました");
+}
+function bowlRecs(){return (bowlShared||store.get("cb_bowl_hist",[])).filter(r=>r&&r.name&&Number.isFinite(+r.total)).sort((a,b)=>(b.end||0)-(a.end||0))}
+let bwRankKey="best";
+function renderBowlLists(){
+  const all=bowlRecs(),ok=all.filter(r=>r.status!=="pending");
+  /* history */
+  const hs=$("bowlHist");hs.innerHTML="";$("bowlHistSheet").hidden=!all.length;
+  all.slice(0,30).forEach(r=>{
+    const pend=r.status==="pending",d=new Date(r.end||r.start);
+    const row=document.createElement("div");row.className="hist-item"+(pend?" pending":"");
+    row.innerHTML=`<span class="type">ボーラード</span><div class="names"><span class="win"></span><div class="date"></div></div><div class="score"></div>`;
+    row.querySelector(".names span").textContent=r.team?`${r.name}（${r.team}）`:r.name;
+    row.querySelector(".date").textContent=`${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")} ・ ストライク ${r.strikes||0} ・ スペア ${r.spares||0}`;
+    row.querySelector(".score").textContent=r.total;
+    if(pend){
+      const ap=document.createElement("div");ap.className="approve";
+      const t=document.createElement("span");t.className="ap-label";t.textContent=`${r.recordedBy?`${r.recordedBy} 以外`:"記録者以外"}の承認待ち${r.recordedBy?`（記録：${r.recordedBy}）`:""}。ランキングにはまだ入りません`;ap.appendChild(t);
+      if(isOwner||!db||(!!myName&&myName!==r.recordedBy)){
+        const yes=document.createElement("button");yes.type="button";yes.className="primary";yes.textContent="承認する";yes.onclick=()=>approveBowl(r.id,myName||null);
+        const no=document.createElement("button");no.type="button";no.className="ghost danger";no.textContent="否認";
+        no.onclick=()=>{if(no.dataset.armed){rejectBowl(r.id)}else{no.dataset.armed="1";no.textContent="もう一度押すと記録を削除";setTimeout(()=>{if(no.isConnected){delete no.dataset.armed;no.textContent="否認"}},3000)}};
+        ap.append(yes,no);
+      }
+      row.appendChild(ap);
+    }
+    hs.appendChild(row);
+  });
+  /* ranking */
+  const now=new Date();
+  const per=rk.period==="month"?ok.filter(r=>{const d=new Date(r.end||r.start);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()}):ok;
+  $("bowlRankSheet").hidden=!ok.length;
+  const P={};
+  per.forEach(r=>{const p=P[r.name]||(P[r.name]={n:r.name,t:r.team||"",g:0,sum:0,best:0,x:0});if(!p.t&&r.team)p.t=r.team;
+    p.g++;p.sum+=+r.total;p.best=Math.max(p.best,+r.total);p.x+=+r.strikes||0});
+  let rows=Object.values(P).map(p=>({...p,avg:p.sum/p.g}));
+  const key=bwRankKey;
+  rows.sort((a,b)=>key==="best"?(b.best-a.best||b.avg-a.avg):(b.avg-a.avg||b.best-a.best));
+  $("bowlRankKey").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===key));
+  const ol=$("bowlRankList");ol.innerHTML="";let prev=null,rank=0;
+  rows.forEach((r,i)=>{const v=key==="best"?r.best:r.avg.toFixed(1);if(v!==prev){rank=i+1;prev=v}
+    const li=document.createElement("li");li.className="rk"+(rank<=3?" top":"");
+    li.innerHTML=`<span class="rk-ball r${Math.min(rank,4)}"><span>${rank}</span></span><div class="rk-name"><b></b><small></small></div><div class="rk-val"><b></b><small></small></div>`;
+    li.querySelector(".rk-name b").textContent=r.n;li.querySelector(".rk-name small").textContent=r.t||"";
+    li.querySelector(".rk-val b").textContent=key==="best"?r.best:r.avg.toFixed(1);
+    li.querySelector(".rk-val small").textContent=key==="best"?`平均 ${r.avg.toFixed(1)} ・ ${r.g}ゲーム`:`ベスト ${r.best} ・ ${r.g}ゲーム`;
+    ol.appendChild(li)});
+  $("bowlRankNote").textContent=rows.length?(key==="best"?"1ゲームの最高点の順。300点がパーフェクトです。":"承認されたゲームの平均点の順。"):(rk.period==="month"?"今月はまだ承認されたゲームがありません。":"");
+}
+$("bowlRankKey").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;bwRankKey=b.dataset.v;renderBowlLists()});
 
 function rkSeg(id,key){$(id).addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
   $(id).querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));rk[key]=b.dataset.v;renderRanking()})}
@@ -2398,6 +2716,7 @@ $("pushLocal").onclick=async()=>{
     if(!$("settings").hidden)renderRoster();renderPickers();renderSched();
   },()=>{});
   const timer=setTimeout(()=>{if(!shared){dbState="error";renderHistory()}},10000);
+  db.collection("bowl").onSnapshot(snap=>{bowlShared=snap.docs.map(d=>d.data());renderBowlLists()},()=>{});
   db.collection("matches").onSnapshot(snap=>{
     shared=snap.docs.map(d=>d.data());if(!snap.metadata.fromCache){clearTimeout(timer)}dbState="on";renderHistory();
   },err=>{clearTimeout(timer);shared=null;db=null;dbState="error";renderHistory()});
@@ -2405,8 +2724,8 @@ $("pushLocal").onclick=async()=>{
 
 /* ---------- boot ---------- */
 let cur=store.get("cb_cur",null);if(cur&&!GAMES[cur.game]){cur=null;store.set("cb_cur",null)}
-$("resumeBtn").hidden=!cur;if(cur)M=cur;
-$("resumeBtn").onclick=()=>{M=store.get("cb_cur",M);undoStack=[];openPlay()};
+$("resumeBtn").hidden=!(cur||BW);if(cur)M=cur;
+$("resumeBtn").onclick=()=>{if(store.get("cb_bowl_cur",null)&&(!store.get("cb_cur",null)||cfg.game==="bowl")){BW=store.get("cb_bowl_cur",BW);openBowl();return}M=store.get("cb_cur",M);undoStack=[];openPlay()};
 renderHistory();
 let startPage="match";try{startPage=sessionStorage.getItem("cb_page")||"match"}catch(e){}
 showPage(startPage==="settings"?"match":startPage);
