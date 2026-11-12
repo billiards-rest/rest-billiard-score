@@ -670,7 +670,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <label class="hc-toggle" for="hcAuto"><input type="checkbox" id="hcAuto" checked><span>レートでハンデ（持ち点）を決める</span></label>
       <p class="hc-msg" id="hcMsg"></p>
     </div>
-    <p class="hint" id="hcHint">持ち点は、その人のレートに比例して自動で決めます。自分で決めたいときはチェックを外してください。チーム名は空欄でもかまいません。</p>
+    <p class="hint" id="hcHint">持ち点は、その人のレートから自動で決めます。レートが高い人ほど、差が大きく開きます。自分で決めたいときはチェックを外してください。チーム名は空欄でもかまいません。</p>
 
     <div class="grid2" id="breakRow">
       <div class="field">
@@ -1450,7 +1450,8 @@ function hcStrong(){const a=rateOf(getName(1)),b=rateOf(getName(2));if(!a||!b||a
 /* each player's 持ち点 is proportional to their own rating: rating 500 → the format's points (rating range 100–1000) */
 function hcFormats(){return {long:{label:"ロング",at500:70},short:{label:"ショート",at500:35}}}
 function hcFmt(){const F=hcFormats();return F[(cfg&&cfg.fmt)||"long"]||F.long}
-function hcPoints(r){return Math.max(1,Math.round(r*hcFmt().at500/500))}
+/* HC_POW > 1 widens the gap between strong and weak players (1 = plain proportion) */
+function hcPoints(r){const HC_POW=2;return Math.max(1,Math.round(hcFmt().at500*Math.pow(Math.max(r,1)/500,HC_POW)))}
 function renderFmt(){
   const f=hcFmt(),sh=(cfg&&cfg.fmt)==="short";
   $("fmtSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===(sh?"short":"long")));
@@ -1464,11 +1465,11 @@ function updateHandicap(){
     el.textContent=r?`${Math.round(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
   const msg=$("hcMsg");
   if(!$("hcAuto").checked){msg.textContent="持ち点は手動で入れています。";return}
-  if(!rs[0]&&!rs[1]){msg.textContent=`レートがある人は、レートに比例して持ち点を自動で決めます（レート500で${hcFmt().at500}点）。`;return}
+  if(!rs[0]&&!rs[1]){msg.textContent=`レートがある人は、レートから持ち点を自動で決めます（レート500で${hcFmt().at500}点）。`;return}
   const parts=[];
   [1,2].forEach(i=>{const r=rs[i-1];if(!r)return;const v=hcPoints(r.r);$("t"+i).value=v;parts.push(`${r.n} ${v}点（レート${Math.round(r.r)}）`)});
   const missing=[1,2].filter(i=>!rs[i-1]).map(i=>getName(i)||(i===1?"左":"右"));
-  msg.textContent=parts.join(" ／ ")+`。レートに比例して決めました（レート500で${hcFmt().at500}点）。`
+  msg.textContent=parts.join(" ／ ")+`。レートから決めました（レート500で${hcFmt().at500}点）。`
     +(missing.length?`${missing.join("・")} はレートがないので、持ち点を入れてください。`:"")
     +(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
 }
@@ -1957,7 +1958,7 @@ const RULES={
     ["ラック",["9番が落ちたらそのラックは終わりで、次のラックに進みます。","9番を落とした人が、そのラックを取ったことになります（レートの計算に使います）。","ブレイクは「交互ブレイク」か「勝者ブレイク」を試合の前に選びます。"]],
     ["デッドボール",["スコア画面でボールをダブルタップすると、デッドボール（得点にならない球）にできます。もう一度ダブルタップで戻せます。"]],
     ["相手0点でラックを取ったとき",["ブレイクから1人で取り切った：ブレイクランアウト","ブレイクで9番が入った：ブレイクエース","それ以外で相手を0点のまま取った：ウィンジップ","ラックの終わりに出る画面で、どれかを選びます。ランキングで回数を競えます。"]],
-    ["ハンデ",["持ち点は、その人のレートに比例して自動で決めます。","ロング（通常の試合）：レート500で70点。例：300で42点、400で56点、600で84点、700で98点。","ショート（気軽にできる短い試合）：ロングの半分。レート500で35点。例：300で21点、400で28点、600で42点、700で49点。","手動で決めたいときは、試合タブのチェックを外します。"]],
+    ["ハンデ",["持ち点は、その人のレートから自動で決めます。レートの差が大きいほど、持ち点の差も大きく開きます。","ロング（通常の試合）：レート500で70点。例：300で25点、400で45点、600で101点、700で137点。","ショート（気軽にできる短い試合）：ロングの半分。レート500で35点。例：300で13点、400で22点、600で50点、700で69点。","手動で決めたいときは、試合タブのチェックを外します。"]],
     ["記録の確定",["試合が終わると記録は「承認待ち」になります。","記録した人以外（対戦相手や第三者）が承認すると確定し、ランキングとレートに入ります。"]]
   ]},
   "10":{ready:false,title:"10ボール",lead:"一般的なルールの概要です。細かい扱いはお店のハウスルールに従ってください。",sections:[
