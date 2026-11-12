@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 管理者（設定の変更と履歴の消去ができる人）
+    function isOwner() {
+      return request.auth != null
+        && request.auth.token.email == "billiards.rest@gmail.com"
+        && request.auth.token.email_verified == true;
+    }
+
+    // アプリが保存する形：{ j: "記録の中身（文字）" } だけ
+    function okDoc() {
+      return request.resource.data.keys().hasOnly(['j'])
+        && request.resource.data.j is string
+        && request.resource.data.j.size() < 500000;
+    }
+
+    // 試合・ボーラード・トーナメントの結果：誰でも見られる・記録できる（承認・否認も）
+    match /matches/{id}     { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
+    match /bowl/{id}        { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
+    match /tourResults/{id} { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
+
+    // 各スマホの「自分の名前」
+    match /data/users/{uid}/{doc} { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
+
+    // チーム・メンバー・日程・トーナメント・アプリの設定：見るのは誰でも、変えられるのは管理者だけ
+    match /config/{id} {
+      allow read: if true;
+      allow create, update: if isOwner() && okDoc();
+      allow delete: if isOwner();
+    }
+  }
+}

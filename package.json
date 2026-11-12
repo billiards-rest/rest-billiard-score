@@ -1,9 +1,0 @@
-{
-  "name": "rest-billiard-score",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "@netlify/blobs": "^8.1.0",
-    "@netlify/functions": "^3.0.0"
-  }
-}

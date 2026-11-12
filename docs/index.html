@@ -471,6 +471,8 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .seg button[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:#fff}
 .hint{color:var(--muted);font-size:13px;margin:0}
 .primary{background:var(--felt);color:#fff;border:0;border-radius:12px;padding:14px 20px;font-weight:700;font-size:17px}
+.admin-box{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.admin-box .ghost{font-size:13px}
 .ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
@@ -788,6 +790,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   <h1 class="page-title">ルール</h1>
   <div class="game-switch rules-switch" id="ruleSeg" role="group" aria-label="種目"></div>
   <article class="sheet rule-body" id="ruleBody" aria-live="polite"></article>
+  <div class="admin-box" id="adminBox" hidden>
+   <p class="hint" id="adminState">設定の変更と履歴の消去は、管理者だけができます。</p>
+   <button class="ghost" type="button" id="adminBtn">管理者ログイン</button>
+  </div>
  </div>
 
  <!-- SETTINGS -->
@@ -952,168 +958,134 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 </div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
-/* REST Billiard Score on Netlify: provides the same storage calls the app uses (claude.use("db") / claude.use("user")),
-   backed by /api/store (Netlify Functions + Blobs). Changes from other phones arrive by polling every few seconds. */
+/* REST Billiard Score on GitHub Pages: provides the same storage calls the app uses (claude.use("db") / claude.use("user")),
+   backed by Firebase Firestore. Changes from other phones arrive live. Each document is stored as {j: "<JSON text>"}
+   so any shape the app writes (nested arrays, undefined fields) round-trips exactly. */
 (function () {
-  const API = "/api/store";
-  const POLL_MS = 4000;
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBCGbQ6fdNwbBZPE0kEVzluB_KeXEx8sGw",
+    authDomain: "rest-billiards.firebaseapp.com",
+    projectId: "rest-billiards",
+    storageBucket: "rest-billiards.firebasestorage.app",
+    messagingSenderId: "97108297064",
+    appId: "1:97108297064:web:83c0fdb71bcf1a0063c2dd"
+  };
+  const OWNER_EMAIL = "billiards.rest@gmail.com";
+
   const ls = {
     get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
     set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
-    del(k) { try { localStorage.removeItem(k); } catch (e) {} },
   };
   let devId = ls.get("rbs_dev");
-  if (!devId) {
-    devId = "d_" + Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
-    ls.set("rbs_dev", devId);
-  }
+  if (!devId) { devId = "d_" + Math.random().toString(36).slice(2, 12) + Date.now().toString(36); ls.set("rbs_dev", devId); }
 
-  async function call(body) {
-    const headers = { "content-type": "application/json" };
-    let r;
-    try { r = await fetch(API, { method: "POST", headers, body: JSON.stringify(body), cache: "no-store" }); }
-    catch (e) { throw { code: "unavailable", message: "network error" }; }
-    let j = {};
-    try { j = await r.json(); } catch (e) {}
-    if (!r.ok) throw { code: j.code || "unavailable", message: j.error || "error " + r.status };
-    return j;
-  }
+  let fs = null, auth = null;
+  try {
+    if (window.firebase) { firebase.initializeApp(FIREBASE_CONFIG); fs = firebase.firestore(); auth = firebase.auth(); }
+  } catch (e) { fs = null; auth = null; }
 
-  /* ---- local cache of documents: key -> { etag, data } ---- */
-  const cache = {};
-  const pending = {}; // key -> count of in-flight writes (skip overwriting optimistic data)
-  const listeners = new Set(); // { kind: "col"|"doc", path, next, err, sig }
-  const synced = new Set(); // paths synced at least once
-
-  const isChild = (key, col) => key.startsWith(col + "/") && key.indexOf("/", col.length + 1) === -1;
-  const snapDoc = (key) => {
-    const e = cache[key];
-    const data = e ? e.data : undefined;
-    return { id: key.split("/").pop(), exists: !!e, data: () => (data ? JSON.parse(JSON.stringify(data)) : undefined), metadata: { fromCache: false, hasPendingWrites: !!pending[key] } };
+  /* who is signed in (only the administrator ever signs in) */
+  let authUser = null;
+  const authReady = new Promise((res) => {
+    if (!auth) return res();
+    let done = false;
+    auth.onAuthStateChanged((u) => { authUser = u; if (!done) { done = true; res(); } });
+    setTimeout(() => { if (!done) { done = true; res(); } }, 4000);
+  });
+  const ownerNow = () => !!(authUser && authUser.email && authUser.email.toLowerCase() === OWNER_EMAIL);
+  window.restAdmin = {
+    ready: authReady,
+    isOwner: ownerNow,
+    email: () => (authUser && authUser.email) || "",
+    async signIn() {
+      if (!auth) throw new Error("unavailable");
+      await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      if (!ownerNow()) { await auth.signOut(); throw new Error("not_owner"); }
+      location.reload();
+    },
+    async signOut() { if (auth) await auth.signOut(); location.reload(); },
   };
-  const snapCol = (col) => {
-    const docs = Object.keys(cache).filter((k) => isChild(k, col)).sort().map(snapDoc);
-    return { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: { fromCache: false, hasPendingWrites: false } };
+
+  const enc = (o) => ({ j: JSON.stringify(o === undefined ? {} : o) });
+  const dec = (raw) => {
+    if (!raw) return undefined;
+    if (typeof raw.j === "string") { try { return JSON.parse(raw.j); } catch (e) { return {}; } }
+    return raw;
   };
-  const sigOf = (l) => {
-    const keys = l.kind === "doc" ? [l.path] : Object.keys(cache).filter((k) => isChild(k, l.path)).sort();
-    return keys.map((k) => k + ":" + (cache[k] ? cache[k].etag : "-")).join("|");
+  const isObj = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+  const merge = (a, b) => { const o = Object.assign({}, a); for (const k of Object.keys(b)) o[k] = isObj(b[k]) && isObj(o[k]) ? merge(o[k], b[k]) : b[k]; return o; };
+  const err = (e) => {
+    const c = e && e.code;
+    if (c === "permission-denied") return { code: "invalid_argument", message: "not allowed" };
+    if (c === "resource-exhausted") return { code: "quota_exceeded", message: "quota" };
+    if (c === "invalid_argument" || c === "not-found") return { code: "invalid_argument", message: (e && e.message) || "invalid" };
+    return { code: "unavailable", message: (e && e.message) || "unavailable" };
   };
-  function emit(force) {
-    listeners.forEach((l) => {
-      if (!synced.has(l.path)) return;
-      const s = sigOf(l);
-      if (!force && s === l.sig) return;
-      l.sig = s;
-      try { l.next(l.kind === "doc" ? snapDoc(l.path) : snapCol(l.path)); } catch (e) { console.error(e); }
-    });
-  }
+  const meta = (s) => ({ fromCache: !!(s.metadata && s.metadata.fromCache), hasPendingWrites: !!(s.metadata && s.metadata.hasPendingWrites) });
+  const wrapDoc = (s) => {
+    const body = s.exists ? dec(s.data()) : undefined;
+    return { id: s.id, exists: !!s.exists, data: () => (body === undefined ? undefined : JSON.parse(JSON.stringify(body))), metadata: meta(s) };
+  };
+  const wrapCol = (q) => {
+    const docs = q.docs.map(wrapDoc);
+    return { docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: meta(q) };
+  };
 
-  async function syncPath(path, kind) {
-    const prefix = kind === "doc" ? path : path + "/";
-    const { items } = await call({ op: "list", prefix });
-    const mine = items.filter((it) => (kind === "doc" ? it.key === path : isChild(it.key, path)));
-    const seen = new Set(mine.map((it) => it.key));
-    Object.keys(cache).forEach((k) => {
-      const inScope = kind === "doc" ? k === path : isChild(k, path);
-      if (inScope && !seen.has(k) && !pending[k]) delete cache[k];
-    });
-    const need = mine.filter((it) => !pending[it.key] && (!cache[it.key] || cache[it.key].etag !== it.etag)).map((it) => it.key);
-    for (let i = 0; i < need.length; i += 80) {
-      const { docs } = await call({ op: "get", keys: need.slice(i, i + 80) });
-      docs.forEach((d) => { if (!pending[d.key]) cache[d.key] = { etag: d.etag, data: d.data }; });
-    }
-    synced.add(path);
-  }
-
-  let polling = false;
-  async function pollOnce() {
-    if (polling) return;
-    polling = true;
-    const paths = new Map();
-    listeners.forEach((l) => paths.set(l.path, l.kind));
-    for (const [p, k] of paths) {
-      try { await syncPath(p, k); } catch (e) { /* keep listening; try again next round */ }
-    }
-    polling = false;
-    emit(false);
-  }
-  setInterval(() => { if (document.visibilityState !== "hidden" && listeners.size) pollOnce(); }, POLL_MS);
-  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") pollOnce(); });
-
-  function listen(kind, path, next, err) {
-    const l = { kind, path, next, err, sig: null };
-    listeners.add(l);
-    if (synced.has(path)) setTimeout(() => { l.sig = sigOf(l); next(kind === "doc" ? snapDoc(path) : snapCol(path)); }, 0);
-    else syncPath(path, kind).then(() => emit(false)).catch(() => {});
-    return () => listeners.delete(l);
-  }
-
-  async function write(op, key, data) {
-    const prev = cache[key];
-    pending[key] = (pending[key] || 0) + 1;
-    if (op === "set") cache[key] = { etag: "local", data };
-    else if (op === "update" && prev) cache[key] = { etag: "local", data: Object.assign({}, prev.data, data) };
-    else if (op === "delete") delete cache[key];
-    emit(false);
-    try {
-      const r = await call({ op, key, data });
-      if (op === "delete") delete cache[key];
-      else cache[key] = { etag: r.etag || "srv" + Date.now(), data: op === "update" && r.data ? r.data : (cache[key] ? cache[key].data : data) };
-    } catch (e) {
-      if (prev) cache[key] = prev; else delete cache[key];
-      throw e;
-    } finally {
-      pending[key]--; if (!pending[key]) delete pending[key];
-      emit(false);
-    }
-  }
-
-  const clone = (o) => JSON.parse(JSON.stringify(o));
-  function docRef(key) {
+  function docRef(path) {
+    const ref = fs.doc(path);
     return {
-      id: key.split("/").pop(),
-      path: key,
-      async get() { await syncPath(key, "doc"); return snapDoc(key); },
-      set(data) { return write("set", key, clone(data)); },
-      update(data) { return write("update", key, clone(data)); },
-      delete() { return write("delete", key); },
-      onSnapshot(next, err) { return listen("doc", key, next, err); },
-      collection(sub) { return colRef(key + "/" + sub); },
+      id: ref.id,
+      path,
+      async get() { try { return wrapDoc(await ref.get()); } catch (e) { throw err(e); } },
+      async set(data) { try { await ref.set(enc(data)); } catch (e) { throw err(e); } },
+      async update(patch) {
+        try {
+          await fs.runTransaction(async (t) => {
+            const cur = await t.get(ref);
+            if (!cur.exists) throw { code: "invalid_argument", message: "document does not exist" };
+            t.set(ref, enc(merge(dec(cur.data()) || {}, JSON.parse(JSON.stringify(patch)))));
+          });
+        } catch (e) { throw err(e); }
+      },
+      async delete() { try { await ref.delete(); } catch (e) { throw err(e); } },
+      onSnapshot(next, onErr) {
+        return ref.onSnapshot((s) => { try { next(wrapDoc(s)); } catch (e) { console.error(e); } }, (e) => { if (onErr) onErr(err(e)); });
+      },
+      collection(sub) { return colRef(path + "/" + sub); },
     };
   }
   function colRef(path) {
+    const col = fs.collection(path);
     return {
       path,
-      doc(id) { return docRef(path + "/" + (id || Date.now().toString(36) + Math.random().toString(36).slice(2, 8))); },
+      doc(id) { return docRef(path + "/" + (id || col.doc().id)); },
       async add(data) { const r = this.doc(); await r.set(data); return r; },
-      async get() { await syncPath(path, "col"); return snapCol(path); },
-      onSnapshot(next, err) { return listen("col", path, next, err); },
+      async get() { try { return wrapCol(await col.get()); } catch (e) { throw err(e); } },
+      onSnapshot(next, onErr) {
+        return col.onSnapshot((q) => { try { next(wrapCol(q)); } catch (e) { console.error(e); } }, (e) => { if (onErr) onErr(err(e)); });
+      },
       where() { return this; }, orderBy() { return this; }, limit() { return this; },
     };
   }
-  const db = Object.freeze({ doc: (p) => docRef(p), collection: (p) => colRef(p) });
+  const db = fs ? Object.freeze({ doc: (p) => docRef(p), collection: (p) => colRef(p) }) : null;
 
   const user = Object.freeze({
-    isOwner: async () => false,
-    canEdit: async () => true,
+    isOwner: async () => { await authReady; return ownerNow(); },
+    canEdit: async () => { await authReady; return ownerNow(); },
     can: async () => true,
     id: async () => devId,
     me: async () => ({ id: devId, name: "" }),
     profiles: async () => ({}),
   });
 
-  /* if the shared storage is not deployed (or unreachable), give the app no db so it falls back to this phone's own storage */
-  let probe = null;
-  const storeReady = () => {
-    if (!probe) probe = fetch(API, { cache: "no-store" }).then((r) => r.ok ? r.json() : null).then((j) => !!(j && j.ok)).catch(() => false);
-    return probe;
-  };
   window.claude = Object.freeze({
     use: async (name) => {
-      if (name === "db") return (await storeReady()) ? db : null;
-      if (name === "user") return (await storeReady()) ? user : null;
+      if (name === "db") return db;
+      if (name === "user") return db ? user : null;
       return null;
     },
   });
@@ -2689,6 +2661,17 @@ $("pushLocal").onclick=async()=>{
   if(ok===local.length){store.set("cb_hist",[]);toast(`${ok} 件を共有に送りました`)}else{store.set("cb_hist",local.slice(ok));canWrite=false;toast("共有に送れませんでした。記録する権限がないようです")}
   $("pushLocal").disabled=false;renderHistory();
 };
+function renderAdmin(){
+  const A=window.restAdmin;if(!A||!db){$("adminBox").hidden=true;return}
+  $("adminBox").hidden=false;
+  $("adminState").textContent=isOwner?`管理者としてログイン中（${A.email()}）。設定の変更と履歴の消去ができます。`:"設定の変更と履歴の消去は、管理者だけができます。";
+  $("adminBtn").textContent=isOwner?"管理者ログアウト":"管理者ログイン";
+}
+$("adminBtn").onclick=async()=>{
+  const A=window.restAdmin;if(!A)return;
+  try{if(isOwner)await A.signOut();else await A.signIn()}
+  catch(e){toast(e&&e.message==="not_owner"?"このアカウントは管理者ではありません":"ログインできませんでした")}
+};
 (async()=>{
   if(!window.claude||!window.claude.use){$("openSettings").hidden=false;return}
   dbState="loading";renderHistory();
@@ -2702,7 +2685,7 @@ $("pushLocal").onclick=async()=>{
       else if(myName&&!sn.metadata.fromCache){meDoc.set({name:myName}).catch(()=>{})}
     },()=>{});
   }catch(e){meDoc=null}}
-  $("openSettings").hidden=false;
+  $("openSettings").hidden=!isOwner;renderAdmin();
   tourDb=db.doc("config/tournament");
   tourDb.onSnapshot(sn=>{tour=sn.exists&&sn.data()&&Array.isArray(sn.data().players)?{...sn.data(),players:[...sn.data().players]}:null;renderTour()},()=>{});
   tourResCol=db.collection("tourResults");
@@ -2719,7 +2702,7 @@ $("pushLocal").onclick=async()=>{
   rosterDb.onSnapshot(sn=>{
     if(sn.exists){const d=sn.data();roster={teams:(d.teams||[]).map(t=>({name:t.name,members:[...(t.members||[])]})),init:{...(d.init||{})}}}
     else{const local=store.get("cb_roster",{teams:[]});roster=local;if(isOwner&&local.teams.length&&!sn.metadata.fromCache)saveRoster()}
-    $("rosterNote").textContent="ここに登録したチームとメンバーは、お店の全員の端末で共通です。変更できるのは管理者（あなた）だけです。";
+    $("rosterNote").textContent="ここに登録したチームとメンバーは、お店の全員の端末で共通です。変更できるのは管理者だけです。";
     if(!$("settings").hidden)renderRoster();renderPickers();renderSched();
   },()=>{});
   const timer=setTimeout(()=>{if(!shared){dbState="error";renderHistory()}},10000);
