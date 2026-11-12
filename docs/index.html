@@ -1109,7 +1109,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 <script>
 (function(){
 const GAMES={
-  "9":{label:"9ボール",tag:"9-BALL · POINT GAME",mode:"balls",n:9,val:n=>n===9?14:1,endBall:9,def:30,hint:"ポイント制。1〜8番は1点、9番を入れた人はそのラック14点（1〜8番の分は数えない）。9番が落ちたらラック終了。"},
+  "9":{label:"9ボール",tag:"9-BALL · POINT GAME",mode:"balls",n:9,val:n=>n===9?10:1,endBall:9,def:30,hint:"ポイント制。1〜8番は1点、9番を入れた人はそのラック10点（1〜8番の分は数えない）。9番が落ちたらラック終了。"},
   "bowl":{label:"ボーラード",tag:"BOWLLIARDS · 10 FRAMES",mode:"bowl",def:0,hint:"10フレーム・各2イニング。ボウリングと同じ点数のつけ方で最高300点。"}
 };
 const BALLS=["#e2b53b","#2457a6","#c2412d","#5b3a8c","#e0752b","#1f7a4d","#7a2a2a","#151515"];
@@ -1920,7 +1920,7 @@ $("schedView").addEventListener("click",e=>{const b=e.target.closest("button");i
 /* ---------- rules ---------- */
 const RULES={
   "9":{ready:true,title:"9ボール（RESTルール制）",lead:"このアプリで使っている、RESTルールです。",sections:[
-    ["点数",["9番を入れた人は、そのラック14点で固定です（そのラックで入れた1〜8番の分は足しません）。","9番を入れていない人は、そのラックで入れた1〜8番の個数×1点です。","落とした人に点が入ります。ボールを落とした人のスコアへドラッグして記録します。","目標点に先に届いた人の勝ちです。"]],
+    ["点数",["9番を入れた人は、そのラック10点で固定です（そのラックで入れた1〜8番の分は足しません）。","9番を入れていない人は、そのラックで入れた1〜8番の個数×1点です。","落とした人に点が入ります。ボールを落とした人のスコアへドラッグして記録します。","目標点に先に届いた人の勝ちです。"]],
     ["ラック",["9番が落ちたらそのラックは終わりで、次のラックに進みます。","9番を落とした人が、そのラックを取ったことになります（レートの計算に使います）。","ブレイクは「交互ブレイク」か「勝者ブレイク」を試合の前に選びます。"]],
     ["デッドボール",["スコア画面でボールをダブルタップすると、デッドボール（得点にならない球）にできます。もう一度ダブルタップで戻せます。"]],
     ["相手0点でラックを取ったとき",["ブレイクから1人で取り切った：ブレイクランアウト","ブレイクで9番が入った：ブレイクエース","それ以外で相手を0点のまま取った：ウィンジップ","ラックの終わりに出る画面で、どれかを選びます。ランキングで回数を競えます。"]],
@@ -2477,7 +2477,7 @@ function setTurn(p){if(M.turn===p)return;snap();M.turn=p;render()}
 function pocket(n,p){
   if(M.done)return;snap();const g=GAMES[M.game],v=g.val(n);M.turn=p;
   M.pocketed.push(n);
-  /* REST rule: whoever pockets the 9 gets a flat 14 for the rack (their 1–8 balls this rack are not added on top);
+  /* REST rule: whoever pockets the 9 gets a flat 10 for the rack (their 1–8 balls this rack are not added on top);
      the other player keeps 1 point per 1–8 ball they pocketed */
   const isNine=g.endBall&&n===g.endBall;
   const gain=isNine?v-M.rackPts[p]:v;
