@@ -581,6 +581,12 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .board.compact .score-btn .num{font-size:clamp(56px,11vw,110px)}
 .board.compact{flex:none}
 @media (max-width:640px) and (orientation:portrait){.board.compact{grid-template-columns:1fr 1fr}.board.compact .side-tools button{font-size:12px;padding:8px 4px}}
+/* balls stand in one vertical column between the two players */
+.board.compact.lanein{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:stretch}
+.board.lanein .lane{padding:10px 8px;justify-content:center;border-radius:14px}
+.board.lanein .balls{grid-template-columns:1fr;width:clamp(38px,7vw,58px);gap:clamp(5px,1vh,10px);margin:0}
+.board.lanein .tb,.board.lanein .slot{font-size:clamp(13px,2.4vw,22px)}
+@media (max-width:640px) and (orientation:portrait){.board.compact.lanein{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px}.board.lanein .side{padding:10px}.board.lanein .stats{gap:4px 10px}}
 .footer-tools{display:flex;gap:10px;flex-wrap:wrap}
 .footer-tools button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 14px;font-weight:500}
 .footer-tools .undo{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
@@ -2366,7 +2372,8 @@ function render(){
   meta.innerHTML=`<b></b> ・ ${M.mode==="race"?`${M.target[0]}-${M.target[1]} 先取`:`目標 ${M.target[0]} / ${M.target[1]} 点`} ・ ラック ${M.rack}`;
   meta.querySelector("b").textContent=g.label;$("meta").appendChild(meta);
 
-  const board=$("board");board.innerHTML="";board.classList.toggle("compact",M.mode==="balls");
+  const board=$("board"),cloth=$("cloth");if(cloth.parentNode===board)$("tableWrap").appendChild(cloth);
+  board.innerHTML="";board.classList.toggle("compact",M.mode==="balls");board.classList.toggle("lanein",M.mode==="balls");
   if(!moreSeen.__init){moreSeen.__init=1;[0,1].forEach(q=>{const r=M.target[q]-M.score[q];moreSeen[M.id+":"+q]=r<=MORE_AT&&r>0?r:r+100})}
   [0,1].forEach(p=>{
     const side=document.createElement("section");side.className="side";side.dataset.p=p;
@@ -2428,7 +2435,7 @@ function render(){
   });
 
   $("tableWrap").hidden=M.mode!=="balls";
-  if(M.mode==="balls")renderTable();
+  if(M.mode==="balls"){board.insertBefore(cloth,board.children[1]||null);renderTable()}
   $("swapTurn").hidden=M.mode!=="pts";
   $("newRack").hidden=M.mode!=="balls";
   $("undoBtn").disabled=!undoStack.length;
