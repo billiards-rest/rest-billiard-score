@@ -2604,7 +2604,8 @@ function render(){
     const st=document.createElement("div");st.className="stats";
     st.innerHTML=M.mode==="race"?`<span>マスワリ <b>${M.runouts[p]}</b></span><span>ファウル <b>${M.fouls[p]}</b></span>`
       :`${M.mode==="balls"?"":`<span>ファウル <b>${M.fouls[p]}</b></span>`}${M.mode==="pts"?`<span>連続ファウル <b>${M.consec[p]}</b></span>`:""}${M.mode==="balls"?`<span>ブレイクランアウト <b>${M.runouts[p]}</b></span><span>ウィンジップ <b>${(M.zips||[0,0])[p]}</b></span><span>ブレイクエース <b>${(M.aces||[0,0])[p]}</b></span><span>このラック <b>${M.rackPts[p]}</b> 点</span>`:""}`;
-    side.appendChild(st);
+    /* 9-ball: break run-outs, win-zips, break aces and rack points are kept for the result and history, not shown during play */
+    if(M.mode!=="balls")side.appendChild(st);
     board.appendChild(side);
   });
 
