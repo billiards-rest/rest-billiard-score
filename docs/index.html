@@ -336,12 +336,8 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 /* bowlliards */
 .versus.solo{grid-template-columns:minmax(0,1fr)}
 .versus.solo .vs,.versus.solo .pblock.b{display:none}
-.gsw-ball.bowlic{background:transparent;box-shadow:none;position:relative}
-.gsw-ball.bowlic em{position:absolute;width:17px;height:17px;border-radius:50%;background:var(--c);display:grid;place-items:center;box-shadow:inset -2px -2px 0 rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.12)}
-.gsw-ball.bowlic em i{width:9px;height:9px;min-width:0;padding:0;font-size:7px;letter-spacing:0}
-.gsw-ball.bowlic .b1{left:6.5px;top:-1px;z-index:1}
-.gsw-ball.bowlic .b2{left:-1px;bottom:0}
-.gsw-ball.bowlic .b3{right:-1px;bottom:0}
+.gsw-ball.bowlic{background:transparent;box-shadow:none;width:44px;height:40px;border-radius:0}
+.gsw-ball.bowlic svg{width:44px;height:40px;display:block;overflow:visible}
 #bowl{min-height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px 24px;max-width:900px;margin:0 auto;position:relative}
 .bw-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-radius:18px;border:8px solid var(--rail);color:var(--chalk-white);padding:12px 16px;
   background:radial-gradient(130% 110% at 20% 10%,var(--cloth-hi),var(--cloth) 55%,var(--felt-deep))}
@@ -1140,11 +1136,24 @@ const gs=$("gameSeg");
 const SOON=[{k:"10",label:"10ボール",sub:"コールショット"},{k:"8",label:"8ボール",sub:"ラック先取"},{k:"trio",label:"トリオマッチ",sub:"3人1チーム"},{k:"3c",label:"スリークッション",sub:"キャロム"}];
 const GAME_SUB={"9":"RESTルール","bowl":"10フレーム"};
 const GAME_ICON={"9":["#e2b53b",true,"9"],"10":["#2457a6",true,"10"],"8":["#151515",false,"8"],"trio":["#2457a6",false,"3"],"3c":["#f5f3ec",false,""]};
+/* Bowlard icon: ten numbered balls racked in a triangle (1 at the front) */
+function bowlRackSvg(){
+  const C=["#e2b53b","#2457a6","#c2412d","#5b3a8c","#e0752b","#1f7a4d","#7a2a2a","#151515","#e2b53b","#2457a6"];
+  const R=5.2,DX=10.6,DY=9.3;let n=0,out="";
+  for(let row=0;row<4;row++)for(let k=0;k<=row;k++){
+    const x=22+(k-row/2)*DX,y=6+row*DY,c=C[n],num=++n,stripe=num>8;
+    out+=`<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)})">`
+      +(stripe?`<circle r="${R}" fill="#f5f3ec"/><rect x="${-R}" y="-2.9" width="${2*R}" height="5.8" fill="${c}" clip-path="url(#bwc)"/>`:`<circle r="${R}" fill="${c}"/>`)
+      +`<circle r="${R}" fill="none" stroke="rgba(0,0,0,.18)" stroke-width=".6"/><circle r="2.7" fill="#fff"/>`
+      +`<text y="1.25" text-anchor="middle" font-size="${num>9?3:3.6}" font-weight="800" fill="#111" font-family="Arial,sans-serif">${num}</text></g>`;
+  }
+  return `<svg viewBox="0 0 44 40"><defs><clipPath id="bwc"><circle r="${R}"/></clipPath></defs>${out}</svg>`;
+}
 function gameBtn(k,label,sub,ready){
   const b=document.createElement("button");b.type="button";b.dataset.v=k;b.className="gsw"+(ready?"":" soon");
   const ic=GAME_ICON[k]||["#999",false,""];
   const ball=k==="bowl"
-    ?`<span class="gsw-ball bowlic" aria-hidden="true"><em style="--c:#e2b53b" class="b1"><i>1</i></em><em style="--c:#2457a6" class="b2"><i>2</i></em><em style="--c:#c2412d" class="b3"><i>3</i></em></span>`
+    ?`<span class="gsw-ball bowlic" aria-hidden="true">${bowlRackSvg()}</span>`
     :k==="trio"
     ?`<span class="gsw-ball people" aria-hidden="true"><svg viewBox="0 0 30 30"><circle class="pb" cx="8" cy="12" r="3.2"/><path class="pb" d="M2.5 23.5c0-3.4 2.5-5.6 5.5-5.6s5.5 2.2 5.5 5.6z"/><circle class="pb" cx="22" cy="12" r="3.2"/><path class="pb" d="M16.5 23.5c0-3.4 2.5-5.6 5.5-5.6s5.5 2.2 5.5 5.6z"/><circle class="pf" cx="15" cy="9.5" r="3.8"/><path class="pf" d="M8.6 24c0-4 2.9-6.6 6.4-6.6s6.4 2.6 6.4 6.6z"/></svg></span>`
     :k==="3c"
