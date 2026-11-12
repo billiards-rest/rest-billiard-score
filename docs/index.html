@@ -302,6 +302,30 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .sc-btns .sc-go:disabled{opacity:.5}
 .sc-btns .sc-ex{background:var(--cue);border-color:var(--cue);color:#1b1b1b}
 .sc-btns .sc-ex small{font-size:10px}
+.cc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cc-side{--pc:var(--p1);border:2px solid var(--line);border-radius:14px;background:var(--bg);padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;color:var(--ink);transition:border-color .2s,background .2s}
+.cc-side[data-p="1"]{--pc:var(--p2)}
+.cc-side.run{border-color:var(--pc);background:color-mix(in srgb,var(--pc) 12%,var(--bg))}
+.cc-side.low .cc-time{color:var(--red)}
+.cc-side.over{border-color:var(--red);background:color-mix(in srgb,var(--red) 14%,var(--bg))}
+.cc-side.over .cc-time{color:var(--red)}
+.cc-name{font-weight:700;font-size:14px;color:var(--pc);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-time{font:900 clamp(40px,11vw,64px)/1 var(--f-display);font-variant-numeric:tabular-nums}
+.cc-hint{font-size:11px;color:var(--muted);min-height:1.3em}
+.cc-btns{display:grid;grid-template-columns:2fr 1fr;gap:8px}
+.cc-btns button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 4px;font-size:14px;font-weight:700}
+.cc-btns .cc-go{background:var(--felt);border-color:var(--felt);color:#fff}
+.cc-alert{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--red);color:#fff;border-radius:12px;padding:10px 12px}
+.cc-alert b{font-size:14px;min-width:0}
+.cc-alert button{border:2px solid #fff;background:transparent;color:#fff;border-radius:10px;padding:8px 12px;font-weight:800;font-size:13px;white-space:nowrap}
+.shotclock.nudge{border:2px solid var(--red);box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 25%,transparent)}
+.sc-card.need{border-color:var(--red)}
+.sc-card.need::after{content:"持ち時間切れ";position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px}
+.sc-card.need .sc-name{padding-right:76px}
+.cc-help{margin:0;font-size:11px;color:var(--muted);text-align:center}
+.cc-step{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
+.cc-step button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;font-weight:700}
+.cc-step input{box-sizing:border-box;min-width:0;width:100%;text-align:center;font:800 22px/1 var(--f-display);font-variant-numeric:tabular-nums}
 .sc-used{font-size:11px;color:var(--muted);min-height:1em;text-align:center}
 @media (max-width:420px){.sc-btns{grid-template-columns:1fr 1fr}.sc-btns .sc-go{grid-column:1/-1}}
 @media (prefers-reduced-motion:reduce){.sc-card.warn .sc-time,.sc-time.bump{animation:none}}
@@ -663,6 +687,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <label>試合形式</label>
       <div class="seg" id="fmtSeg" role="group" aria-label="試合形式">
         <button type="button" data-v="long" aria-pressed="true">ロング（通常）</button>
+        <button type="button" data-v="middle" aria-pressed="false">ミドル</button>
         <button type="button" data-v="short" aria-pressed="false">ショート（気軽に）</button>
       </div>
       <p class="hint" id="fmtHint"></p>
@@ -838,6 +863,17 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     </div>
     <p class="hint" id="scSetMsg"></p>
   </section>
+  <section class="sheet" aria-labelledby="h-ccset">
+    <h2 id="h-ccset">チェスクロック</h2>
+    <p class="hint">試合画面のチェスクロックの持ち時間（1人あたり）です。変えるとお店の全員の端末に反映されます。</p>
+    <label class="hc-toggle" for="ccOnIn"><input type="checkbox" id="ccOnIn" checked><span>チェスクロックを使う</span></label>
+    <div class="field"><label for="ccMinIn">持ち時間（分）</label>
+      <div class="cc-step"><button type="button" data-cd="-5" aria-label="持ち時間を5分減らす">−5</button><input id="ccMinIn" type="number" inputmode="numeric" min="1" max="180" step="1"><button type="button" data-cd="5" aria-label="持ち時間を5分増やす">＋5</button></div></div>
+    <div class="seg small" id="ccPresets" role="group" aria-label="よく使う持ち時間">
+      <button type="button" data-m="15">15分</button><button type="button" data-m="20">20分</button><button type="button" data-m="30">30分</button><button type="button" data-m="45">45分</button><button type="button" data-m="60">60分</button>
+    </div>
+    <p class="hint" id="ccSetMsg"></p>
+  </section>
 
   <section class="sheet" id="schedAdmin" aria-labelledby="h-sa">
     <h2 id="h-sa">リーグ戦を組む</h2>
@@ -911,6 +947,16 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <button id="newRack" type="button" hidden>次のラック</button>
     <button id="endBtn" type="button">試合終了</button>
   </div>
+  <section class="shotclock chess" id="chess" aria-label="チェスクロック">
+    <div class="sc-head"><span class="sc-title">チェスクロック</span><span class="sc-note" id="ccNote">1人30分</span></div>
+    <div class="cc-grid">
+      <button type="button" class="cc-side" data-p="0" id="cc0"><span class="cc-name" id="ccName0">プレイヤー1</span><span class="cc-time" id="ccTime0">30:00</span><span class="cc-hint" id="ccHint0"></span></button>
+      <button type="button" class="cc-side" data-p="1" id="cc1"><span class="cc-name" id="ccName1">プレイヤー2</span><span class="cc-time" id="ccTime1">30:00</span><span class="cc-hint" id="ccHint1"></span></button>
+    </div>
+    <div class="cc-btns"><button type="button" class="cc-go" id="ccToggle">スタート</button><button type="button" id="ccReset">リセット</button></div>
+    <p class="cc-help" id="ccHelp">自分の番が終わったら、自分の側をタップすると相手の時計が動きます。持ち時間が切れたら、その人はショットクロックで打ちます。</p>
+    <div class="cc-alert" id="ccAlert" hidden role="status"><b id="ccAlertText"></b><button type="button" id="ccToShot">ショットクロックへ</button></div>
+  </section>
   <section class="shotclock" id="shotclock" aria-label="ショットクロック">
     <div class="sc-head"><span class="sc-title">ショットクロック</span><span class="sc-note" id="scNote">40秒 ・ EXで＋40秒</span></div>
     <div class="sc-grid">
@@ -1449,14 +1495,16 @@ function rateOf(n){return (rateRows||[]).find(x=>x.n===n)||null}
 function hcStrong(){const a=rateOf(getName(1)),b=rateOf(getName(2));if(!a||!b||a===b)return 0;return a.r>=b.r?1:2}
 /* match formats: ロング (normal) and ショート (a quick, casual game) */
 /* each player's 持ち点 is proportional to their own rating: rating 500 → the format's points (rating range 100–1000) */
-function hcFormats(){return {long:{label:"ロング",at500:70},short:{label:"ショート",at500:35}}}
+function hcFormats(){return {long:{label:"ロング",at500:70},middle:{label:"ミドル",at500:50},short:{label:"ショート",at500:35}}}
 function hcFmt(){const F=hcFormats();return F[(cfg&&cfg.fmt)||"long"]||F.long}
 /* HC_POW > 1 widens the gap between strong and weak players (1 = plain proportion) */
 function hcPoints(r){const HC_POW=2;return Math.max(1,Math.round(hcFmt().at500*Math.pow(Math.max(r,1)/500,HC_POW)))}
 function renderFmt(){
-  const f=hcFmt(),sh=(cfg&&cfg.fmt)==="short";
-  $("fmtSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===(sh?"short":"long")));
-  $("fmtHint").textContent=sh?`気軽にできる短い試合です。持ち点はロングの半分（レート500で${f.at500}点）。`:`通常の試合です。持ち点はレート500で${f.at500}点。`;
+  const f=hcFmt(),k=(cfg&&cfg.fmt)||"long";
+  $("fmtSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===k));
+  $("fmtHint").textContent=k==="short"?`気軽にできる短い試合です。持ち点はロングの半分（レート500で${f.at500}点）。`
+    :k==="middle"?`ロングとショートの間の長さです。持ち点はレート500で${f.at500}点。`
+    :`通常の試合です。持ち点はレート500で${f.at500}点。`;
   $("fmtRow").hidden=!!(GAMES[cfg.game]&&GAMES[cfg.game].mode!=="balls");
 }
 function updateHandicap(){
@@ -1966,7 +2014,7 @@ const RULES={
     ["ラック",["9番が落ちたらそのラックは終わりで、次のラックに進みます。","9番を落とした人が、そのラックを取ったことになります（レートの計算に使います）。","ブレイクは「交互ブレイク」か「勝者ブレイク」を試合の前に選びます。"]],
     ["デッドボール",["スコア画面でボールをダブルタップすると、デッドボール（得点にならない球）にできます。もう一度ダブルタップで戻せます。"]],
     ["相手0点でラックを取ったとき",["ブレイクから1人で取り切った：ブレイクランアウト","ブレイクで9番が入った：ブレイクエース","それ以外で相手を0点のまま取った：ウィンジップ","ラックの終わりに出る画面で、どれかを選びます。ランキングで回数を競えます。"]],
-    ["ハンデ",["持ち点は、その人のレートから自動で決めます。レートの差が大きいほど、持ち点の差も大きく開きます。","ロング（通常の試合）：レート500で70点。例：300で25点、400で45点、600で101点、700で137点。","ショート（気軽にできる短い試合）：ロングの半分。レート500で35点。例：300で13点、400で22点、600で50点、700で69点。","手動で決めたいときは、試合タブのチェックを外します。"]],
+    ["ハンデ",["持ち点は、その人のレートから自動で決めます。レートの差が大きいほど、持ち点の差も大きく開きます。","ロング（通常の試合）：レート500で70点。例：300で25点、400で45点、600で101点、700で137点。","ミドル：レート500で50点。例：300で18点、400で32点、600で72点、700で98点。","ショート（気軽にできる短い試合）：ロングの半分。レート500で35点。例：300で13点、400で22点、600で50点、700で69点。","手動で決めたいときは、試合タブのチェックを外します。"]],
     ["記録の確定",["試合が終わると記録は「承認待ち」になります。","記録した人以外（対戦相手や第三者）が承認すると確定し、ランキングとレートに入ります。"]]
   ]},
   "10":{ready:false,title:"10ボール",lead:"一般的なルールの概要です。細かい扱いはお店のハウスルールに従ってください。",sections:[
@@ -2256,13 +2304,14 @@ function L(text,cls){M.log.push({t:Date.now()-M.start,text,cls:cls||""})}
 function fmtDur(ms){const s=Math.floor(ms/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60);const ss=s%60;return (h?h+":"+String(m).padStart(2,"0"):String(m).padStart(2,"0"))+":"+String(ss).padStart(2,"0")}
 
 function openPlay(){setTimeout(()=>{if(M&&M.pending)askRackType()},0);
+  if(CC.matchId!==M.id){CC.matchId=M.id;ccResetAll()}else ccDraw();
   $("setup").hidden=true;$("play").hidden=false;
   clearInterval(tick);tick=setInterval(()=>{$("clock").textContent=fmtDur(Date.now()-M.start)},1000);
   try{navigator.wakeLock&&navigator.wakeLock.request("screen").then(w=>wake=w).catch(()=>{})}catch(e){}
   render();
 }
 function closePlay(){
-  scStopAll();
+  scStopAll();ccPause();ccDraw();
   clearInterval(tick);try{wake&&wake.release()}catch(e){}wake=null;
   $("play").hidden=true;$("setup").hidden=false;$("overlay").hidden=true;
   $("resumeBtn").hidden=!store.get("cb_cur",null);renderHistory();
@@ -2286,6 +2335,8 @@ function moreBurst(side,remain){
 }
 /* ---------- shot clock (one per player) ---------- */
 let SC_BASE=40,SC_EX=40;
+/* everything in config/app is saved together, so changing one setting never wipes another */
+function appCfgObj(){const c=typeof CC!=="undefined"?CC:{min:30,on:true};return{shotBase:SC_BASE,shotEx:SC_EX,chessMin:c.min,chessOn:c.on}}
 let appCfgDb=null;
 function scApplyCfg(base,ex,save){
   base=Math.min(300,Math.max(5,Math.round(+base||40)));ex=Math.min(300,Math.max(5,Math.round(+ex||40)));
@@ -2297,7 +2348,7 @@ function scApplyCfg(base,ex,save){
   /* clocks that are idle and untouched follow the new length right away */
   if(typeof SC!=="undefined")SC.c.forEach((c,i)=>{if(!c.run&&c.left===old*1000&&c.max===old*1000){c.left=base*1000;c.max=c.left}});
   if(typeof scDraw==="function")scDraw();
-  if(save){const v={shotBase:base,shotEx:ex};store.set("cb_appcfg",v);
+  if(save){const v=appCfgObj();store.set("cb_appcfg",v);
     if(appCfgDb)appCfgDb.set(v).then(()=>{$("scSetMsg").textContent=`保存しました：持ち時間 ${base}秒、EX ${ex}秒`}).catch(()=>{$("scSetMsg").textContent="保存できませんでした。通信を確認してください"});
     else $("scSetMsg").textContent=`この端末に保存しました：持ち時間 ${base}秒、EX ${ex}秒`;}
 }
@@ -2378,12 +2429,87 @@ function scNames(){if(!M)return;[0,1].forEach(i=>{$("scName"+i).textContent=M.na
 function scStopAll(){scPause(0);scPause(1);scDraw()}
 {const c=store.get("cb_appcfg",null);scApplyCfg(c?c.shotBase:40,c?c.shotEx:40,false)}
 
+/* ---------- chess clock (a total time per player; tap your side to hand the clock to the opponent) ---------- */
+const CC={min:30,on:true,left:[1800000,1800000],run:-1,last:-1,at:0,timer:null,said:[{},{}],over:[false,false],matchId:null};
+function ccNow(i){return CC.run===i?Math.max(0,CC.left[i]-(performance.now()-CC.at)):CC.left[i]}
+function ccFmt(ms){const t=Math.ceil(ms/1000),m=Math.floor(t/60),s=t%60;return `${m}:${String(s).padStart(2,"0")}`}
+function ccPause(){if(CC.run<0)return;const i=CC.run;CC.left[i]=ccNow(i);CC.last=i;CC.run=-1}
+function ccStart(i){if(CC.left[i]<=0)return;scPrimeVoice();ccPause();CC.run=i;CC.last=i;CC.at=performance.now();ccLoop()}
+function ccResetAll(){ccPause();CC.left=[CC.min*60000,CC.min*60000];CC.last=-1;CC.said=[{},{}];CC.over=[false,false];ccDraw()}
+function ccLoop(){if(CC.timer)return;CC.timer=setInterval(()=>{
+  if(CC.run<0){clearInterval(CC.timer);CC.timer=null;ccDraw();return}
+  const i=CC.run,t=ccNow(i),sd=CC.said[i];
+  if(t<=300000&&t>290000&&CC.min>5&&!sd.m5){sd.m5=1;scSay(`${M?M.names[i]:""}さん、残り5分`,880)}
+  if(t<=60000&&t>50000&&!sd.m1){sd.m1=1;scSay(`${M?M.names[i]:""}さん、残り1分`,880)}
+  if(t<=0){CC.left[i]=0;CC.run=-1;CC.last=i;CC.over[i]=true;
+    scSay(`${M?M.names[i]:""}さん、持ち時間切れです。ここからショットクロックを使ってください`,440,600);
+    try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}
+    ccNudge(true)}
+  ccDraw()},200)}
+/* when someone's chess time is gone, point everyone to the shot clock */
+function ccNudge(scroll){
+  const out=[0,1].filter(i=>CC.over[i]);
+  $("ccAlert").hidden=!out.length||!CC.on;
+  $("shotclock").classList.toggle("nudge",!!out.length&&CC.on);
+  [0,1].forEach(i=>{const c=document.querySelector(`.sc-card[data-p="${i}"]`);if(c)c.classList.toggle("need",CC.over[i]&&CC.on)});
+  if(!out.length)return;
+  const names=out.map(i=>M?M.names[i]:"プレイヤー"+(i+1)).join("・");
+  $("ccAlertText").textContent=`${names} さんの持ち時間が切れました。ここからは1ショットごとにショットクロックを使ってください。`;
+  if(scroll){try{$("shotclock").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth",block:"center"})}catch(e){}}
+}
+$("ccToShot").onclick=()=>{try{$("shotclock").scrollIntoView({behavior:"smooth",block:"center"})}catch(e){}};
+function ccDraw(){
+  $("chess").hidden=!CC.on;if(!CC.on)return;
+  $("ccNote").textContent=`1人${CC.min}分`;
+  [0,1].forEach(i=>{const t=ccNow(i),el=$("cc"+i);
+    $("ccTime"+i).textContent=ccFmt(t);
+    el.classList.toggle("run",CC.run===i);el.classList.toggle("low",t<=60000&&t>0);el.classList.toggle("over",CC.over[i]);
+    $("ccHint"+i).textContent=CC.over[i]?"時間切れ":CC.run===i?"タップで相手に渡す":"";
+    if(M)$("ccName"+i).textContent=M.names[i]||("プレイヤー"+(i+1));
+  });
+  const started=CC.last>=0||CC.run>=0;
+  $("ccToggle").textContent=CC.run>=0?"一時停止":started?"再開":"スタート";
+  ccNudge(false);
+}
+[0,1].forEach(i=>$("cc"+i).addEventListener("click",()=>{
+  if(CC.run===i){ccStart(1-i);ccDraw();return}   /* my turn ends → opponent's clock runs */
+  if(CC.run<0&&CC.over[i]&&!CC.over[1-i]){ccStart(1-i);ccDraw();return} /* out of time: my turn ends → opponent's clock */
+  if(CC.run<0&&(CC.last>=0)){ccStart(i);ccDraw()} /* paused: tap the side whose turn it is */
+}));
+$("ccToggle").onclick=()=>{
+  if(CC.run>=0){ccPause();ccDraw();return}
+  const first=CC.last>=0?CC.last:(M&&M.breaker!=null?M.breaker:0);
+  ccStart(CC.left[first]>0?first:1-first);ccDraw();
+};
+let ccRstArmed=false;
+$("ccReset").onclick=()=>{
+  if(!ccRstArmed&&(CC.last>=0||CC.run>=0)){ccRstArmed=true;$("ccReset").textContent="もう一度押す";setTimeout(()=>{ccRstArmed=false;$("ccReset").textContent="リセット"},3000);return}
+  ccRstArmed=false;$("ccReset").textContent="リセット";ccResetAll();
+};
+function ccApplyCfg(min,on,save){
+  min=Math.min(180,Math.max(1,Math.round(+min||30)));on=on!==false;
+  const old=CC.min;CC.min=min;CC.on=on;
+  $("ccMinIn").value=min;$("ccOnIn").checked=on;
+  document.querySelectorAll("#ccPresets button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.m===min));
+  /* clocks that have not started yet follow the new length */
+  if(CC.run<0&&CC.last<0&&CC.left[0]===old*60000&&CC.left[1]===old*60000)CC.left=[min*60000,min*60000];
+  ccDraw();
+  if(save){const v=appCfgObj();store.set("cb_appcfg",v);
+    if(appCfgDb)appCfgDb.set(v).then(()=>{$("ccSetMsg").textContent=on?`保存しました：1人 ${min}分`:"保存しました：チェスクロックを使わない"}).catch(()=>{$("ccSetMsg").textContent="保存できませんでした。通信を確認してください"});
+    else $("ccSetMsg").textContent=on?`この端末に保存しました：1人 ${min}分`:"この端末に保存しました：チェスクロックを使わない";}
+}
+document.querySelectorAll(".cc-step button").forEach(b=>b.addEventListener("click",()=>ccApplyCfg(CC.min+(+b.dataset.cd),CC.on,true)));
+$("ccMinIn").addEventListener("change",()=>ccApplyCfg($("ccMinIn").value,CC.on,true));
+$("ccOnIn").addEventListener("change",()=>ccApplyCfg(CC.min,$("ccOnIn").checked,true));
+$("ccPresets").addEventListener("click",e=>{const b=e.target.closest("button");if(b)ccApplyCfg(b.dataset.m,CC.on,true)});
+{const c=store.get("cb_appcfg",null);ccApplyCfg(c&&c.chessMin?c.chessMin:30,c?c.chessOn!==false:true,false)}
+
 function render(){
   const g=GAMES[M.game];
   $("clock").textContent=fmtDur(Date.now()-M.start);scNames();scDraw();
   $("meta").innerHTML="";
   const meta=document.createElement("span");
-  meta.innerHTML=`<b></b>${M.fmt==="short"?" ・ ショート":M.fmt==="long"?" ・ ロング":""} ・ ${M.mode==="race"?`${M.target[0]}-${M.target[1]} 先取`:`持ち点 ${M.target[0]} / ${M.target[1]} 点`} ・ ラック ${M.rack}`;
+  meta.innerHTML=`<b></b>${M.fmt==="short"?" ・ ショート":M.fmt==="middle"?" ・ ミドル":M.fmt==="long"?" ・ ロング":""} ・ ${M.mode==="race"?`${M.target[0]}-${M.target[1]} 先取`:`持ち点 ${M.target[0]} / ${M.target[1]} 点`} ・ ラック ${M.rack}`;
   meta.querySelector("b").textContent=g.label;$("meta").appendChild(meta);
 
   const board=$("board"),cloth=$("cloth");if(cloth.parentNode===board)$("tableWrap").appendChild(cloth);
@@ -2745,7 +2871,7 @@ $("adminBtn").onclick=async()=>{
     renderSched();
   },()=>{});
   appCfgDb=db.doc("config/app");
-  appCfgDb.onSnapshot(sn=>{if(sn.exists){const d=sn.data()||{};store.set("cb_appcfg",{shotBase:d.shotBase,shotEx:d.shotEx});scApplyCfg(d.shotBase,d.shotEx,false)}},()=>{});
+  appCfgDb.onSnapshot(sn=>{if(sn.exists){const d=sn.data()||{};store.set("cb_appcfg",{shotBase:d.shotBase,shotEx:d.shotEx,chessMin:d.chessMin,chessOn:d.chessOn});scApplyCfg(d.shotBase,d.shotEx,false);ccApplyCfg(d.chessMin||30,d.chessOn!==false,false)}},()=>{});
   rosterDb=db.doc("config/roster");
   rosterDb.onSnapshot(sn=>{
     if(sn.exists){const d=sn.data();roster={teams:(d.teams||[]).map(t=>({name:t.name,members:[...(t.members||[])]})),init:{...(d.init||{})}}}
