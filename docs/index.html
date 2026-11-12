@@ -648,21 +648,21 @@ img,svg{-webkit-user-drag:none;user-drag:none}
         <span class="ptag">PLAYER 1</span>
         <div class="field"><label for="tm1">チーム</label><select id="tm1"></select><input id="tm1x" maxlength="20" autocomplete="off" placeholder="チーム名を入力" hidden></div>
         <div class="field"><label for="n1">名前</label><div class="name-row"><select id="n1"></select><span class="prate" id="pr1" aria-live="polite"></span></div><input id="n1x" maxlength="16" autocomplete="off" placeholder="名前を入力" hidden></div>
-        <div class="field target" id="t1field"><label for="t1" id="t1lab">目標点</label><input id="t1" type="number" inputmode="numeric" min="1" max="999" value="5"></div>
+        <div class="field target" id="t1field"><label for="t1" id="t1lab">持ち点</label><input id="t1" type="number" inputmode="numeric" min="1" max="999" value="5"></div>
       </div>
       <div class="vs" aria-hidden="true">VS</div>
       <div class="pblock b">
         <span class="ptag">PLAYER 2</span>
         <div class="field"><label for="tm2">チーム</label><select id="tm2"></select><input id="tm2x" maxlength="20" autocomplete="off" placeholder="チーム名を入力" hidden></div>
         <div class="field"><label for="n2">名前</label><div class="name-row"><select id="n2"></select><span class="prate" id="pr2" aria-live="polite"></span></div><input id="n2x" maxlength="16" autocomplete="off" placeholder="名前を入力" hidden></div>
-        <div class="field target"><label for="t2" id="t2lab">目標点</label><input id="t2" type="number" inputmode="numeric" min="1" max="999" value="5"></div>
+        <div class="field target"><label for="t2" id="t2lab">持ち点</label><input id="t2" type="number" inputmode="numeric" min="1" max="999" value="5"></div>
       </div>
     </div>
     <div class="hc" id="hcBox">
-      <label class="hc-toggle" for="hcAuto"><input type="checkbox" id="hcAuto" checked><span>レートでハンデ（目標点）を決める</span></label>
+      <label class="hc-toggle" for="hcAuto"><input type="checkbox" id="hcAuto" checked><span>レートでハンデ（持ち点）を決める</span></label>
       <p class="hc-msg" id="hcMsg"></p>
     </div>
-    <p class="hint" id="hcHint">上手の目標点を基準に、下手の目標点をレート差から自動で決めます。自分で決めたいときはチェックを外してください。チーム名は空欄でもかまいません。</p>
+    <p class="hint" id="hcHint">上手の持ち点を基準に、下手の持ち点をレート差から自動で決めます。自分で決めたいときはチェックを外してください。チーム名は空欄でもかまいません。</p>
 
     <div class="grid2" id="breakRow">
       <div class="field">
@@ -1178,7 +1178,7 @@ function syncSetup(){
   $("startBtn").textContent=solo?"ゲーム開始":"試合開始";
   if(solo){$("gameHint").textContent=g.hint;$("heroTag").textContent=g.tag;$("breakRow").hidden=true;return}
   $("gameHint").textContent=g.hint;$("heroTag").textContent=g.tag||g.label;
-  const unit=g.mode==="race"?"先取ラック数":"目標点";
+  const unit=g.mode==="race"?"先取ラック数":"持ち点";
   $("t1lab").textContent=unit;$("t2lab").textContent=unit;
   $("t1").value=g.def;$("t2").value=g.def;
   $("breakRow").hidden=!(g.mode==="race"||g.endBall);
@@ -1443,7 +1443,7 @@ function updateHandicap(){
   [1,2].forEach(i=>{const el=$("pr"+i),r=rs[i-1];el.className="prate"+(r?(r.prov?" prov":""):" none");
     el.textContent=r?`${Math.round(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
   const msg=$("hcMsg");
-  if(!$("hcAuto").checked){msg.textContent="目標点は手動で入れています。";return}
+  if(!$("hcAuto").checked){msg.textContent="持ち点は手動で入れています。";return}
   const hi=hcStrong();
   if(!hi){msg.textContent="2人ともレートがあると、レート差からハンデを自動で決めます。";return}
   const lo=3-hi,H=rs[hi-1],Lo=rs[lo-1];
@@ -1936,11 +1936,11 @@ $("schedView").addEventListener("click",e=>{const b=e.target.closest("button");i
 /* ---------- rules ---------- */
 const RULES={
   "9":{ready:true,title:"9ボール（RESTルール制）",lead:"このアプリで使っている、RESTルールです。",sections:[
-    ["点数",["9番を入れた人は、そのラック10点で固定です（そのラックで入れた1〜8番の分は足しません）。","9番を入れていない人は、そのラックで入れた1〜8番の個数×1点です。","落とした人に点が入ります。ボールを落とした人のスコアへドラッグして記録します。","目標点に先に届いた人の勝ちです。"]],
+    ["点数",["9番を入れた人は、そのラック10点で固定です（そのラックで入れた1〜8番の分は足しません）。","9番を入れていない人は、そのラックで入れた1〜8番の個数×1点です。","落とした人に点が入ります。ボールを落とした人のスコアへドラッグして記録します。","持ち点に先に届いた人の勝ちです。"]],
     ["ラック",["9番が落ちたらそのラックは終わりで、次のラックに進みます。","9番を落とした人が、そのラックを取ったことになります（レートの計算に使います）。","ブレイクは「交互ブレイク」か「勝者ブレイク」を試合の前に選びます。"]],
     ["デッドボール",["スコア画面でボールをダブルタップすると、デッドボール（得点にならない球）にできます。もう一度ダブルタップで戻せます。"]],
     ["相手0点でラックを取ったとき",["ブレイクから1人で取り切った：ブレイクランアウト","ブレイクで9番が入った：ブレイクエース","それ以外で相手を0点のまま取った：ウィンジップ","ラックの終わりに出る画面で、どれかを選びます。ランキングで回数を競えます。"]],
-    ["ハンデ",["2人ともレートがあると、上手の目標点を基準に下手の目標点を自動で決めます。","レート差50でおよそ30点対25点、100で30点対21点、200で30点対15点が目安です。","手動で決めたいときは、試合タブのチェックを外します。"]],
+    ["ハンデ",["2人ともレートがあると、上手の持ち点を基準に下手の持ち点を自動で決めます。","レート差50でおよそ30点対25点、100で30点対21点、200で30点対15点が目安です。","手動で決めたいときは、試合タブのチェックを外します。"]],
     ["記録の確定",["試合が終わると記録は「承認待ち」になります。","記録した人以外（対戦相手や第三者）が承認すると確定し、ランキングとレートに入ります。"]]
   ]},
   "10":{ready:false,title:"10ボール",lead:"一般的なルールの概要です。細かい扱いはお店のハウスルールに従ってください。",sections:[
@@ -1962,7 +1962,7 @@ const RULES={
   "3c":{ready:false,title:"スリークッション",lead:"キャロムビリヤードの代表的な種目です。一般的なルールの概要です。",sections:[
     ["道具",["ポケットのないテーブルで、白・黄の手球と赤の的球の3つを使います。","2人それぞれが自分の手球（白か黄）を打ちます。"]],
     ["点の取り方",["自分の手球を残り2つの球に当て、2つ目の球に当たる前に手球がクッションに3回以上当たれば1点です。","点が取れた限り続けて打ち、失敗したら相手の番になります。この1回の番をイニングと言います。"]],
-    ["勝敗",["先に目標点に届いた人の勝ちです。","後攻にも同じイニング数を打たせる（イコールイニング）ルールが一般的です。"]],
+    ["勝敗",["先に持ち点に届いた人の勝ちです。","後攻にも同じイニング数を打たせる（イコールイニング）ルールが一般的です。"]],
     ["ファウル",["手球以外を打った、球が台の外に出たなどはファウルで、その番は終わりです。"]]
   ]}
 };
@@ -2357,7 +2357,7 @@ function render(){
   $("clock").textContent=fmtDur(Date.now()-M.start);scNames();scDraw();
   $("meta").innerHTML="";
   const meta=document.createElement("span");
-  meta.innerHTML=`<b></b> ・ ${M.mode==="race"?`${M.target[0]}-${M.target[1]} 先取`:`目標 ${M.target[0]} / ${M.target[1]} 点`} ・ ラック ${M.rack}`;
+  meta.innerHTML=`<b></b> ・ ${M.mode==="race"?`${M.target[0]}-${M.target[1]} 先取`:`持ち点 ${M.target[0]} / ${M.target[1]} 点`} ・ ラック ${M.rack}`;
   meta.querySelector("b").textContent=g.label;$("meta").appendChild(meta);
 
   const board=$("board"),cloth=$("cloth");if(cloth.parentNode===board)$("tableWrap").appendChild(cloth);
@@ -2379,7 +2379,7 @@ function render(){
 
     const btn=document.createElement("button");btn.type="button";btn.className="score-btn";
     const remain=Math.max(0,M.target[p]-M.score[p]);
-    btn.innerHTML=`<span class="num">${M.score[p]}</span><span class="race">${M.mode==="race"?`${M.target[p]} 先 ・ あと ${remain}`:`目標 ${M.target[p]} ・ あと ${remain}`}</span><span class="tap"></span>`;
+    btn.innerHTML=`<span class="num">${M.score[p]}</span><span class="race">${M.mode==="race"?`${M.target[p]} 先 ・ あと ${remain}`:`持ち点 ${M.target[p]} ・ あと ${remain}`}</span><span class="tap"></span>`;
     btn.querySelector(".tap").textContent=M.mode==="race"?"タップでラック獲得":M.mode==="balls"?"落としたボールをここへドラッグ":"タップで +1";
     btn.setAttribute("aria-label",`${M.names[p]} ${M.score[p]}`);
     /* "○モア": 10 points or fewer left to the target */
