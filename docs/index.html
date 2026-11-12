@@ -786,8 +786,8 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <div class="field">
         <label>最初のブレイク</label>
         <div class="seg" id="firstSeg" role="group" aria-label="最初のブレイク">
-          <button type="button" data-v="0" aria-pressed="true" id="fb0">田中</button>
-          <button type="button" data-v="1" aria-pressed="false" id="fb1">佐藤</button>
+          <button type="button" data-v="0" aria-pressed="true" id="fb0">PLAYER 1</button>
+          <button type="button" data-v="1" aria-pressed="false" id="fb1">PLAYER 2</button>
         </div>
       </div>
     </div>
@@ -1354,7 +1354,7 @@ function fillNames(i){
   $("n"+i+"x").hidden=sel.value!==OTHER;syncNames();
 }
 function renderPickers(){fillTeams(1);fillTeams(2)}
-function syncNames(){$("fb0").textContent=getName(1)||"左";$("fb1").textContent=getName(2)||"右";updateHandicap()}
+function syncNames(){[1,2].forEach(i=>{const n=getName(i);$("fb"+(i-1)).textContent=n?`PLAYER ${i}（${n}）`:`PLAYER ${i}`});updateHandicap()}
 [1,2].forEach(i=>{
   $("tm"+i).addEventListener("change",()=>{$("tm"+i+"x").hidden=$("tm"+i).value!==OTHER;fillNames(i)});
   $("n"+i).addEventListener("change",()=>{$("n"+i+"x").hidden=$("n"+i).value!==OTHER;syncNames()});
@@ -1614,7 +1614,7 @@ function updateHandicap(){
   if(!rs[0]&&!rs[1]){msg.textContent=`レートがある人は、レートから持ち点を自動で決めます（レート500で${hcFmt().at500}点）。`;return}
   const parts=[];
   [1,2].forEach(i=>{const r=rs[i-1];if(!r)return;const v=hcPoints(r.r);$("t"+i).value=v;parts.push(`${r.n} ${v}点（レート${Math.round(r.r)}）`)});
-  const missing=[1,2].filter(i=>!rs[i-1]).map(i=>getName(i)||(i===1?"左":"右"));
+  const missing=[1,2].filter(i=>!rs[i-1]).map(i=>getName(i)||("PLAYER "+i));
   msg.textContent=parts.join(" ／ ")+`。レートから決めました（レート500で${hcFmt().at500}点）。`
     +(missing.length?`${missing.join("・")} はレートがないので ${hcFmt().at500}点 にしています。`:"")
     +(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
