@@ -302,6 +302,17 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .sc-btns .sc-go:disabled{opacity:.5}
 .sc-btns .sc-ex{background:var(--cue);border-color:var(--cue);color:#1b1b1b}
 .sc-btns .sc-ex small{font-size:10px}
+.cc-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.cc-title{font-weight:800;font-size:12px;color:var(--muted);letter-spacing:.06em}
+.cc-title small{font-weight:600;letter-spacing:0}
+.cc-ctl{display:flex;gap:6px}
+.cc-ctl button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700}
+.cc-ctl .cc-go{background:var(--felt);border-color:var(--felt);color:#fff}
+.sc-card .cc-side{flex-direction:row;justify-content:center;align-items:baseline;gap:6px;padding:4px 6px;border-width:1.5px;border-radius:10px}
+.cc-lab{font-size:11px;color:var(--muted);font-weight:700}
+.sc-card .cc-time{font-size:clamp(20px,5.5vw,28px)}
+.sc-card .cc-hint{min-height:0;font-size:10px}
+.shotclock.nocc .cc-side{display:none}
 .cc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .cc-side{--pc:var(--p1);border:2px solid var(--line);border-radius:14px;background:var(--bg);padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;color:var(--ink);transition:border-color .2s,background .2s}
 .cc-side[data-p="1"]{--pc:var(--p2)}
@@ -315,13 +326,12 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .cc-btns{display:grid;grid-template-columns:2fr 1fr;gap:8px}
 .cc-btns button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 4px;font-size:14px;font-weight:700}
 .cc-btns .cc-go{background:var(--felt);border-color:var(--felt);color:#fff}
-.cc-alert{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--red);color:#fff;border-radius:12px;padding:10px 12px}
+.cc-alert{font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:var(--red);color:#fff;border-radius:12px;padding:10px 12px}
 .cc-alert b{font-size:14px;min-width:0}
 .cc-alert button{border:2px solid #fff;background:transparent;color:#fff;border-radius:10px;padding:8px 12px;font-weight:800;font-size:13px;white-space:nowrap}
 .shotclock.nudge{border:2px solid var(--red);box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 25%,transparent)}
 .sc-card.need{border-color:var(--red)}
-.sc-card.need::after{content:"持ち時間切れ";position:absolute;top:8px;right:8px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:999px;padding:2px 8px}
-.sc-card.need .sc-name{padding-right:76px}
+.sc-card.need .cc-side{border-color:var(--red)}
 .cc-help{margin:0;font-size:11px;color:var(--muted);text-align:center}
 .cc-step{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
 .cc-step button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;font-weight:700}
@@ -536,6 +546,40 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 
 /* play screen */
 #play{min-height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px 16px;max-width:1100px;margin:0 auto}
+/* phones: score board, balls, buttons and both clocks fit in one screen; the board height is set by fitPlay() */
+#play.fit{gap:8px;padding-block:8px 10px}
+#play.fit .bar{gap:8px}
+#play.fit .board.lanein{flex:none}
+#play.fit .board.lanein .side{padding:8px;gap:6px}
+#play.fit .board.lanein .score-btn{min-height:0}
+#play.fit .board.lanein .score-btn .num{font-size:clamp(44px,13vw,96px)}
+#play.fit .board.lanein .lane{padding:6px 5px}
+#play.fit .board.lanein .balls{width:var(--ball,40px);gap:var(--bgap,4px)}
+#play.fit #tableWrap{gap:0!important}
+#play.fit .turnline{font-size:11px;line-height:1.3}
+#play.fit .footer-tools{gap:6px;flex-wrap:nowrap}
+#play.fit .footer-tools button{padding:8px 10px;font-size:13px;flex:1;white-space:nowrap}
+#play.fit .shotclock{padding:8px;gap:6px}
+#play.fit .sc-grid{gap:6px}
+#play.fit .sc-card{padding:6px;gap:4px}
+#play.fit .sc-time{font-size:clamp(34px,10vw,48px)}
+#play.fit .sc-bar{height:5px}
+#play.fit .sc-btns{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+#play.fit .sc-btns .sc-go{grid-column:auto}
+#play.fit .sc-btns button{padding:6px 2px;font-size:12px}
+#play.fit .sc-used:empty{display:none}
+#play.fit .sc-head{display:none}
+#play.fit .board.lanein .score-btn .tap{display:none}
+#play.fit .board.lanein .score-btn .race{font-size:12px}
+#play.fit .board.lanein .side-head .pname{font-size:16px}
+#play.fit .bar .meta{font-size:12px;line-height:1.35}
+#play.fit .bar .ghost{padding:6px 10px}
+#play.fit .clock{font-size:20px}
+#play.fit .sc-name{font-size:12px;line-height:1.2}
+#play.fit .sc-btns button{font-size:11px;letter-spacing:-.02em;padding:6px 0}
+#play.fit .footer-tools button{padding:7px 6px}
+#play.fit .cc-ctl button{padding:4px 10px}
+@media (max-height:700px){#play.fit .turnline{display:none}#play.fit .sc-time{font-size:34px}#play.fit .sc-card .cc-time{font-size:20px}}
 .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bar .meta{flex:1;min-width:0;font-size:13px;color:var(--muted)}
 .bar .meta b{color:var(--ink)}
@@ -957,21 +1001,17 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <button id="newRack" type="button" hidden>次のラック</button>
     <button id="endBtn" type="button">試合終了</button>
   </div>
-  <section class="shotclock chess" id="chess" aria-label="チェスクロック">
-    <div class="sc-head"><span class="sc-title">チェスクロック</span><span class="sc-note" id="ccNote">1人30分</span></div>
-    <div class="cc-grid">
-      <button type="button" class="cc-side" data-p="0" id="cc0"><span class="cc-name" id="ccName0">プレイヤー1</span><span class="cc-time" id="ccTime0">30:00</span><span class="cc-hint" id="ccHint0"></span></button>
-      <button type="button" class="cc-side" data-p="1" id="cc1"><span class="cc-name" id="ccName1">プレイヤー2</span><span class="cc-time" id="ccTime1">30:00</span><span class="cc-hint" id="ccHint1"></span></button>
-    </div>
-    <div class="cc-btns"><button type="button" class="cc-go" id="ccToggle">スタート</button><button type="button" id="ccReset">リセット</button></div>
-    <p class="cc-help" id="ccHelp">自分の番が終わったら、自分の側をタップすると相手の時計が動きます。持ち時間が切れたら、その人はショットクロックで打ちます。</p>
-    <div class="cc-alert" id="ccAlert" hidden role="status"><b id="ccAlertText"></b><button type="button" id="ccToShot">ショットクロックへ</button></div>
-  </section>
   <section class="shotclock" id="shotclock" aria-label="ショットクロック">
     <div class="sc-head"><span class="sc-title">ショットクロック</span><span class="sc-note" id="scNote">40秒 ・ EXで＋40秒</span></div>
+    <div class="cc-bar" id="chess">
+      <span class="cc-title">チェスクロック <small id="ccNote">1人30分</small></span>
+      <span class="cc-ctl"><button type="button" class="cc-go" id="ccToggle">スタート</button><button type="button" id="ccReset">リセット</button></span>
+    </div>
+    <div class="cc-alert" id="ccAlert" hidden role="status"><b id="ccAlertText"></b><button type="button" id="ccToShot" hidden>ショットクロックへ</button></div>
     <div class="sc-grid">
       <div class="sc-card" data-p="0">
         <div class="sc-name" id="scName0">プレイヤー1</div>
+        <button type="button" class="cc-side" data-p="0" id="cc0" aria-label="チェスクロック：タップで相手に渡す"><span class="cc-lab">持ち時間</span><span class="cc-time" id="ccTime0">30:00</span><span class="cc-hint" id="ccHint0"></span><span id="ccName0" hidden></span></button>
         <button type="button" class="sc-time" id="scTime0" aria-label="タップでスタート／一時停止">40</button>
         <div class="sc-bar"><i id="scBar0"></i></div>
         <div class="sc-btns">
@@ -983,6 +1023,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       </div>
       <div class="sc-card" data-p="1">
         <div class="sc-name" id="scName1">プレイヤー2</div>
+        <button type="button" class="cc-side" data-p="1" id="cc1" aria-label="チェスクロック：タップで相手に渡す"><span class="cc-lab">持ち時間</span><span class="cc-time" id="ccTime1">30:00</span><span class="cc-hint" id="ccHint1"></span><span id="ccName1" hidden></span></button>
         <button type="button" class="sc-time" id="scTime1" aria-label="タップでスタート／一時停止">40</button>
         <div class="sc-bar"><i id="scBar1"></i></div>
         <div class="sc-btns">
@@ -2483,22 +2524,45 @@ function ccLoop(){if(CC.timer)return;CC.timer=setInterval(()=>{
 /* when someone's chess time is gone, point everyone to the shot clock */
 function ccNudge(scroll){
   const out=[0,1].filter(i=>CC.over[i]);
+  const was=$("ccAlert").hidden;
   $("ccAlert").hidden=!out.length||!CC.on;
+  if(was!==$("ccAlert").hidden)requestAnimationFrame(fitPlay);
   $("shotclock").classList.toggle("nudge",!!out.length&&CC.on);
   [0,1].forEach(i=>{const c=document.querySelector(`.sc-card[data-p="${i}"]`);if(c)c.classList.toggle("need",CC.over[i]&&CC.on)});
   if(!out.length)return;
   const names=out.map(i=>M?M.names[i]:"プレイヤー"+(i+1)).join("・");
-  $("ccAlertText").textContent=`${names} さんの持ち時間が切れました。ここからは1ショットごとにショットクロックを使ってください。`;
-  if(scroll){try{$("shotclock").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth",block:"center"})}catch(e){}}
+  $("ccAlertText").textContent=`${names} さんの持ち時間切れ。ここからは1ショットごとにショットクロックで打ってください。`;
+  if(scroll){try{$("shotclock").scrollIntoView({behavior:"auto",block:"nearest"})}catch(e){}}
 }
+/* phones: size the score board so the whole play screen (score, balls, buttons, clocks) fits without scrolling */
+function fitPlay(){
+  const play=$("play"),board=$("board");
+  const on=!!(M&&!play.hidden&&M.mode==="balls"&&window.innerWidth<=820);
+  play.classList.toggle("fit",on);
+  if(!on){board.style.height="";return}
+  const vh=(window.visualViewport?window.visualViewport.height:window.innerHeight);
+  const cs=getComputedStyle(play),gap=parseFloat(cs.rowGap)||8;
+  const pad=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom)+parseFloat(getComputedStyle(document.documentElement).paddingTop)+parseFloat(getComputedStyle(document.documentElement).paddingBottom);
+  let used=pad,n=0;
+  [...play.children].forEach(el=>{if(el===board||el.hidden||el.classList.contains("log")||getComputedStyle(el).display==="none")return;used+=el.getBoundingClientRect().height;n++});
+  used+=gap*n; /* gaps between the board and the other blocks */
+  const h=Math.max(190,Math.min(700,Math.floor(vh-used)));
+  board.style.height=h+"px";
+  const lane=$("cloth"),lp=lane?parseFloat(getComputedStyle(lane).paddingTop)*2+2:14;
+  const g=Math.max(2,Math.min(6,Math.round(h/90)));
+  const ball=Math.max(17,Math.min(56,Math.floor((h-lp-8*g)/9)));
+  play.style.setProperty("--ball",ball+"px");play.style.setProperty("--bgap",g+"px");
+}
+window.addEventListener("resize",()=>{clearTimeout(fitPlay.t);fitPlay.t=setTimeout(fitPlay,120)});
+if(window.visualViewport)window.visualViewport.addEventListener("resize",()=>{clearTimeout(fitPlay.t);fitPlay.t=setTimeout(fitPlay,120)});
 $("ccToShot").onclick=()=>{try{$("shotclock").scrollIntoView({behavior:"smooth",block:"center"})}catch(e){}};
 function ccDraw(){
-  $("chess").hidden=!CC.on;if(!CC.on)return;
+  $("chess").hidden=!CC.on;$("shotclock").classList.toggle("nocc",!CC.on);if(!CC.on){ccNudge(false);return}
   $("ccNote").textContent=`1人${CC.min}分`;
   [0,1].forEach(i=>{const t=ccNow(i),el=$("cc"+i);
     $("ccTime"+i).textContent=ccFmt(t);
     el.classList.toggle("run",CC.run===i);el.classList.toggle("low",t<=60000&&t>0);el.classList.toggle("over",CC.over[i]);
-    $("ccHint"+i).textContent=CC.over[i]?"時間切れ":CC.run===i?"タップで相手に渡す":"";
+    $("ccHint"+i).textContent=CC.over[i]?"切れ":CC.run===i?"タップで交代":"";
     if(M)$("ccName"+i).textContent=M.names[i]||("プレイヤー"+(i+1));
   });
   const started=CC.last>=0||CC.run>=0;
@@ -2611,6 +2675,7 @@ function render(){
 
   $("tableWrap").hidden=M.mode!=="balls";
   if(M.mode==="balls"){board.insertBefore(cloth,board.children[1]||null);renderTable()}
+  requestAnimationFrame(fitPlay);
   $("swapTurn").hidden=M.mode!=="pts";
   $("newRack").hidden=M.mode!=="balls";
   $("undoBtn").disabled=!undoStack.length;
