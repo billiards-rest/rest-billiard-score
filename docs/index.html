@@ -537,6 +537,26 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .rk-val b{font:800 24px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
 .rk.top .rk-name b{font-size:17px}
 .tscroll{overflow-x:auto}
+.ltab,.xtab{border-collapse:collapse;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:14px}
+.ltab{width:100%}
+.ltab th{font-size:11px;color:var(--muted);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
+.ltab td{padding:8px;border-bottom:1px solid var(--line);text-align:right}
+.ltab tr:last-child td{border-bottom:0}
+@media (max-width:480px){.ltab th,.ltab td{padding:7px 4px}.ltab{font-size:13px}.ltab td:nth-child(2){max-width:6.5em}.ltab .rk-n{width:22px;height:22px;font-size:12px}}
+.ltab th:nth-child(2),.ltab td:nth-child(2){text-align:left}
+.ltab td:nth-child(2){font-weight:700;max-width:9em;overflow:hidden;text-overflow:ellipsis}
+.ltab .rk-n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--bg);font:800 13px var(--f-display);color:var(--muted)}
+.ltab tr.top1 .rk-n{background:#e2b53b;color:#111}.ltab tr.top2 .rk-n{background:#2457a6;color:#fff}.ltab tr.top3 .rk-n{background:#c2412d;color:#fff}
+.ltab tr.me td{background:color-mix(in srgb,var(--cue) 14%,transparent)}
+.ltab td.w{font-weight:800;color:var(--felt)}
+.lt-sub{margin:6px 0 0;font-size:13px;color:var(--muted);font-weight:700}
+.xtab th,.xtab td{border:1px solid var(--line);padding:6px 8px;text-align:center;min-width:44px}
+.xtab th{font-size:11px;color:var(--muted);font-weight:700;max-width:7em;overflow:hidden;text-overflow:ellipsis}
+.xtab th.rowh{text-align:left;color:var(--ink);font-size:13px}
+.xtab td.self{background:repeating-linear-gradient(135deg,var(--bg) 0 6px,var(--line) 6px 7px)}
+.xtab td.win{color:var(--felt);font-weight:800}
+.xtab td.lose{color:var(--red);font-weight:800}
+.xtab td small{display:block;font-size:10px;color:var(--muted);font-weight:500}
 .ptab{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ptab th{font-size:12px;color:var(--muted);font-weight:700;text-align:right;padding:6px 10px;border-bottom:1px solid var(--line)}
 .ptab td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
@@ -776,6 +796,13 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   <div class="seg small" id="schedFilter" role="group" aria-label="チームで絞り込む"></div>
   <section class="next-card" id="schedNext" aria-label="次の対戦" hidden></section>
   <section class="sheet league-sum" id="schedSum" aria-label="リーグの進み具合" hidden></section>
+  <section class="sheet" id="leagueTable" aria-labelledby="h-lt" hidden>
+    <h2 id="h-lt">リーグ表</h2>
+    <div class="tscroll"><table class="ltab" id="ltStand"></table></div>
+    <h3 class="lt-sub">対戦表</h3>
+    <div class="tscroll"><table class="xtab" id="ltCross"></table></div>
+    <p class="hint" id="ltNote"></p>
+  </section>
   <section class="sheet" aria-labelledby="h-up">
     <h2 id="h-up">節ごとの対戦と消化推奨期間</h2>
     <div class="fx-list" id="schedUp"></div>
@@ -1830,7 +1857,53 @@ function renderSched(){
     row.querySelector(".fx-st").textContent=ST_LABEL[x.st];
     const bs=row.querySelectorAll(".fx-teams b");bs[0].textContent=x.home;bs[1].textContent=x.away;
     up.appendChild(row)});
-  renderSchedAdmin(items);
+  renderSchedAdmin(items);renderLeagueTable();
+}
+/* league table: wins / losses / points from approved matches between the league's entries during the league */
+function leagueResults(){
+  const L=sched.league;if(!L||!Array.isArray(L.teams))return null;
+  const side=L.kind==="solo"?"names":"teams",ents=L.teams,set=new Set(ents);
+  const from=parseYmd(L.start).getTime(),to=parseYmd(L.end).getTime()+864e5;
+  const cap={};sched.items.forEach(x=>{const k=pairKey(x.home,x.away);cap[k]=(cap[k]||0)+1});
+  const used={},R={};ents.forEach(e=>R[e]={n:e,g:0,w:0,l:0,d:0,pf:0,pa:0,vs:{}});
+  [...(lastHist||[])].sort((a,b)=>(a.end||0)-(b.end||0)).forEach(m=>{
+    const t=m[side];if(!t||!set.has(t[0])||!set.has(t[1])||t[0]===t[1])return;
+    if((m.end||0)<from||(m.end||0)>=to)return;
+    const k=pairKey(t[0],t[1]);if((used[k]||0)>=(cap[k]||0))return;used[k]=(used[k]||0)+1;
+    const sc=m.score||[0,0],res=sc[0]>sc[1]?0:sc[1]>sc[0]?1:-1;
+    [0,1].forEach(i=>{const me=R[t[i]],op=t[1-i];me.g++;me.pf+=+sc[i]||0;me.pa+=+sc[1-i]||0;
+      if(res===i)me.w++;else if(res===1-i)me.l++;else me.d++;
+      (me.vs[op]=me.vs[op]||[]).push({r:res===-1?"d":res===i?"w":"l",a:+sc[i]||0,b:+sc[1-i]||0})})});
+  const rows=Object.values(R).sort((a,b)=>b.w-a.w||a.l-b.l||(b.pf-b.pa)-(a.pf-a.pa)||b.pf-a.pf||a.n.localeCompare(b.n));
+  return {L,ents,rows};
+}
+function renderLeagueTable(){
+  const box=$("leagueTable"),res=leagueResults();
+  if(!res||!res.ents.length){box.hidden=true;return}
+  box.hidden=false;const solo=res.L.kind==="solo",me=solo?myName:myTeam();
+  const st=$("ltStand");st.innerHTML=`<thead><tr><th>順位</th><th>${solo?"名前":"チーム"}</th><th>試合</th><th>勝</th><th>敗</th><th>得点</th><th>失点</th><th>差</th></tr></thead><tbody></tbody>`;
+  const tb=st.querySelector("tbody");let prev=null,rank=0;
+  res.rows.forEach((r,i)=>{const key=`${r.w}|${r.l}|${r.pf-r.pa}|${r.pf}`;if(key!==prev){rank=i+1;prev=key}
+    const tr=document.createElement("tr");tr.className=(rank<=3&&r.g?"top"+rank:"")+(me&&r.n===me?" me":"");
+    const df=r.pf-r.pa;
+    tr.innerHTML=`<td><span class="rk-n">${rank}</span></td><td></td><td>${r.g}</td><td class="w">${r.w}</td><td>${r.l}</td><td>${r.pf}</td><td>${r.pa}</td><td>${df>0?"+"+df:df}</td>`;
+    tr.children[1].textContent=r.n;tb.appendChild(tr)});
+  const ord=res.rows.map(r=>r.n),by={};res.rows.forEach(r=>by[r.n]=r);
+  const xt=$("ltCross");xt.innerHTML="";
+  const hr=document.createElement("tr");hr.appendChild(document.createElement("th"));
+  ord.forEach(n=>{const th=document.createElement("th");th.textContent=n;hr.appendChild(th)});
+  const th=document.createElement("thead");th.appendChild(hr);xt.appendChild(th);const body=document.createElement("tbody");
+  ord.forEach(a=>{const tr=document.createElement("tr");const h=document.createElement("th");h.className="rowh";h.textContent=a;tr.appendChild(h);
+    ord.forEach(b=>{const td=document.createElement("td");
+      if(a===b){td.className="self";td.setAttribute("aria-label","同じ"+(solo?"人":"チーム"))}
+      else{const gs=by[a].vs[b]||[];
+        if(!gs.length){td.textContent="−";td.style.color="var(--muted)"}
+        else{const last=gs[gs.length-1];td.className=last.r==="w"?"win":last.r==="l"?"lose":"";
+          td.innerHTML=gs.map(g=>g.r==="w"?"○":g.r==="l"?"●":"△").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}}
+      tr.appendChild(td)});body.appendChild(tr)});
+  xt.appendChild(body);
+  const done=res.rows.reduce((n,r)=>n+r.g,0)/2;
+  $("ltNote").textContent=`承認済みの ${done} 試合から作っています。○ 勝ち ● 負け（行の${solo?"人":"チーム"}から見た結果）。順位は勝ち数、負けの少なさ、得失点差の順です。`;
 }
 function renderSchedAdmin(items){
   if(!$("gStart").value)$("gStart").value=sched.league?sched.league.start:ymd(new Date());
