@@ -332,6 +332,9 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .shotclock.nudge{border:2px solid var(--red);box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 25%,transparent)}
 .sc-card.need{border-color:var(--red)}
 .sc-card.need .cc-side{border-color:var(--red)}
+.sc-card.locked .sc-time,.sc-card.locked .sc-bar,.sc-card.locked .sc-btns{opacity:.35}
+.sc-card.locked .sc-time{cursor:default}
+.sc-card.locked .sc-used{display:block!important;color:var(--muted)}
 .cc-help{margin:0;font-size:11px;color:var(--muted);text-align:center}
 .cc-step{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
 .cc-step button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;font-weight:700}
@@ -2556,19 +2559,23 @@ function scLoop(){if(SC.timer)return;SC.timer=setInterval(()=>{let any=false;
     c._lastSec=sec;
     if(t<=0){c.run=false;c.left=0;c.over=true;scSay("時間切れです",440,600);scFx(i,"時間切れ","over");try{navigator.vibrate&&navigator.vibrate([200,80,200])}catch(e){}}});
   scDraw();if(!any){clearInterval(SC.timer);SC.timer=null}},100)}
+/* while the chess clock is on, a player's shot clock is used only after their chess time has run out */
+function ccLocked(i){try{return !!(CC.on&&!CC.over[i])}catch(e){return false}}
 function scDraw(){
   SC.c.forEach((c,i)=>{const t=scNow(c),sec=Math.ceil(t/1000);
     const card=document.querySelector(`.sc-card[data-p="${i}"]`);if(!card)return;
+    const lock=ccLocked(i);card.classList.toggle("locked",lock);
+    card.querySelectorAll(".sc-time,.sc-btns button").forEach(b=>{b.disabled=lock});
     $("scTime"+i).textContent=sec;
     $("scBar"+i).style.width=(c.max?Math.max(0,t/c.max*100):0).toFixed(1)+"%";
     card.classList.toggle("run",c.run);card.classList.toggle("warn",t<=10000&&t>0);card.classList.toggle("over",c.over);
     card.querySelector(".sc-go").textContent=c.run?"一時停止":(t<=0?"時間切れ":"スタート");
-    card.querySelector(".sc-go").disabled=t<=0&&!c.run;
-    $("scUsed"+i).textContent=c.ex?`EX 使用 ${c.ex}回`:"";
+    card.querySelector(".sc-go").disabled=lock||(t<=0&&!c.run);
+    $("scUsed"+i).textContent=lock?"持ち時間が切れたら使えます":c.ex?`EX 使用 ${c.ex}回`:"";
   });
 }
 document.querySelectorAll(".sc-card").forEach(card=>{const i=+card.dataset.p;
-  card.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+  card.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.classList.contains("cc-side")||ccLocked(i))return;
     if(b.classList.contains("sc-time")||b.dataset.act==="toggle"){SC.c[i].run?scPause(i):scStart(i);scDraw();return}
     if(b.dataset.act==="reset"){scReset(i);return}
     if(b.dataset.act==="ex"){scEx(i)}})});
@@ -2597,6 +2604,7 @@ function ccLoop(){if(CC.timer)return;CC.timer=setInterval(()=>{
 /* when someone's chess time is gone, point everyone to the shot clock */
 function ccNudge(scroll){
   const out=[0,1].filter(i=>CC.over[i]);
+  if(typeof scDraw==="function")scDraw();
   const was=$("ccAlert").hidden;
   $("ccAlert").hidden=!out.length||!CC.on;
   if(was!==$("ccAlert").hidden)requestAnimationFrame(fitPlay);
