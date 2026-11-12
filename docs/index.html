@@ -436,12 +436,21 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .fx-day.cur{border-bottom-color:var(--cue)}
 .fx-day.cur small{color:var(--ink);font-weight:700}
 .fx-list .fx-day:first-child{padding-top:2px}
-.fx{display:grid;grid-template-columns:4.6em minmax(0,1fr);gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.fx{display:grid;grid-template-columns:4.6em minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
 .fx-st{font-size:11px;font-weight:700;text-align:center;border-radius:999px;padding:3px 0;background:var(--bg);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .fx.st-done .fx-st{background:var(--felt);border-color:var(--felt);color:#fff}
 .fx.st-now .fx-st{background:color-mix(in srgb,var(--cue) 30%,var(--surface));border-color:var(--cue);color:var(--ink)}
 .fx.st-late .fx-st{border-color:var(--red);color:var(--red)}
 .fx.st-done .fx-teams{opacity:.6}
+.fx-go{border:0;background:var(--felt);color:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:800;white-space:nowrap}
+.lg-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:color-mix(in srgb,var(--felt) 12%,var(--surface));border:2px solid var(--felt);border-radius:14px;padding:10px 12px}
+.lg-banner b{display:block;font-size:15px;color:var(--felt)}
+.lg-banner span{font-size:12px;color:var(--muted)}
+.lg-banner .ghost{font-size:12px;padding:6px 10px}
+#fmtSeg button:disabled{opacity:.45}
+.title-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.title-row .page-title{margin:0}
+.page-reload{color:var(--ink);border-color:var(--line);background:var(--surface)}
 .fx-teams{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}
 .fx-teams b{font-weight:700;overflow-wrap:anywhere}
 .fx-teams b.me{color:var(--felt);text-decoration:underline;text-decoration-color:var(--cue);text-decoration-thickness:3px;text-underline-offset:4px}
@@ -728,6 +737,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 
   <section class="sheet" aria-labelledby="h-new">
     <h2 id="h-new">新しい試合</h2>
+    <div class="lg-banner" id="lgBanner" hidden role="status"><div><b id="lgBannerTitle"></b><span id="lgBannerSub"></span></div><button class="ghost" type="button" id="lgCancel">リーグ戦をやめる</button></div>
 
     <div class="field">
       <label id="gameLab">種目</label>
@@ -965,6 +975,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <div class="grid2">
       <div class="field"><label for="gStart" id="gStartLab">開始日</label><input id="gStart" type="date"></div>
       <div class="field"><label for="gMonths">期間</label><select id="gMonths"><option value="0">1日だけ（突発の1回）</option><option value="1">1か月</option><option value="2">2か月</option><option value="3" selected>3か月</option><option value="4">4か月</option><option value="6">6か月</option></select></div>
+      <div class="field"><label for="gFmt">試合形式</label><select id="gFmt"><option value="long">ロング（通常）</option><option value="middle">ミドル</option><option value="short">ショート（気軽に）</option></select></div>
       <div class="field"><label for="gRounds">回数</label><select id="gRounds"><option value="1">1回総当たり</option><option value="2">2回総当たり</option></select></div>
     </div>
     <div class="plan" id="gPlan" aria-live="polite"></div>
@@ -1420,11 +1431,14 @@ renderPickers();
 
 $("startBtn").onclick=()=>{
   const g=GAMES[cfg.game];
+  if(leagueCtx&&!leagueCtxOk()){toast(`リーグ戦の組み合わせ（${leagueCtx.home} 対 ${leagueCtx.away}）と違います。選び直すか「リーグ戦をやめる」を押してください`);return}
   if(g.mode==="bowl"){startBowl();return}
   const t=[Math.max(1,parseInt($("t1").value)||g.def),Math.max(1,parseInt($("t2").value)||g.def)];
   M={id:Date.now(),game:cfg.game,mode:g.mode,fmt:g.mode==="balls"?((cfg&&cfg.fmt)||"long"):undefined,names:[getName(1)||"プレイヤー1",getName(2)||"プレイヤー2"],teams:[getTeam(1),getTeam(2)],
     target:t,score:[0,0],runouts:[0,0],aces:[0,0],zips:[0,0],fouls:[0,0],consec:[0,0],breakRule:cfg.breakRule,breaker:cfg.first,turn:cfg.first,
-    rack:1,pocketed:[],dead:[],rackPts:[0,0],rackWins:[0,0],log:[],start:Date.now(),done:false};
+    rack:1,pocketed:[],dead:[],rackPts:[0,0],rackWins:[0,0],log:[],start:Date.now(),done:false,
+    league:leagueCtx?{fixture:leagueCtx.id,round:leagueCtx.round,fmt:leagueCtx.fmt}:null};
+  leagueCtx=null;renderLeagueBanner();
   undoStack=[];save();openPlay();
 };
 $("resumeBtn").onclick=()=>{undoStack=[];openPlay()};
@@ -1581,6 +1595,7 @@ function hcFmt(){const F=hcFormats();return F[(cfg&&cfg.fmt)||"long"]||F.long}
 /* curve through rating 500 → 60 and 200 → 25 (ロング); ミドル and ショート scale the same curve */
 function hcPoints(r){const HC_POW=Math.log(25/60)/Math.log(200/500);return Math.max(1,Math.round(hcFmt().at500*Math.pow(Math.max(r,1)/500,HC_POW)))}
 function renderFmt(){
+  try{if(leagueCtx&&cfg.fmt!==leagueCtx.fmt)cfg.fmt=leagueCtx.fmt}catch(e){}
   const f=hcFmt(),k=(cfg&&cfg.fmt)||"long";
   $("fmtSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===k));
   $("fmtHint").textContent=k==="short"?`気軽にできる短い試合です。持ち点はロングの半分（レート500で${f.at500}点）。`
@@ -1595,12 +1610,13 @@ function updateHandicap(){
     el.textContent=r?`${Math.round(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
   const msg=$("hcMsg");
   if(!$("hcAuto").checked){msg.textContent="持ち点は手動で入れています。";return}
+  [1,2].forEach(i=>{if(!rs[i-1])$("t"+i).value=hcFmt().at500});
   if(!rs[0]&&!rs[1]){msg.textContent=`レートがある人は、レートから持ち点を自動で決めます（レート500で${hcFmt().at500}点）。`;return}
   const parts=[];
   [1,2].forEach(i=>{const r=rs[i-1];if(!r)return;const v=hcPoints(r.r);$("t"+i).value=v;parts.push(`${r.n} ${v}点（レート${Math.round(r.r)}）`)});
   const missing=[1,2].filter(i=>!rs[i-1]).map(i=>getName(i)||(i===1?"左":"右"));
   msg.textContent=parts.join(" ／ ")+`。レートから決めました（レート500で${hcFmt().at500}点）。`
-    +(missing.length?`${missing.join("・")} はレートがないので、持ち点を入れてください。`:"")
+    +(missing.length?`${missing.join("・")} はレートがないので ${hcFmt().at500}点 にしています。`:"")
     +(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
 }
 $("hcAuto").addEventListener("change",updateHandicap);
@@ -1609,7 +1625,7 @@ $("fmtSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!
   [1,2].forEach(i=>{if(!rateOf(getName(i)))$("t"+i).value=hcFmt().at500})});
 [1,2].forEach(i=>$("t"+i).addEventListener("input",()=>{
   if(!$("hcAuto").checked)return;
-  if(rateOf(getName(i))){$("hcAuto").checked=false;updateHandicap()}
+  $("hcAuto").checked=false;updateHandicap();
 }));
 /* ---------- my rating (per viewer / per phone) ---------- */
 let myName=store.get("cb_me",null),myId=null,meDoc=null,meEditing=false;
@@ -1771,7 +1787,7 @@ $("gMake").onclick=()=>{
   genArmed=false;$("gMake").textContent="この内容でリーグを作る";
   const win=windows(start,p.end,p.rr.length),items=[];
   p.rr.forEach((games,r)=>games.forEach(([home,away])=>items.push({id:newId(),round:r+1,start:win[r][0],end:win[r][1],home,away,done:false})));
-  sched={league:{start,end:p.end,months,rounds,teams,kind:gKind},items};saveSched();
+  sched={league:{start,end:p.end,months,rounds,teams,kind:gKind,fmt:$("gFmt").value},items};saveSched();
   msg.textContent=months===0?`${fmtDay(start)} 1日だけの突発${gKind==="solo"?"個人":"チーム"}リーグ（${teams.length}${gU()}・${items.length}試合）を作りました。日程タブで確認できます。`:`${teams.length}${gU()}・${p.rr.length}節・${items.length}試合の${gKind==="solo"?"個人":"チーム"}リーグを作りました。日程タブで確認できます。`;
 };
 let clrArmed=false;
@@ -1787,6 +1803,7 @@ function fixtureState(){
   if(L){const from=parseYmd(L.start).getTime();
     const side=L.kind==="solo"?"names":"teams";
     (lastHist||[]).forEach(m=>{const t=m[side];if(!t||!t[0]||!t[1]||t[0]===t[1]||(m.end||0)<from)return;
+      if(L.fmt&&(m.fmt||"long")!==L.fmt)return;
       const k=pairKey(t[0],t[1]);played[k]=(played[k]||0)+1})}
   const today=ymd(new Date());
   return items.map(x=>{
@@ -1819,7 +1836,7 @@ function renderSched(){
       <div class="sum-bar"><i style="width:${pct}%"></i></div>
       <div class="sum-nums"><span><b>${doneN}</b> / ${mine.length} 試合消化</span><span></span></div>`;
     sum.querySelector(".sum-label").textContent=schedFilter==="all"?"リーグ全体":schedFilter;
-    sum.querySelector(".sum-period").textContent=`${fmtShort(L.start)}〜${fmtShort(L.end)}${today>L.end?" ・ 終了":today<L.start?" ・ 開幕前":curRound?` ・ 今は第${curRound.round}節`:""}`;
+    sum.querySelector(".sum-period").textContent=`${L.fmt?({long:"ロング",middle:"ミドル",short:"ショート"})[L.fmt]+" ・ ":""}${fmtShort(L.start)}〜${fmtShort(L.end)}${today>L.end?" ・ 終了":today<L.start?" ・ 開幕前":curRound?` ・ 今は第${curRound.round}節`:""}`;
     sum.querySelector(".sum-nums span:last-child").textContent=lateN?`期限切れ ${lateN}`:"";
   }
 
@@ -1859,6 +1876,9 @@ function renderSched(){
     row.innerHTML=`<span class="fx-st"></span><span class="fx-teams"><b class="${hl(x.home)}"></b><i>VS</i><b class="${hl(x.away)}"></b></span>`;
     row.querySelector(".fx-st").textContent=ST_LABEL[x.st];
     const bs=row.querySelectorAll(".fx-teams b");bs[0].textContent=x.home;bs[1].textContent=x.away;
+    if(!x.consumed&&L){const go=document.createElement("button");go.type="button";go.className="fx-go";go.textContent="スコアをつける";
+      go.setAttribute("aria-label",`${x.home} 対 ${x.away} のスコアをつける`);go.onclick=()=>startFixture(x);row.appendChild(go)}
+    else row.appendChild(document.createElement("span"));
     up.appendChild(row)});
   renderSchedAdmin(items);renderLeagueTable();
 }
@@ -1872,6 +1892,7 @@ function leagueResults(){
   [...(lastHist||[])].sort((a,b)=>(a.end||0)-(b.end||0)).forEach(m=>{
     const t=m[side];if(!t||!set.has(t[0])||!set.has(t[1])||t[0]===t[1])return;
     if((m.end||0)<from||(m.end||0)>=to)return;
+    if(L.fmt&&(m.fmt||"long")!==L.fmt)return;
     const k=pairKey(t[0],t[1]);if((used[k]||0)>=(cap[k]||0))return;used[k]=(used[k]||0)+1;
     const sc=m.score||[0,0],res=sc[0]>sc[1]?0:sc[1]>sc[0]?1:-1;
     [0,1].forEach(i=>{const me=R[t[i]],op=t[1-i];me.g++;me.pf+=+sc[i]||0;me.pa+=+sc[1-i]||0;
@@ -1908,6 +1929,43 @@ function renderLeagueTable(){
   const done=res.rows.reduce((n,r)=>n+r.g,0)/2;
   $("ltNote").textContent=`承認済みの ${done} 試合から作っています。○ 勝ち ● 負け（行の${solo?"人":"チーム"}から見た結果）。順位は勝ち数、負けの少なさ、得失点差の順です。`;
 }
+/* ---- start a league fixture: game, format, teams/names filled in; format locked to the league's ---- */
+var leagueCtx=null;
+const FMT_LABEL={long:"ロング",middle:"ミドル",short:"ショート"};
+function setPick(i,team,name){
+  const ts=$("tm"+i);
+  if(team&&[...ts.options].some(o=>o.value===team))ts.value=team;else if(team){ts.value=OTHER;$("tm"+i+"x").value=team}else ts.value="";
+  $("tm"+i+"x").hidden=ts.value!==OTHER;fillNames(i);
+  if(name){const ns=$("n"+i);if([...ns.options].some(o=>o.value===name))ns.value=name;else{ns.value=OTHER;$("n"+i+"x").value=name}
+    $("n"+i+"x").hidden=ns.value!==OTHER;syncNames()}
+}
+function teamOf(n){const t=roster.teams.find(t=>t.members.includes(n));return t?t.name:""}
+function startFixture(x){
+  const L=sched.league;if(!L)return;
+  leagueCtx={id:x.id,round:x.round,home:x.home,away:x.away,fmt:L.fmt||"long",kind:L.kind||"team"};
+  showPage("match");
+  const g9=$("gameSeg").querySelector('[data-v="9"]');if(cfg.game!=="9"&&g9)g9.click();
+  cfg.fmt=leagueCtx.fmt;
+  if(leagueCtx.kind==="solo"){setPick(1,teamOf(x.home),x.home);setPick(2,teamOf(x.away),x.away)}
+  else{setPick(1,x.home,null);setPick(2,x.away,null)}
+  $("hcAuto").checked=true;updateHandicap();renderLeagueBanner();
+  window.scrollTo(0,0);
+  toast(leagueCtx.kind==="solo"?"組み合わせを入れました。「試合開始」を押してください":"出場する人をそれぞれ選んで「試合開始」を押してください");
+}
+function leagueCtxOk(){
+  if(!leagueCtx)return false;
+  const a=leagueCtx.kind==="solo"?[getName(1),getName(2)]:[getTeam(1),getTeam(2)];
+  return pairKey(a[0],a[1])===pairKey(leagueCtx.home,leagueCtx.away);
+}
+function renderLeagueBanner(){
+  const b=$("lgBanner");
+  if(!leagueCtx){b.hidden=true;$("fmtSeg").querySelectorAll("button").forEach(x=>x.disabled=false);return}
+  b.hidden=false;
+  $("lgBannerTitle").textContent=`リーグ戦 第${leagueCtx.round}節：${leagueCtx.home} 対 ${leagueCtx.away}`;
+  $("lgBannerSub").textContent=`試合形式は ${FMT_LABEL[leagueCtx.fmt]} に決まっています。`+(leagueCtx.kind==="solo"?"":"出場する人を選んでください。");
+  $("fmtSeg").querySelectorAll("button").forEach(x=>x.disabled=true);
+}
+$("lgCancel").onclick=()=>{leagueCtx=null;renderLeagueBanner();updateHandicap()};
 function renderSchedAdmin(items){
   if(!$("gStart").value)$("gStart").value=sched.league?sched.league.start:ymd(new Date());
   if(sched.league&&sched.league.kind&&!$("gTeams").value.trim()){const b=$("gKind").querySelector(`[data-v="${sched.league.kind}"]`);if(b&&sched.league.kind!==gKind)b.click()}
@@ -2800,7 +2858,7 @@ function markStat(p,k,label){
   if(M.done)return;snap();M[k]=M[k]||[0,0];M[k][p]++;
   L(`ラック${M.rack}: ${M.names[p]} ${label}`);render();toast(`${M.names[p]} ${label}`);
 }
-function histRec(){return{id:String(M.id),game:M.game,fmt:M.fmt||null,names:M.names,teams:M.teams||["",""],score:M.score,target:M.target,start:M.start,end:M.end,
+function histRec(){return{id:String(M.id),game:M.game,fmt:M.fmt||null,league:M.league||null,names:M.names,teams:M.teams||["",""],score:M.score,target:M.target,start:M.start,end:M.end,
   aces:M.aces||[0,0],zips:M.zips||[0,0],runouts:M.runouts||[0,0],fouls:M.fouls||[0,0],racks:M.rack-1,rackWins:M.rackWins||[0,0],
   status:"pending",recordedBy:myName||null}}
 /* anyone except the person who recorded may approve: the opponent, or any third party (when a scorer recorded, either player too) */
@@ -2991,6 +3049,10 @@ function doPocket(n,i){
   setTimeout(()=>pop.remove(),1000);
 }
 
+document.querySelectorAll("#setup .page > h1.page-title").forEach(h=>{
+  const row=document.createElement("div");row.className="title-row";h.parentNode.insertBefore(row,h);
+  const b=$("reloadBtn").cloneNode(true);b.removeAttribute("id");b.classList.remove("hero-btn");b.classList.add("page-reload");
+  b.onclick=()=>$("reloadBtn").click();row.appendChild(b);row.appendChild(h)});
 $("reloadBtn").onclick=()=>{
   $("reloadBtn").classList.add("spin");
   /* the query string makes the browser fetch the newest version instead of a cached one */
