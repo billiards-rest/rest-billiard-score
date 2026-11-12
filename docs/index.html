@@ -336,10 +336,12 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 /* bowlliards */
 .versus.solo{grid-template-columns:minmax(0,1fr)}
 .versus.solo .vs,.versus.solo .pblock.b{display:none}
-.gsw-ball.bowlic{background:transparent;box-shadow:none}
-.gsw-ball.bowlic svg{width:30px;height:30px;display:block}
-.gsw-ball.bowlic circle{fill:var(--felt)}
-.gsw-ball.bowlic circle.hd{fill:var(--cue)}
+.gsw-ball.bowlic{background:transparent;box-shadow:none;position:relative}
+.gsw-ball.bowlic em{position:absolute;width:17px;height:17px;border-radius:50%;background:var(--c);display:grid;place-items:center;box-shadow:inset -2px -2px 0 rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.12)}
+.gsw-ball.bowlic em i{width:9px;height:9px;min-width:0;padding:0;font-size:7px;letter-spacing:0}
+.gsw-ball.bowlic .b1{left:6.5px;top:-1px;z-index:1}
+.gsw-ball.bowlic .b2{left:-1px;bottom:0}
+.gsw-ball.bowlic .b3{right:-1px;bottom:0}
 #bowl{min-height:100%;display:flex;flex-direction:column;gap:12px;padding-block:12px 24px;max-width:900px;margin:0 auto;position:relative}
 .bw-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;border-radius:18px;border:8px solid var(--rail);color:var(--chalk-white);padding:12px 16px;
   background:radial-gradient(130% 110% at 20% 10%,var(--cloth-hi),var(--cloth) 55%,var(--felt-deep))}
@@ -1142,7 +1144,7 @@ function gameBtn(k,label,sub,ready){
   const b=document.createElement("button");b.type="button";b.dataset.v=k;b.className="gsw"+(ready?"":" soon");
   const ic=GAME_ICON[k]||["#999",false,""];
   const ball=k==="bowl"
-    ?`<span class="gsw-ball bowlic" aria-hidden="true"><svg viewBox="0 0 30 30">${[[15,6],[11,12.5],[19,12.5],[7,19],[15,19],[23,19],[3,25.5],[11,25.5],[19,25.5],[27,25.5]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="3.4" class="${i===0?"hd":""}"/>`).join("")}</svg></span>`
+    ?`<span class="gsw-ball bowlic" aria-hidden="true"><em style="--c:#e2b53b" class="b1"><i>1</i></em><em style="--c:#2457a6" class="b2"><i>2</i></em><em style="--c:#c2412d" class="b3"><i>3</i></em></span>`
     :k==="trio"
     ?`<span class="gsw-ball people" aria-hidden="true"><svg viewBox="0 0 30 30"><circle class="pb" cx="8" cy="12" r="3.2"/><path class="pb" d="M2.5 23.5c0-3.4 2.5-5.6 5.5-5.6s5.5 2.2 5.5 5.6z"/><circle class="pb" cx="22" cy="12" r="3.2"/><path class="pb" d="M16.5 23.5c0-3.4 2.5-5.6 5.5-5.6s5.5 2.2 5.5 5.6z"/><circle class="pf" cx="15" cy="9.5" r="3.8"/><path class="pf" d="M8.6 24c0-4 2.9-6.6 6.4-6.6s6.4 2.6 6.4 6.6z"/></svg></span>`
     :k==="3c"
