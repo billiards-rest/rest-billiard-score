@@ -57,6 +57,7 @@ button{cursor:pointer}
 .field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .field label{font-size:13px;font-weight:700}
 .field input,.field select{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;width:100%}
+.field input,.field select,.field textarea{box-sizing:border-box;max-width:100%}
 /* hero: the table itself — felt surface inside a walnut rail with sights */
 .hero{position:relative;border-radius:24px;border:12px solid var(--rail);
   background:radial-gradient(130% 100% at 25% 15%,var(--cloth-hi),var(--cloth) 50%,var(--felt-deep) 100%);
@@ -840,15 +841,15 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 
   <section class="sheet" id="schedAdmin" aria-labelledby="h-sa">
     <h2 id="h-sa">リーグ戦を組む</h2>
-    <p class="hint">期間内で消化する総当たり戦を作ります。各節に消化推奨期間が付き、日程タブで次の対戦相手と期間が見られます。</p>
+    <p class="hint">期間内で消化する総当たり戦を作ります。「1日だけ」を選ぶと、その日1日で全試合を行う突発のリーグになります。各節に消化推奨期間が付き、日程タブで次の対戦相手と期間が見られます。</p>
     <div class="field">
       <label for="gTeams">出場チーム（1行に1チーム）</label>
       <textarea id="gTeams" rows="6" placeholder="チームA&#10;チームB&#10;チームC"></textarea>
       <div class="row"><button class="ghost" type="button" id="gFromRoster">登録済みのチームを読み込む</button></div>
     </div>
     <div class="grid2">
-      <div class="field"><label for="gStart">開始日</label><input id="gStart" type="date"></div>
-      <div class="field"><label for="gMonths">期間</label><select id="gMonths"><option value="1">1か月</option><option value="2">2か月</option><option value="3" selected>3か月</option><option value="4">4か月</option><option value="6">6か月</option></select></div>
+      <div class="field"><label for="gStart" id="gStartLab">開始日</label><input id="gStart" type="date"></div>
+      <div class="field"><label for="gMonths">期間</label><select id="gMonths"><option value="0">1日だけ（突発の1回）</option><option value="1">1か月</option><option value="2">2か月</option><option value="3" selected>3か月</option><option value="4">4か月</option><option value="6">6か月</option></select></div>
       <div class="field"><label for="gRounds">回数</label><select id="gRounds"><option value="1">1回総当たり</option><option value="2">2回総当たり</option></select></div>
     </div>
     <div class="plan" id="gPlan" aria-live="polite"></div>
@@ -1598,7 +1599,7 @@ function windows(start,end,count){
 function parseTeams(){return [...new Set($("gTeams").value.split(/\n/).map(s=>s.trim()).filter(Boolean))]}
 function planFor(teams,start,months,rounds){
   if(teams.length<2||!start)return null;
-  const end=addDays(addMonths(start,months),-1);
+  const end=months>0?addDays(addMonths(start,months),-1):start; /* 0 = a one-off league played on a single day */
   const rr=roundRobin(teams,rounds);
   const games=rr.reduce((n,g)=>n+g.length,0);
   const days=dayDiff(start,end)+1;
@@ -1606,7 +1607,14 @@ function planFor(teams,start,months,rounds){
 }
 function renderPlan(){
   const teams=parseTeams(),p=planFor(teams,$("gStart").value,+$("gMonths").value,+$("gRounds").value),el=$("gPlan");
-  if(!p){el.innerHTML=`<p class="hint">${teams.length<2?`出場チームが ${teams.length} チームです。2チーム以上入れてください。`:"開始日を選んでください。"}</p>`;return}
+  const one=+$("gMonths").value===0;$("gStartLab").textContent=one?"開催日":"開始日";
+  if(!p){el.innerHTML=`<p class="hint">${teams.length<2?`出場チームが ${teams.length} チームです。2チーム以上入れてください。`:one?"開催日を選んでください。":"開始日を選んでください。"}</p>`;return}
+  if(one){el.innerHTML=`<div class="plan-grid">
+    <div><b>${teams.length}</b><span>チーム</span></div>
+    <div><b>${p.rr.length}</b><span>節</span></div>
+    <div><b>${p.games}</b><span>試合</span></div>
+    <div><b>1</b><span>日だけ</span></div></div>
+    <p class="hint">${fmtDay($("gStart").value)} の1日で、全 ${p.games} 試合を行います。各チーム ${p.rr.length-(p.bye?+$("gRounds").value:0)} 試合${p.bye?`、チーム数が奇数なので各チーム ${+$("gRounds").value} 節はお休み`:""}。</p>`;return}
   el.innerHTML=`<div class="plan-grid">
     <div><b>${teams.length}</b><span>チーム</span></div>
     <div><b>${p.rr.length}</b><span>節</span></div>
@@ -1620,14 +1628,14 @@ let genArmed=false;
 $("gMake").onclick=()=>{
   const teams=parseTeams(),start=$("gStart").value,months=+$("gMonths").value,rounds=+$("gRounds").value,msg=$("gMsg");
   const p=planFor(teams,start,months,rounds);
-  if(!p){msg.textContent=teams.length<2?"出場チームを2チーム以上入れてください。":"開始日を選んでください。";return}
+  if(!p){msg.textContent=teams.length<2?"出場チームを2チーム以上入れてください。":months===0?"開催日を選んでください。":"開始日を選んでください。";return}
   if(sched.items.length&&!genArmed){genArmed=true;$("gMake").textContent="今の日程を置き換えて作る";msg.textContent=`今ある ${sched.items.length} 試合の日程は消えます。よければもう一度押してください。`;
     setTimeout(()=>{genArmed=false;$("gMake").textContent="この内容でリーグを作る"},4000);return}
   genArmed=false;$("gMake").textContent="この内容でリーグを作る";
   const win=windows(start,p.end,p.rr.length),items=[];
   p.rr.forEach((games,r)=>games.forEach(([home,away])=>items.push({id:newId(),round:r+1,start:win[r][0],end:win[r][1],home,away,done:false})));
   sched={league:{start,end:p.end,months,rounds,teams},items};saveSched();
-  msg.textContent=`${teams.length}チーム・${p.rr.length}節・${items.length}試合のリーグを作りました。日程タブで確認できます。`;
+  msg.textContent=months===0?`${fmtDay(start)} 1日だけの突発リーグ（${teams.length}チーム・${items.length}試合）を作りました。日程タブで確認できます。`:`${teams.length}チーム・${p.rr.length}節・${items.length}試合のリーグを作りました。日程タブで確認できます。`;
 };
 let clrArmed=false;
 $("sClear").onclick=()=>{
