@@ -877,9 +877,14 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 
   <section class="sheet" id="schedAdmin" aria-labelledby="h-sa">
     <h2 id="h-sa">リーグ戦を組む</h2>
-    <p class="hint">期間内で消化する総当たり戦を作ります。「1日だけ」を選ぶと、その日1日で全試合を行う突発のリーグになります。各節に消化推奨期間が付き、日程タブで次の対戦相手と期間が見られます。</p>
+    <div class="field"><label>参加の単位</label>
+      <div class="seg" id="gKind" role="group" aria-label="リーグの参加の単位">
+        <button type="button" data-v="team" aria-pressed="true">チーム戦</button>
+        <button type="button" data-v="solo" aria-pressed="false">個人戦</button>
+      </div></div>
+    <p class="hint">期間内で消化する総当たり戦を作ります。チーム戦と個人戦を選べます。「1日だけ」を選ぶと、その日1日で全試合を行う突発のリーグになります。各節に消化推奨期間が付き、日程タブで次の対戦相手と期間が見られます。</p>
     <div class="field">
-      <label for="gTeams">出場チーム（1行に1チーム）</label>
+      <label for="gTeams" id="gTeamsLab">出場チーム（1行に1チーム）</label>
       <textarea id="gTeams" rows="6" placeholder="チームA&#10;チームB&#10;チームC"></textarea>
       <div class="row"><button class="ghost" type="button" id="gFromRoster">登録済みのチームを読み込む</button></div>
     </div>
@@ -900,17 +905,22 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 
   <section class="sheet" id="tourAdmin" aria-labelledby="h-ta">
     <h2 id="h-ta">トーナメントを作る</h2>
-    <p class="hint">単発の大会用です。ダブルイリミネーションで勝ち残りを決めてから、シングルイリミネーションで優勝を決めます。</p>
+    <p class="hint">単発の大会用です。個人戦とチーム戦を選べます。ダブルイリミネーションで勝ち残りを決めてから、シングルイリミネーションで優勝を決めます。</p>
+    <div class="field"><label>参加の単位</label>
+      <div class="seg" id="tKind" role="group" aria-label="トーナメントの参加の単位">
+        <button type="button" data-v="solo" aria-pressed="true">個人戦</button>
+        <button type="button" data-v="team" aria-pressed="false">チーム戦</button>
+      </div></div>
     <div class="field"><label for="tName">大会名</label><input id="tName" maxlength="30" autocomplete="off" placeholder="例：REST 月例ナインボール"></div>
     <div class="field">
-      <label for="tPlayers">参加者（1行に1人）</label>
+      <label for="tPlayers" id="tPlayersLab">参加者（1行に1人）</label>
       <textarea id="tPlayers" rows="6"></textarea>
       <div class="row"><button class="ghost" type="button" id="tFromRoster">登録メンバーを読み込む</button></div>
     </div>
     <div class="grid2">
       <div class="field"><label for="tFormat">形式</label><select id="tFormat"><option value="de">ダブル → シングル</option><option value="se">シングルのみ</option></select></div>
-      <div class="field" id="tQField"><label for="tQ">シングルに進む人数</label><select id="tQ"></select></div>
-      <div class="field"><label for="tSeed">組み合わせ</label><select id="tSeed"><option value="rate">レート順（強い人どうしが序盤で当たらない）</option><option value="random">ランダム</option><option value="order">入力した順</option></select></div>
+      <div class="field" id="tQField"><label for="tQ" id="tQLab">シングルに進む人数</label><select id="tQ"></select></div>
+      <div class="field"><label for="tSeed">組み合わせ</label><select id="tSeed"><option value="rate" id="tSeedRate">レート順（強い人どうしが序盤で当たらない）</option><option value="random">ランダム</option><option value="order">入力した順</option></select></div>
     </div>
     <div class="plan" id="tPlan" aria-live="polite"></div>
     <div class="row"><button class="primary" type="button" id="tMake">この内容でトーナメントを作る</button><button class="ghost danger" type="button" id="tDel" hidden>トーナメントを削除</button></div>
@@ -1653,37 +1663,45 @@ function planFor(teams,start,months,rounds){
   const days=dayDiff(start,end)+1;
   return {end,rr,games,days,per:days/rr.length,bye:teams.length%2===1};
 }
+let gKind="team";
+const gU=()=>gKind==="solo"?"人":"チーム";
+$("gKind").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;gKind=b.dataset.v;
+  $("gKind").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  $("gTeamsLab").textContent=gKind==="solo"?"出場者（1行に1人）":"出場チーム（1行に1チーム）";
+  $("gFromRoster").textContent=gKind==="solo"?"登録メンバーを読み込む":"登録済みのチームを読み込む";
+  $("gTeams").placeholder=gKind==="solo"?"田中\n佐藤\n鈴木":"チームA\nチームB\nチームC";
+  renderPlan()});
 function renderPlan(){
   const teams=parseTeams(),p=planFor(teams,$("gStart").value,+$("gMonths").value,+$("gRounds").value),el=$("gPlan");
   const one=+$("gMonths").value===0;$("gStartLab").textContent=one?"開催日":"開始日";
-  if(!p){el.innerHTML=`<p class="hint">${teams.length<2?`出場チームが ${teams.length} チームです。2チーム以上入れてください。`:one?"開催日を選んでください。":"開始日を選んでください。"}</p>`;return}
+  if(!p){el.innerHTML=`<p class="hint">${teams.length<2?`出場${gKind==="solo"?"者":"チーム"}が ${teams.length} ${gU()}です。2${gU()}以上入れてください。`:one?"開催日を選んでください。":"開始日を選んでください。"}</p>`;return}
   if(one){el.innerHTML=`<div class="plan-grid">
-    <div><b>${teams.length}</b><span>チーム</span></div>
+    <div><b>${teams.length}</b><span>${gU()}</span></div>
     <div><b>${p.rr.length}</b><span>節</span></div>
     <div><b>${p.games}</b><span>試合</span></div>
     <div><b>1</b><span>日だけ</span></div></div>
-    <p class="hint">${fmtDay($("gStart").value)} の1日で、全 ${p.games} 試合を行います。各チーム ${p.rr.length-(p.bye?+$("gRounds").value:0)} 試合${p.bye?`、チーム数が奇数なので各チーム ${+$("gRounds").value} 節はお休み`:""}。</p>`;return}
+    <p class="hint">${fmtDay($("gStart").value)} の1日で、全 ${p.games} 試合を行います。各${gKind==="solo"?"自":"チーム"} ${p.rr.length-(p.bye?+$("gRounds").value:0)} 試合${p.bye?`、${gKind==="solo"?"人":"チーム"}数が奇数なので各${gKind==="solo"?"自":"チーム"} ${+$("gRounds").value} 節はお休み`:""}。</p>`;return}
   el.innerHTML=`<div class="plan-grid">
-    <div><b>${teams.length}</b><span>チーム</span></div>
+    <div><b>${teams.length}</b><span>${gU()}</span></div>
     <div><b>${p.rr.length}</b><span>節</span></div>
     <div><b>${p.games}</b><span>試合</span></div>
     <div><b>${p.per<1.5?"1":"約"+Math.round(p.per)}</b><span>日／1節</span></div></div>
-    <p class="hint">${fmtDay($("gStart").value)} 〜 ${fmtDay(p.end)}（${p.days}日間）。各チーム ${p.rr.length-(p.bye?+$("gRounds").value:0)} 試合${p.bye?`、チーム数が奇数なので各チーム ${+$("gRounds").value} 節はお休み`:""}。${p.per<3?"1節の期間がかなり短いです。期間を延ばすか1回総当たりにすると余裕が出ます。":""}</p>`;
+    <p class="hint">${fmtDay($("gStart").value)} 〜 ${fmtDay(p.end)}（${p.days}日間）。各${gKind==="solo"?"自":"チーム"} ${p.rr.length-(p.bye?+$("gRounds").value:0)} 試合${p.bye?`、${gKind==="solo"?"人":"チーム"}数が奇数なので各${gKind==="solo"?"自":"チーム"} ${+$("gRounds").value} 節はお休み`:""}。${p.per<3?"1節の期間がかなり短いです。期間を延ばすか1回総当たりにすると余裕が出ます。":""}</p>`;
 }
 ["gTeams","gStart","gMonths","gRounds"].forEach(id=>$(id).addEventListener("input",renderPlan));
-$("gFromRoster").onclick=()=>{$("gTeams").value=roster.teams.map(t=>t.name).join("\n");renderPlan()};
+$("gFromRoster").onclick=()=>{$("gTeams").value=gKind==="solo"?[...new Set(roster.teams.flatMap(t=>t.members))].join("\n"):roster.teams.map(t=>t.name).join("\n");renderPlan()};
 let genArmed=false;
 $("gMake").onclick=()=>{
   const teams=parseTeams(),start=$("gStart").value,months=+$("gMonths").value,rounds=+$("gRounds").value,msg=$("gMsg");
   const p=planFor(teams,start,months,rounds);
-  if(!p){msg.textContent=teams.length<2?"出場チームを2チーム以上入れてください。":months===0?"開催日を選んでください。":"開始日を選んでください。";return}
+  if(!p){msg.textContent=teams.length<2?`出場${gKind==="solo"?"者":"チーム"}を2${gU()}以上入れてください。`:months===0?"開催日を選んでください。":"開始日を選んでください。";return}
   if(sched.items.length&&!genArmed){genArmed=true;$("gMake").textContent="今の日程を置き換えて作る";msg.textContent=`今ある ${sched.items.length} 試合の日程は消えます。よければもう一度押してください。`;
     setTimeout(()=>{genArmed=false;$("gMake").textContent="この内容でリーグを作る"},4000);return}
   genArmed=false;$("gMake").textContent="この内容でリーグを作る";
   const win=windows(start,p.end,p.rr.length),items=[];
   p.rr.forEach((games,r)=>games.forEach(([home,away])=>items.push({id:newId(),round:r+1,start:win[r][0],end:win[r][1],home,away,done:false})));
-  sched={league:{start,end:p.end,months,rounds,teams},items};saveSched();
-  msg.textContent=months===0?`${fmtDay(start)} 1日だけの突発リーグ（${teams.length}チーム・${items.length}試合）を作りました。日程タブで確認できます。`:`${teams.length}チーム・${p.rr.length}節・${items.length}試合のリーグを作りました。日程タブで確認できます。`;
+  sched={league:{start,end:p.end,months,rounds,teams,kind:gKind},items};saveSched();
+  msg.textContent=months===0?`${fmtDay(start)} 1日だけの突発${gKind==="solo"?"個人":"チーム"}リーグ（${teams.length}${gU()}・${items.length}試合）を作りました。日程タブで確認できます。`:`${teams.length}${gU()}・${p.rr.length}節・${items.length}試合の${gKind==="solo"?"個人":"チーム"}リーグを作りました。日程タブで確認できます。`;
 };
 let clrArmed=false;
 $("sClear").onclick=()=>{
@@ -1696,8 +1714,9 @@ function fixtureState(){
   const L=sched.league,items=[...sched.items].filter(x=>x.start&&x.home&&x.away).sort((a,b)=>a.round-b.round||a.home.localeCompare(b.home));
   const played={};
   if(L){const from=parseYmd(L.start).getTime();
-    (lastHist||[]).forEach(m=>{if(!m.teams||!m.teams[0]||!m.teams[1]||m.teams[0]===m.teams[1]||(m.end||0)<from)return;
-      const k=pairKey(m.teams[0],m.teams[1]);played[k]=(played[k]||0)+1})}
+    const side=L.kind==="solo"?"names":"teams";
+    (lastHist||[]).forEach(m=>{const t=m[side];if(!t||!t[0]||!t[1]||t[0]===t[1]||(m.end||0)<from)return;
+      const k=pairKey(t[0],t[1]);played[k]=(played[k]||0)+1})}
   const today=ymd(new Date());
   return items.map(x=>{
     let done=!!x.done,auto=false;
@@ -1710,10 +1729,11 @@ const ST_LABEL={done:"済",soon:"これから",now:"期間中",late:"期限切�
 function renderSched(){
   const L=sched.league,items=fixtureState(),today=ymd(new Date());
   const teams=L?L.teams:[...new Set(items.flatMap(x=>[x.home,x.away]))];
-  if(schedFilter===null)schedFilter=myTeam()||"all";
+  const solo=!!(L&&L.kind==="solo");
+  if(schedFilter===null)schedFilter=(solo?myName:myTeam())||"all";
   if(schedFilter!=="all"&&!teams.includes(schedFilter))schedFilter="all";
   const fs=$("schedFilter");fs.innerHTML="";fs.hidden=teams.length<2;
-  [["all","全チーム"],...teams.map(t=>[t,t])].forEach(([v,l])=>{const b=document.createElement("button");b.type="button";b.textContent=l;
+  [["all",solo?"全員":"全チーム"],...teams.map(t=>[t,t])].forEach(([v,l])=>{const b=document.createElement("button");b.type="button";b.textContent=l;
     b.setAttribute("aria-pressed",v===schedFilter);b.onclick=()=>{schedFilter=v;renderSched()};fs.appendChild(b)});
   const mine=schedFilter==="all"?items:items.filter(x=>x.home===schedFilter||x.away===schedFilter);
   const admin=!$("openSettings").hidden;
@@ -1755,7 +1775,7 @@ function renderSched(){
   const up=$("schedUp");up.innerHTML="";
   if(!mine.length){
     const p=document.createElement("p");p.className="hint";
-    p.textContent=items.length?"このチームの対戦はありません。":(admin?"まだリーグがありません。設定タブの「リーグ戦を組む」から作れます。":"まだリーグがありません。管理者が組むとここに出ます。");
+    p.textContent=items.length?(solo?"この人の対戦はありません。":"このチームの対戦はありません。"):(admin?"まだリーグがありません。設定タブの「リーグ戦を組む」から作れます。":"まだリーグがありません。管理者が組むとここに出ます。");
     up.appendChild(p);
   }
   let lastR=null;
@@ -1773,6 +1793,7 @@ function renderSched(){
 }
 function renderSchedAdmin(items){
   if(!$("gStart").value)$("gStart").value=sched.league?sched.league.start:ymd(new Date());
+  if(sched.league&&sched.league.kind&&!$("gTeams").value.trim()){const b=$("gKind").querySelector(`[data-v="${sched.league.kind}"]`);if(b&&sched.league.kind!==gKind)b.click()}
   if(!$("gTeams").value.trim()){$("gTeams").value=(sched.league?sched.league.teams:roster.teams.map(t=>t.name)).join("\n")}
   renderPlan();
   $("sClear").hidden=!items.length;
@@ -1886,20 +1907,21 @@ function renderTour(){
     <div class="sum-bar"><i style="width:${real.length?Math.round(doneN/real.length*100):0}%"></i></div>
     <div class="sum-nums"><span><b>${doneN}</b> / ${real.length} 試合終了</span><span class="t-champ"></span></div>`;
   head.querySelector(".t-name").textContent=tour.name||"トーナメント";
-  head.querySelector(".t-fmt").textContent=`${tour.players.length}人 ・ ${B.de?`ダブル → ベスト${Math.min(tour.q,B.S/2)}からシングル`:"シングル"}`;
+  head.querySelector(".t-fmt").textContent=`${tour.players.length}${tour.kind==="team"?"チーム":"人"} ・ ${B.de?`ダブル → ベスト${Math.min(tour.q,B.S/2)}からシングル`:"シングル"}`;
   head.querySelector(".t-champ").textContent=isName(champ)?`優勝 ${champ}`:"";
 
   /* my status */
-  if(myName&&tour.players.includes(myName)){
+  const myEntry=tour.kind==="team"?myTeam():myName;
+  if(myEntry&&tour.players.includes(myEntry)){
     me.hidden=false;me.className="next-card";
     let title="",big="",sub="";
-    const mine=B.M.filter(m=>{const s=st[m.id];return s.pa===myName||s.pb===myName});
-    const losses=mine.filter(m=>st[m.id].done&&st[m.id].loser===myName);
+    const mine=B.M.filter(m=>{const s=st[m.id];return s.pa===myEntry||s.pb===myEntry});
+    const losses=mine.filter(m=>st[m.id].done&&st[m.id].loser===myEntry);
     const outM=losses.find(m=>m.side!=="W");
     const nextM=mine.find(m=>!st[m.id].done);
-    if(champ===myName){title="TOURNAMENT";big="優勝おめでとうございます";}
+    if(champ===myEntry){title="TOURNAMENT";big="優勝おめでとうございます";}
     else if(outM){title="TOURNAMENT";big="敗退";sub=`${roundName(outM.side,outM.round,B)}で負けました`}
-    else if(nextM){const s=st[nextM.id],opp=s.pa===myName?s.pb:s.pa;
+    else if(nextM){const s=st[nextM.id],opp=s.pa===myEntry?s.pb:s.pa;
       title=`NEXT ・ ${roundName(nextM.side,nextM.round,B)}`;big=isName(opp)?`vs ${opp}`:"相手待ち";
       sub=isName(opp)?"相手が決まっています。台が空いたら始めてください":"前の試合の結果が出ると相手が決まります";
       if(losses.length&&nextM.side==="L")sub="勝者側で1敗しました。敗者側で勝ち上がれば決勝トーナメントに進めます";}
@@ -1958,37 +1980,49 @@ function matchCard(m,s,B,st){
 }
 /* ---- admin: create ---- */
 function tParsePlayers(){return [...new Set($("tPlayers").value.split(/\n/).map(s=>s.trim()).filter(Boolean))]}
+let tKind="solo";
+const tU=()=>tKind==="team"?"チーム":"人";
+$("tKind").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;tKind=b.dataset.v;
+  $("tKind").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  $("tPlayersLab").textContent=tKind==="team"?"参加チーム（1行に1チーム）":"参加者（1行に1人）";
+  $("tFromRoster").textContent=tKind==="team"?"登録済みのチームを読み込む":"登録メンバーを読み込む";
+  $("tQLab").textContent=tKind==="team"?"シングルに進むチーム数":"シングルに進む人数";
+  $("tSeedRate").textContent=tKind==="team"?"レート順（メンバーの平均レートが高いチームどうしが序盤で当たらない）":"レート順（強い人どうしが序盤で当たらない）";
+  renderTourPlan()});
+/* a team's strength for seeding = average rating of its registered members */
+function teamRate(name){const t=roster.teams.find(x=>x.name===name);if(!t)return null;
+  const rs=t.members.map(m=>rateOf(m)).filter(Boolean).map(r=>r.r);return rs.length?rs.reduce((a,b)=>a+b,0)/rs.length:null}
 function renderTourPlan(){
   const ps=tParsePlayers(),fmt=$("tFormat").value,el=$("tPlan"),qs=qOptions(Math.max(ps.length,2)),qsel=$("tQ"),prev=+qsel.value||4;
   qsel.innerHTML="";qs.forEach(q=>{const o=document.createElement("option");o.value=q;o.textContent=`ベスト${q}`;qsel.appendChild(o)});
   qsel.value=qs.includes(prev)?prev:qs[Math.min(1,qs.length-1)]||2;
   $("tQField").hidden=fmt!=="de"||ps.length<3;
-  if(ps.length<2){el.innerHTML=`<p class="hint">参加者が ${ps.length} 人です。2人以上入れてください。</p>`;return}
+  if(ps.length<2){el.innerHTML=`<p class="hint">${tKind==="team"?"参加チーム":"参加者"}が ${ps.length} ${tU()}です。2${tU()}以上入れてください。</p>`;return}
   const B=buildBracket({players:ps,format:fmt,q:+qsel.value});
   const S=B.S,byes=S-ps.length,games=B.M.length;
-  el.innerHTML=`<div class="plan-grid"><div><b>${ps.length}</b><span>人</span></div><div><b>${byes}</b><span>不戦勝枠</span></div><div><b>${B.de?B.W:"–"}</b><span>勝者側回戦</span></div><div><b>${games-byes}</b><span>試合（目安）</span></div></div>
-    <p class="hint">${B.de?`${S}枠のダブルイリミネーションで、勝者側から${(+qsel.value)/2}人・敗者側から${(+qsel.value)/2}人が勝ち残り、ベスト${qsel.value}のシングルトーナメントで優勝を決めます。2回負けるまで敗退しません。`:`${S}枠のシングルイリミネーション。1回負けたら敗退です。`}${byes?` 上位の${byes}人は1回戦が不戦勝です。`:""}</p>`;
+  el.innerHTML=`<div class="plan-grid"><div><b>${ps.length}</b><span>${tU()}</span></div><div><b>${byes}</b><span>不戦勝枠</span></div><div><b>${B.de?B.W:"–"}</b><span>勝者側回戦</span></div><div><b>${games-byes}</b><span>試合（目安）</span></div></div>
+    <p class="hint">${B.de?`${S}枠のダブルイリミネーションで、勝者側から${(+qsel.value)/2}${tU()}・敗者側から${(+qsel.value)/2}${tU()}が勝ち残り、ベスト${qsel.value}のシングルトーナメントで優勝を決めます。2回負けるまで敗退しません。`:`${S}枠のシングルイリミネーション。1回負けたら敗退です。`}${byes?` 上位の${byes}人は1回戦が不戦勝です。`:""}</p>`;
 }
 ["tPlayers","tFormat","tQ","tSeed"].forEach(id=>$(id).addEventListener("input",renderTourPlan));
-$("tFromRoster").onclick=()=>{$("tPlayers").value=[...new Set(roster.teams.flatMap(t=>t.members))].join("\n");renderTourPlan()};
+$("tFromRoster").onclick=()=>{$("tPlayers").value=tKind==="team"?roster.teams.map(t=>t.name).join("\n"):[...new Set(roster.teams.flatMap(t=>t.members))].join("\n");renderTourPlan()};
 function renderTourAdmin(){
-  if(!$("tPlayers").value.trim()&&tour)$("tPlayers").value=tour.players.join("\n");
+  if(!$("tPlayers").value.trim()&&tour){if(tour.kind&&tour.kind!==tKind){const b=$("tKind").querySelector(`[data-v="${tour.kind}"]`);b&&b.click()}$("tPlayers").value=tour.players.join("\n")}
   if(!$("tName").value&&tour)$("tName").value=tour.name||"";
   renderTourPlan();$("tDel").hidden=!tour;
 }
 let tMakeArmed=false,tDelArmed=false;
 $("tMake").onclick=()=>{
   let ps=tParsePlayers();const msg=$("tMsg");
-  if(ps.length<2){msg.textContent="参加者を2人以上入れてください。";return}
+  if(ps.length<2){msg.textContent=tKind==="team"?"参加チームを2チーム以上入れてください。":"参加者を2人以上入れてください。";return}
   if(tour&&!tMakeArmed){tMakeArmed=true;$("tMake").textContent="今のトーナメントを置き換えて作る";msg.textContent="今のトーナメントと結果は見えなくなります。よければもう一度押してください。";
     setTimeout(()=>{tMakeArmed=false;$("tMake").textContent="この内容でトーナメントを作る"},4000);return}
   tMakeArmed=false;$("tMake").textContent="この内容でトーナメントを作る";
   const seed=$("tSeed").value;
   if(seed==="random"){for(let i=ps.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ps[i],ps[j]]=[ps[j],ps[i]]}}
-  if(seed==="rate"){const rv=n=>{const r=rateOf(n);return r?r.r:-1e9};ps=ps.map((n,i)=>[n,i]).sort((a,b)=>rv(b[0])-rv(a[0])||a[1]-b[1]).map(x=>x[0])}
-  tour={id:newId(),name:$("tName").value.trim()||"トーナメント",format:$("tFormat").value,q:+$("tQ").value||2,players:ps,created:Date.now()};
+  if(seed==="rate"){const rv=n=>{if(tKind==="team"){const t=teamRate(n);return t==null?-1e9:t}const r=rateOf(n);return r?r.r:-1e9};ps=ps.map((n,i)=>[n,i]).sort((a,b)=>rv(b[0])-rv(a[0])||a[1]-b[1]).map(x=>x[0])}
+  tour={id:newId(),name:$("tName").value.trim()||"トーナメント",format:$("tFormat").value,q:+$("tQ").value||2,players:ps,kind:tKind,created:Date.now()};
   if(tourDb){tourDb.set({...tour,players:[...ps]}).catch(()=>toast("トーナメントを保存できませんでした"))}else store.set("cb_tour",tour);
-  renderTour();msg.textContent=`${ps.length}人のトーナメントを作りました。日程タブの「トーナメント」で見られます。`;
+  renderTour();msg.textContent=`${ps.length}${tU()}の${tKind==="team"?"チーム":"個人"}トーナメントを作りました。日程タブの「トーナメント」で見られます。`;
 };
 $("tDel").onclick=()=>{
   if(!tDelArmed){tDelArmed=true;$("tDel").textContent="もう一度押して削除";setTimeout(()=>{tDelArmed=false;$("tDel").textContent="トーナメントを削除"},3000);return}
