@@ -68,6 +68,10 @@ button{cursor:pointer}
   background-position:12.5% 0,12.5% 100%;opacity:.9}
 .hero-top{display:flex;align-items:center;justify-content:space-between;gap:10px;position:relative}
 .hero-tag{font:700 12px/1 var(--f-display);letter-spacing:.24em;opacity:.75}
+.reload-btn{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px 6px 10px;font-size:13px;font-weight:700;min-height:34px}
+.reload-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.reload-btn.spin svg{animation:rbspin .7s linear infinite}
+@keyframes rbspin{to{transform:rotate(360deg)}}
 .hero-btn{color:inherit;border-color:color-mix(in srgb,var(--chalk-white) 35%,transparent);background:color-mix(in srgb,#000 12%,transparent)}
 .hero-main{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:14px;position:relative}
 .hero-title{min-width:0;display:flex;flex-direction:column;gap:10px}
@@ -614,6 +618,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
  <div class="page" data-page="match" id="pageMatch">
   <header class="hero">
     <div class="hero-top">
+      <button class="ghost hero-btn reload-btn" type="button" id="reloadBtn" aria-label="アプリを最新の状態に更新"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg><span>更新</span></button>
       <span class="hero-tag" id="heroTag">9-BALL · POINT GAME</span>
     </div>
     <div class="hero-main">
@@ -2642,6 +2647,12 @@ function doPocket(n,i){
   setTimeout(()=>pop.remove(),1000);
 }
 
+$("reloadBtn").onclick=()=>{
+  $("reloadBtn").classList.add("spin");
+  /* the query string makes the browser fetch the newest version instead of a cached one */
+  const u=location.pathname+"?v="+Date.now()+location.hash;
+  try{location.replace(u)}catch(e){location.reload()}
+};
 let tt;function toast(t){const el=$("toast");el.textContent=t;el.hidden=false;clearTimeout(tt);tt=setTimeout(()=>el.hidden=true,1800)}
 
 /* ---------- shared history ---------- */
