@@ -1224,7 +1224,7 @@ function renderRoster(){
     card.appendChild(ms);
     const f=document.createElement("form");f.className="addrow";
     const inp=document.createElement("input");inp.maxLength=16;inp.placeholder="メンバーの名前";inp.autocomplete="off";inp.id="addm"+ti;
-    const rt=document.createElement("input");rt.type="number";rt.inputMode="numeric";rt.min="100";rt.max="1000";rt.step="10";rt.placeholder="開始レート";rt.id="addr"+ti;rt.className="start-rate";
+    const rt=document.createElement("input");rt.type="number";rt.inputMode="numeric";rt.min="100";rt.max="1000";rt.step="1";rt.placeholder="開始レート";rt.id="addr"+ti;rt.className="start-rate";
     rt.setAttribute("aria-label","開始の目安レーティング");
     const btn=document.createElement("button");btn.className="primary";btn.type="submit";btn.textContent="メンバーを追加";
     const hint=document.createElement("p");hint.className="hint start-hint";
