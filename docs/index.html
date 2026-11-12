@@ -1136,12 +1136,12 @@ const gs=$("gameSeg");
 const SOON=[{k:"10",label:"10ボール",sub:"コールショット"},{k:"8",label:"8ボール",sub:"ラック先取"},{k:"trio",label:"トリオマッチ",sub:"3人1チーム"},{k:"3c",label:"スリークッション",sub:"キャロム"}];
 const GAME_SUB={"9":"RESTルール","bowl":"10フレーム"};
 const GAME_ICON={"9":["#e2b53b",true,"9"],"10":["#2457a6",true,"10"],"8":["#151515",false,"8"],"trio":["#2457a6",false,"3"],"3c":["#f5f3ec",false,""]};
-/* Bowlard icon: ten numbered balls racked in a triangle (1 at the front) */
+/* Bowlard icon: ten numbered balls racked the official 10-ball way (1 at the apex, 10 in the middle of the third row) */
 function bowlRackSvg(){
   const C=["#e2b53b","#2457a6","#c2412d","#5b3a8c","#e0752b","#1f7a4d","#7a2a2a","#151515","#e2b53b","#2457a6"];
-  const R=5.2,DX=10.6,DY=9.3;let n=0,out="";
+  const R=5.2,DX=10.6,DY=9.3,ORDER=[1,2,3,4,10,5,6,7,8,9];let n=0,out="";
   for(let row=0;row<4;row++)for(let k=0;k<=row;k++){
-    const x=22+(k-row/2)*DX,y=6+row*DY,c=C[n],num=++n,stripe=num>8;
+    const x=22+(k-row/2)*DX,y=6+row*DY,num=ORDER[n++],c=C[num-1],stripe=num>8;
     out+=`<g transform="translate(${x.toFixed(2)} ${y.toFixed(2)})">`
       +(stripe?`<circle r="${R}" fill="#f5f3ec"/><rect x="${-R}" y="-2.9" width="${2*R}" height="5.8" fill="${c}" clip-path="url(#bwc)"/>`:`<circle r="${R}" fill="${c}"/>`)
       +`<circle r="${R}" fill="none" stroke="rgba(0,0,0,.18)" stroke-width=".6"/><circle r="2.7" fill="#fff"/>`
