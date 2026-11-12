@@ -442,6 +442,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .fx.st-now .fx-st{background:color-mix(in srgb,var(--cue) 30%,var(--surface));border-color:var(--cue);color:var(--ink)}
 .fx.st-late .fx-st{border-color:var(--red);color:var(--red)}
 .fx.st-done .fx-teams{opacity:.6}
+.fmt-change{border:1px dashed var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.fmt-change .row{gap:8px}
+.fmt-change select{flex:1;min-width:140px}
+.fmt-change .primary{padding:9px 14px;font-size:14px}
 .fx-go{border:0;background:var(--felt);color:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:800;white-space:nowrap}
 .lg-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:color-mix(in srgb,var(--felt) 12%,var(--surface));border:2px solid var(--felt);border-radius:14px;padding:10px 12px}
 .lg-banner b{display:block;font-size:15px;color:var(--felt)}
@@ -984,6 +988,12 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 
     <h2 id="h-list" style="margin-top:6px">組んだ日程</h2>
     <p class="hint">対戦が履歴に記録されると自動で「済」になります。記録しない対戦は「済にする」で手動で消化できます。</p>
+    <div class="fmt-change" id="fmtChange" hidden>
+      <div class="field"><label for="fcSel">残りの試合の形式</label>
+        <div class="row"><select id="fcSel"><option value="long">ロング（通常）</option><option value="middle">ミドル</option><option value="short">ショート（気軽に）</option></select>
+        <button class="primary" type="button" id="fcBtn">残りの試合をこの形式にする</button></div></div>
+      <p class="hint" id="fcMsg">消化済みの試合と、いま試合中の試合はそのまま数えます。これから始める試合だけがこの形式になります。</p>
+    </div>
     <div class="fx-list" id="schedEdit"></div>
     <div class="row"><button class="ghost danger" type="button" id="sClear">日程をすべて消す</button></div>
   </section>
@@ -1797,13 +1807,20 @@ $("sClear").onclick=()=>{
 };
 
 /* which fixtures are consumed: manual "done", or a recorded match between the two teams since the league started */
+/* which format a league match must be played in: after the admin changes the remaining games' format,
+   matches started from then on must use the new format; earlier matches (finished or already being played) keep the old rule */
+function leagueFmtFor(L,m){
+  if(L.fmtFrom&&(m.start||m.end||0)>=L.fmtFrom.at)return L.fmtFrom.fmt;
+  return L.fmt||null;
+}
+function leagueNowFmt(L){return (L.fmtFrom&&L.fmtFrom.fmt)||L.fmt||"long"}
 function fixtureState(){
   const L=sched.league,items=[...sched.items].filter(x=>x.start&&x.home&&x.away).sort((a,b)=>a.round-b.round||a.home.localeCompare(b.home));
   const played={};
   if(L){const from=parseYmd(L.start).getTime();
     const side=L.kind==="solo"?"names":"teams";
     (lastHist||[]).forEach(m=>{const t=m[side];if(!t||!t[0]||!t[1]||t[0]===t[1]||(m.end||0)<from)return;
-      if(L.fmt&&(m.fmt||"long")!==L.fmt)return;
+      {const need=leagueFmtFor(L,m);if(need&&(m.fmt||"long")!==need)return}
       const k=pairKey(t[0],t[1]);played[k]=(played[k]||0)+1})}
   const today=ymd(new Date());
   return items.map(x=>{
@@ -1836,7 +1853,7 @@ function renderSched(){
       <div class="sum-bar"><i style="width:${pct}%"></i></div>
       <div class="sum-nums"><span><b>${doneN}</b> / ${mine.length} 試合消化</span><span></span></div>`;
     sum.querySelector(".sum-label").textContent=schedFilter==="all"?"リーグ全体":schedFilter;
-    sum.querySelector(".sum-period").textContent=`${L.fmt?({long:"ロング",middle:"ミドル",short:"ショート"})[L.fmt]+" ・ ":""}${fmtShort(L.start)}〜${fmtShort(L.end)}${today>L.end?" ・ 終了":today<L.start?" ・ 開幕前":curRound?` ・ 今は第${curRound.round}節`:""}`;
+    sum.querySelector(".sum-period").textContent=`${(L.fmt||L.fmtFrom)?({long:"ロング",middle:"ミドル",short:"ショート"})[leagueNowFmt(L)]+" ・ ":""}${fmtShort(L.start)}〜${fmtShort(L.end)}${today>L.end?" ・ 終了":today<L.start?" ・ 開幕前":curRound?` ・ 今は第${curRound.round}節`:""}`;
     sum.querySelector(".sum-nums span:last-child").textContent=lateN?`期限切れ ${lateN}`:"";
   }
 
@@ -1892,7 +1909,7 @@ function leagueResults(){
   [...(lastHist||[])].sort((a,b)=>(a.end||0)-(b.end||0)).forEach(m=>{
     const t=m[side];if(!t||!set.has(t[0])||!set.has(t[1])||t[0]===t[1])return;
     if((m.end||0)<from||(m.end||0)>=to)return;
-    if(L.fmt&&(m.fmt||"long")!==L.fmt)return;
+    {const need=leagueFmtFor(L,m);if(need&&(m.fmt||"long")!==need)return}
     const k=pairKey(t[0],t[1]);if((used[k]||0)>=(cap[k]||0))return;used[k]=(used[k]||0)+1;
     const sc=m.score||[0,0],res=sc[0]>sc[1]?0:sc[1]>sc[0]?1:-1;
     [0,1].forEach(i=>{const me=R[t[i]],op=t[1-i];me.g++;me.pf+=+sc[i]||0;me.pa+=+sc[1-i]||0;
@@ -1942,7 +1959,7 @@ function setPick(i,team,name){
 function teamOf(n){const t=roster.teams.find(t=>t.members.includes(n));return t?t.name:""}
 function startFixture(x){
   const L=sched.league;if(!L)return;
-  leagueCtx={id:x.id,round:x.round,home:x.home,away:x.away,fmt:L.fmt||"long",kind:L.kind||"team"};
+  leagueCtx={id:x.id,round:x.round,home:x.home,away:x.away,fmt:leagueNowFmt(L),kind:L.kind||"team"};
   showPage("match");
   const g9=$("gameSeg").querySelector('[data-v="9"]');if(cfg.game!=="9"&&g9)g9.click();
   cfg.fmt=leagueCtx.fmt;
@@ -1965,6 +1982,16 @@ function renderLeagueBanner(){
   $("lgBannerSub").textContent=`試合形式は ${FMT_LABEL[leagueCtx.fmt]} に決まっています。`+(leagueCtx.kind==="solo"?"":"出場する人を選んでください。");
   $("fmtSeg").querySelectorAll("button").forEach(x=>x.disabled=true);
 }
+$("fcSel").addEventListener("change",()=>{$("fcSel").dataset.touched="1"});
+let fcArmed=false;
+$("fcBtn").onclick=()=>{
+  const L=sched.league;if(!L)return;const f=$("fcSel").value,lab={long:"ロング",middle:"ミドル",short:"ショート"}[f];
+  if(!fcArmed){fcArmed=true;$("fcBtn").textContent=`もう一度押すと残りを${lab}にします`;setTimeout(()=>{fcArmed=false;$("fcBtn").textContent="残りの試合をこの形式にする"},4000);return}
+  fcArmed=false;$("fcBtn").textContent="残りの試合をこの形式にする";
+  const left=fixtureState().filter(x=>!x.consumed).length;
+  L.fmtFrom={fmt:f,at:Date.now()};saveSched();delete $("fcSel").dataset.touched;renderSched();
+  $("fcMsg").textContent=`残りの ${left} 試合を ${lab} にしました。消化済みと試合中の試合はそのままです。`;
+};
 $("lgCancel").onclick=()=>{leagueCtx=null;renderLeagueBanner();updateHandicap()};
 function renderSchedAdmin(items){
   if(!$("gStart").value)$("gStart").value=sched.league?sched.league.start:ymd(new Date());
@@ -1972,6 +1999,8 @@ function renderSchedAdmin(items){
   if(!$("gTeams").value.trim()){$("gTeams").value=(sched.league?sched.league.teams:roster.teams.map(t=>t.name)).join("\n")}
   renderPlan();
   $("sClear").hidden=!items.length;
+  $("fmtChange").hidden=!(sched.league&&items.length);
+  if(sched.league&&!$("fcSel").dataset.touched)$("fcSel").value=leagueNowFmt(sched.league);
   const list=$("schedEdit");list.innerHTML="";
   if(!items.length){list.innerHTML='<p class="hint">まだ日程はありません。</p>';return}
   let lastR=null;
