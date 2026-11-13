@@ -2960,8 +2960,7 @@ function render(){
     const tools=document.createElement("div");tools.className="side-tools";
     const mk=(t,fn)=>{const b=document.createElement("button");b.type="button";b.textContent=t;b.onclick=fn;tools.appendChild(b)};
     if(M.mode==="race"){
-      mk("マスワリで獲得",()=>winRack(p,true));
-      if(M.game!=="8")mk("ファウル",()=>foul(p));
+      if(M.game!=="8"){mk("マスワリで獲得",()=>winRack(p,true));mk("ファウル",()=>foul(p))}
     }else if(M.mode==="pts"){
       mk("+5",()=>addPts(p,5,"+5"));
       mk("ファウル −1",()=>foul(p));
@@ -2996,7 +2995,7 @@ function winRack(p,runout){
   if(M.done)return;snap();
   M.score[p]++;if(runout)M.runouts[p]++;M.rackWins=M.rackWins||[0,0];M.rackWins[p]++;
   M.p8=[];M.grp=[null,null];M.removed=[];M.dead=[];
-  L(`ラック${M.rack}: ${M.names[p]} 獲得${runout?"（マスワリ）":""}  ${M.score[0]}-${M.score[1]}`,runout?"":"");
+  L(`ラック${M.rack}: ${M.names[p]} 獲得${runout?"（ブレイクランアウト）":""}  ${M.score[0]}-${M.score[1]}`,runout?"":"");
   M.rack++;
   M.breaker=M.breakRule==="winner"?p:1-M.breaker;
   if(M.score[p]>=M.target[p])return finish(p);
@@ -3206,6 +3205,8 @@ function pocket8(n,p){
     const side=$("board").querySelector(`.side[data-p="${p}"]`);
     if(side&&!matchMedia("(prefers-reduced-motion:reduce)").matches){const fx=document.createElement("div");fx.className="eight-win";fx.innerHTML="<b>8</b><span>ラック獲得</span>";side.appendChild(fx);setTimeout(()=>fx.remove(),1400)}
     undoStack.pop(); /* winRack takes its own snapshot */
+    /* opponent pocketed nothing this rack: ask how it was won (like the 9-ball) */
+    if(!(M.p8||[]).some(x=>x.p===1-p)){ask8(p);return}
     winRack(p,false);return;
   }
   M.p8.push({n,p});
@@ -3238,6 +3239,19 @@ function groupRow(p){
     else{const c=document.createElement("p");c.className="hc-note";
       c.innerHTML=`<b>ハンデ</b>8番を含めて残り${N}球になったら、残りの自分の球を取り除けます`;r.appendChild(c)}}
   return r;
+}
+function ask8(p){
+  $("ovTitle").textContent=`ラック${M.rack}：${M.names[p]}`;
+  $("ovScore").textContent=`${M.score[0]} – ${M.score[1]}`;
+  $("ovSub").textContent="相手が1球も入れないままラックを取りました。どちらかを選ぶと次のラックへ進みます。";
+  const bt=$("ovBtns");bt.innerHTML="";
+  [["runouts","ブレイクランアウト","ブレイクから1人で取り切った"],["zips","ウィンジップ","相手に番が回ったが、相手は1球も入れなかった"]].forEach(([k,label,sub])=>{
+    const b=document.createElement("button");b.type="button";b.className="primary";b.innerHTML=`${label}<small style="display:block;font-size:11px;font-weight:500;opacity:.85">${sub}</small>`;
+    b.onclick=()=>{$("overlay").hidden=true;const runout=k==="runouts";
+      if(!runout){M.zips=M.zips||[0,0];M.zips[p]++}
+      winRack(p,runout);if(!runout)L(`ラック${M.rack-1}: ${M.names[p]} ウィンジップ`)};bt.appendChild(b)});
+  const c=document.createElement("button");c.type="button";c.className="ghost";c.textContent="8番を戻す";c.onclick=()=>{$("overlay").hidden=true;render()};bt.appendChild(c);
+  $("overlay").hidden=false;bt.querySelector("button").focus();
 }
 function removeOwn(p){
   if(M.done)return;const g=M.grp&&M.grp[p];if(!g)return;snap();M.removed=M.removed||[];
