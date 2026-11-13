@@ -3215,7 +3215,7 @@ function pocket8(n,p){
   /* ball-removal handicap: tell the player when they may take their remaining balls off */
   [0,1].forEach(i=>{const N=M.hcBalls&&M.hcBalls[i],lft=left8(i);
     if(N&&N<8&&lft!=null&&lft<=N&&lft>1&&!(M.toldRm||{})[M.rack+":"+i]){M.toldRm=M.toldRm||{};M.toldRm[M.rack+":"+i]=1;
-      toast(`${M.names[i]}さん：ハンデで残りの自分の球 ${lft-1}個 を台から取り除けます。取り除いたら赤いボタンをタップしてください`)}});
+      toast(`${M.names[i]}さん：ハンデです。残りの自分の球 ${lft-1}個 を台から取り除いて、赤いボタンをタップしてください`)}});
 }
 /* which group each player has: chosen by tapping ロー / ハイ (the table stays open until someone legally takes a group) */
 function setGroup(p,g){if(M.done)return;snap();M.grp=g?[null,null]:[null,null];
@@ -3239,14 +3239,14 @@ function groupRow(p){
     const need=Math.max(0,own-keep);              /* own balls still to pocket before the handicap applies */
     if(g&&own>0&&need===0){
       const b=document.createElement("button");b.type="button";b.className="hc-use";
-      b.innerHTML=`<b>ハンデ：自分の球 残り${own}個を取り除けます</b><span>台から取り除いたらタップ → 8番を狙って続行</span>`;
+      b.innerHTML=`<b>ハンデ：自分の球 残り${own}個を台から取り除いて、ここをタップしてください</b><span>タップすると8番を狙って試合を続けます</span>`;
       b.onclick=e=>{e.stopPropagation();removeOwn(p)};r.appendChild(b);
     }else if(g&&own===0){
       const c=document.createElement("p");c.className="hc-note";c.innerHTML=`<b>ハンデ</b>自分の球はもうありません。8番を狙います`;r.appendChild(c);
     }else{
       const c=document.createElement("p");c.className="hc-note";
-      c.innerHTML=g?`<b>ハンデ</b>自分の球をあと${need}個落とすと、残り${keep}個を取り除けます`
-                   :`<b>ハンデ</b>グループが決まったら、自分の球を${7-keep}個落とすと、残り${keep}個を取り除けます`;
+      c.innerHTML=g?`<b>ハンデ</b>自分の球をあと${need}個落としたら、残り${keep}個を取り除いてください`
+                   :`<b>ハンデ</b>グループが決まったら、自分の球を${7-keep}個落としたあと、残り${keep}個を取り除いてください`;
       r.appendChild(c);
     }}
   return r;
