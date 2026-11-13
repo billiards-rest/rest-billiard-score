@@ -1001,7 +1001,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
   <details class="sheet how">
     <summary>レートの見方</summary>
-    <p class="hint">クラス：Beginner（〜199・アイアン）／Rookie（200〜・カッパー）／C（300〜・ブロンズ）／C+（400〜・ブロンズ）／B（500〜・シルバー）／B+（600〜・シルバー）／A-（700〜・ゴールド）／A（800〜・ゴールド）／SA（900〜・プラチナ）／Pro（1000・ブラックダイヤ）。レートの上限は1000です</p>
+    <p class="hint">クラス：Beginner（〜199・アイアン）／Rookie（200〜・カッパー）／C（300〜・ブロンズ）／C+（400〜・ブロンズ）／B（500〜・シルバー）／A-（600〜・ゴールド）／A（700〜・ゴールド）／SA（800〜・プラチナ）／Pro（900〜・ブラックダイヤ）。レートの上限は1000です</p>
     <p class="hint">勝ち負けではなく、各ラックをどちらが取ったか（9番を落としたか）で計算します。レート差100点で1ラックあたりの勝ち比が2:1、200点差で4:1です。</p>
     <p class="hint">新しい試合が入るたびに全試合からまとめて計算し直すので、強い人から取った1ラックはそのぶん高く評価されます。基準は500点です。</p>
     <p class="hint">取ったラックと取られたラックの合計が100未満の人は「暫定」です。試合が少ないうちは500点の近くに留まり、ラック数が増えるほど実力に近づきます。</p>
@@ -1702,7 +1702,7 @@ function hcStrong(){const a=rateOf(getName(1)),b=rateOf(getName(2));if(!a||!b||a
 /* each player's 持ち点 is proportional to their own rating: rating 500 → the format's points (rating range 100–1000) */
 /* rating classes: each band of 100 rating points */
 function rateClass(r){
-  const C=[[1000,"Pro","pro"],[900,"SA","sa"],[800,"A","a"],[700,"A-","am"],[600,"B+","bp"],[500,"B","b"],[400,"C+","cp"],[300,"C","c"],[200,"Rookie","rk"],[0,"Beginner","bg"]];
+  const C=[[900,"Pro","pro"],[800,"SA","sa"],[700,"A","a"],[600,"A-","am"],[500,"B","b"],[400,"C+","cp"],[300,"C","c"],[200,"Rookie","rk"],[0,"Beginner","bg"]];
   const v=Math.round(+r||0),c=C.find(x=>v>=x[0]);return {label:c[1],key:c[2]};
 }
 (function(){const d=document.createElementNS("http://www.w3.org/2000/svg","svg");d.setAttribute("width","0");d.setAttribute("height","0");d.setAttribute("aria-hidden","true");d.style.cssText="position:absolute;width:0;height:0;overflow:hidden";
