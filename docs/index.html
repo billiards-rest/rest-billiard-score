@@ -593,6 +593,21 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit{gap:8px;padding-block:8px 10px}
 #play.fit .bar{gap:8px}
 #play.fit .board.lanein{flex:none}
+/* 8-ball set match on phones: both players side by side, everything on one screen */
+#play.fit .board.racec{grid-template-columns:minmax(0,1fr) minmax(0,1fr);flex:none;gap:8px}
+#play.fit .board.racec .side{padding:8px;gap:6px}
+#play.fit .board.racec .side-head .pname{font-size:16px}
+#play.fit .board.racec .score-btn{min-height:0;gap:6px}
+#play.fit .board.racec .score-btn .num{font-size:clamp(64px,21vw,140px)}
+#play.fit .board.racec .score-btn .rc b{font-size:clamp(34px,10.5vw,56px)}
+#play.fit .board.racec .score-btn .rc small{font-size:13px}
+#play.fit .board.racec .score-btn .race{gap:12px}
+#play.fit .board.racec .score-btn .tap{display:none}
+#play.fit .board.racec .pips{gap:4px;justify-content:center}
+#play.fit .board.racec .pip{width:12px;height:12px}
+#play.fit .board.racec .side-tools{flex-direction:column;gap:4px}
+#play.fit .board.racec .side-tools button{padding:7px 4px;font-size:12px}
+#play.fit .board.racec .stats{display:none}
 #play.fit .board.lanein .side{padding:8px;gap:6px}
 #play.fit .board.lanein .score-btn{min-height:0}
 #play.fit .board.lanein .score-btn .num{font-size:clamp(64px,21vw,140px)}
@@ -643,6 +658,9 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .side-head{display:flex;align-items:center;gap:8px;min-width:0}
 .pname{font-weight:700;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
 .chip{font-size:11px;font-weight:700;letter-spacing:.06em;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.chip.balls{background:var(--red);color:#fff;font-size:11px;padding:3px 7px;letter-spacing:0;flex:none;max-width:100%;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis}
+.board.racec .side-head{flex-wrap:wrap;row-gap:4px}
+.board.racec .side-head .pname-wrap{flex:1 1 4.5em}
 .chip.break{background:var(--cue);color:#1b1b1b}
 .chip.turn{background:var(--pc);color:#fff}
 .score-btn{flex:1;min-height:150px;border:0;border-radius:12px;background:var(--pc);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;user-select:none;touch-action:manipulation}
@@ -1290,6 +1308,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 (function(){
 const GAMES={
   "9":{label:"9ボール",tag:"9-BALL · POINT GAME",mode:"balls",n:9,val:n=>n===9?10:1,endBall:9,def:70,hint:"ポイント制。1〜8番は1点、9番を入れた人はそのラック10点（1〜8番の分は数えない）。9番が落ちたらラック終了。"},
+  "8":{label:"8ボール",tag:"8-BALL · SET MATCH",mode:"race",def:5,hint:"セットマッチ（ラック先取）。8番を正しく落とした人がそのラックの勝ち。先取ラック数はレートから決めるハンデ戦（最大7対1）。"},
   "bowl":{label:"ボーラード",tag:"BOWLLIARDS · 10 FRAMES",mode:"bowl",def:0,hint:"10フレーム・各2イニング。ボウリングと同じ点数のつけ方で最高300点。"}
 };
 const BALLS=["#e2b53b","#2457a6","#c2412d","#5b3a8c","#e0752b","#1f7a4d","#7a2a2a","#151515"];
@@ -1310,8 +1329,8 @@ function seg(el,key,onChange){
 }
 const gs=$("gameSeg");
 /* games that will be added later: shown in the switch, not selectable yet. To enable one, add it to GAMES with its rules. */
-const SOON=[{k:"10",label:"10ボール",sub:"コールショット"},{k:"8",label:"8ボール",sub:"ラック先取"},{k:"trio",label:"トリオマッチ",sub:"3人1チーム"},{k:"3c",label:"スリークッション",sub:"キャロム"}];
-const GAME_SUB={"9":"RESTルール","bowl":"10フレーム"};
+const SOON=[{k:"10",label:"10ボール",sub:"コールショット"},{k:"trio",label:"トリオマッチ",sub:"3人1チーム"},{k:"3c",label:"スリークッション",sub:"キャロム"}];
+const GAME_SUB={"9":"RESTルール","8":"セットマッチ","bowl":"10フレーム"};
 const GAME_ICON={"9":["#e2b53b",true,"9"],"10":["#2457a6",true,"10"],"8":["#151515",false,"8"],"trio":["#2457a6",false,"3"],"3c":["#f5f3ec",false,""]};
 /* Bowlard icon: ten numbered balls racked the official 10-ball way (1 at the apex, 10 in the middle of the third row) */
 function bowlRackSvg(){
@@ -1464,10 +1483,11 @@ $("startBtn").onclick=()=>{
   if(leagueCtx&&!leagueCtxOk()){toast(`リーグ戦の組み合わせ（${leagueCtx.home} 対 ${leagueCtx.away}）と違います。選び直すか「リーグ戦をやめる」を押してください`);return}
   if(g.mode==="bowl"){startBowl();return}
   const t=[Math.max(1,parseInt($("t1").value)||g.def),Math.max(1,parseInt($("t2").value)||g.def)];
-  M={id:Date.now(),game:cfg.game,mode:g.mode,fmt:g.mode==="balls"?((cfg&&cfg.fmt)||"long"):undefined,names:[getName(1)||"プレイヤー1",getName(2)||"プレイヤー2"],teams:[getTeam(1),getTeam(2)],
+  M={id:Date.now(),game:cfg.game,mode:g.mode,fmt:(g.mode==="balls"||g.mode==="race")?((cfg&&cfg.fmt)||"long"):undefined,names:[getName(1)||"プレイヤー1",getName(2)||"プレイヤー2"],teams:[getTeam(1),getTeam(2)],
     target:t,score:[0,0],runouts:[0,0],aces:[0,0],zips:[0,0],fouls:[0,0],consec:[0,0],breakRule:cfg.breakRule,breaker:cfg.first,turn:cfg.first,
     rack:1,pocketed:[],dead:[],rackPts:[0,0],rackWins:[0,0],log:[],start:Date.now(),done:false,
-    league:leagueCtx?{fixture:leagueCtx.id,round:leagueCtx.round,fmt:leagueCtx.fmt}:null};
+    league:leagueCtx?{fixture:leagueCtx.id,round:leagueCtx.round,fmt:leagueCtx.fmt}:null,
+    hcBalls:(g.mode==="race"&&$("hcAuto").checked&&cfg.hcBalls)?cfg.hcBalls.slice():null};
   leagueCtx=null;renderLeagueBanner();
   undoStack=[];save();openPlay();
 };
@@ -1620,45 +1640,73 @@ function rateOf(n){return (rateRows||[]).find(x=>x.n===n)||null}
 function hcStrong(){const a=rateOf(getName(1)),b=rateOf(getName(2));if(!a||!b||a===b)return 0;return a.r>=b.r?1:2}
 /* match formats: ロング (normal) and ショート (a quick, casual game) */
 /* each player's 持ち点 is proportional to their own rating: rating 500 → the format's points (rating range 100–1000) */
-function hcFormats(){return {long:{label:"ロング",at500:60},middle:{label:"ミドル",at500:43},short:{label:"ショート",at500:30}}}
+function hcRace(){try{return GAMES[cfg.game].mode==="race"}catch(e){return false}}
+function hcUnit(){return hcRace()?"ラック":"点"}
+function hcFormats(){return hcRace()
+  ?{long:{label:"ロング",at500:5},middle:{label:"ミドル",at500:4},short:{label:"ショート",at500:3}}   /* 8-ball: racks to win */
+  :{long:{label:"ロング",at500:60},middle:{label:"ミドル",at500:43},short:{label:"ショート",at500:30}}}
 function hcFmt(){const F=hcFormats();return F[(cfg&&cfg.fmt)||"long"]||F.long}
 /* curve through rating 500 → 60 and 200 → 22 (ロング); ミドル and ショート scale the same curve */
-function hcPoints(r){const HC_POW=Math.log(22/60)/Math.log(200/500);return Math.max(1,Math.round(hcFmt().at500*Math.pow(Math.max(r,1)/500,HC_POW)))}
+function hcPoints(r){const HC_POW=Math.log(22/60)/Math.log(200/500);const v=Math.max(1,Math.round(hcFmt().at500*Math.pow(Math.max(r,1)/500,HC_POW)));
+  return hcRace()?Math.min(7,v):v}   /* 8-ball set match: the biggest handicap is 7 to 1 */
 function renderFmt(){
   try{if(leagueCtx&&cfg.fmt!==leagueCtx.fmt)cfg.fmt=leagueCtx.fmt}catch(e){}
   const f=hcFmt(),k=(cfg&&cfg.fmt)||"long";
   $("fmtSeg").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===k));
-  $("fmtHint").textContent=k==="short"?`気軽にできる短い試合です。持ち点はロングの半分（レート500で${f.at500}点）。`
-    :k==="middle"?`ロングとショートの間の長さです。持ち点はレート500で${f.at500}点。`
-    :`通常の試合です。持ち点はレート500で${f.at500}点。`;
-  $("fmtRow").hidden=!!(GAMES[cfg.game]&&GAMES[cfg.game].mode!=="balls");
+  const u=hcUnit(),w=hcRace()?"先取ラック数は":"持ち点は";
+  $("fmtHint").textContent=k==="short"?`気軽にできる短い試合です。${w}レート500で${f.at500}${u}。`
+    :k==="middle"?`ロングとショートの間の長さです。${w}レート500で${f.at500}${u}。`
+    :`通常の試合です。${w}レート500で${f.at500}${u}。`+(hcRace()?"ハンデは最大7対1です。":"");
+  $("fmtRow").hidden=!!(GAMES[cfg.game]&&!["balls","race"].includes(GAMES[cfg.game].mode));
+}
+/* 8-ball handicap: 12 steps by rating difference (50 per step).
+   [stronger player's race, weaker player's race, balls left (8 included) at which the weaker player removes the rest of their group; 8 = none] */
+function eightLadder(){return [[5,5,8],[5,5,4],[5,5,3],[5,4,8],[5,4,4],[5,4,3],[5,3,4],[5,3,3],[6,3,3],[6,2,3],[7,2,3],[7,1,3]]}
+function eightHandicap(ra,rb){
+  const diff=Math.abs(ra-rb),lvl=Math.min(11,Math.floor(diff/50)),[S,W,N]=eightLadder()[lvl];
+  const shift={long:0,middle:1,short:2}[(cfg&&cfg.fmt)||"long"]||0;
+  const strong=ra>=rb?0:1,race=[0,0];race[strong]=Math.max(1,S-shift);race[1-strong]=Math.max(1,W-shift);
+  const balls=[8,8];balls[1-strong]=N;
+  return {lvl,diff:Math.round(diff),race,balls,strong};
 }
 function updateHandicap(){
   renderFmt();
   const rs=[rateOf(getName(1)),rateOf(getName(2))];
+  if(hcRace()&&$("hcAuto").checked){
+    [1,2].forEach(i=>{const el=$("pr"+i),r=rs[i-1];el.className="prate"+(r?(r.prov?" prov":""):" none");
+      el.textContent=r?`${Math.round(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
+    const h=eightHandicap(rs[0]?rs[0].r:500,rs[1]?rs[1].r:500);
+    $("t1").value=h.race[0];$("t2").value=h.race[1];cfg.hcBalls=h.balls;
+    const nm=i=>getName(i+1)||("PLAYER "+(i+1)),w=1-h.strong;
+    $("hcMsg").textContent=`ハンデ ${h.lvl+1}/12（レート差 ${h.diff}）：${nm(h.strong)} ${h.race[h.strong]}先取 ／ ${nm(w)} ${h.race[w]}先取`
+      +(h.balls[w]<8?`。${nm(w)} は自分の球が「8番を含めて残り${h.balls[w]}球」になったら、残りの自分の球を取り除いて8番を狙えます。`:"。")
+      +(rs.some(r=>!r)?"レートがない人はレート500として計算しています。":"")+(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
+    return;
+  }
+  if(hcRace())cfg.hcBalls=null;
   [1,2].forEach(i=>{const el=$("pr"+i),r=rs[i-1];el.className="prate"+(r?(r.prov?" prov":""):" none");
     el.textContent=r?`${Math.round(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
   const msg=$("hcMsg");
-  if(!$("hcAuto").checked){msg.textContent="持ち点は手動で入れています。";return}
+  if(!$("hcAuto").checked){msg.textContent=hcRace()?"先取ラック数は手動で入れています。":"持ち点は手動で入れています。";return}
   [1,2].forEach(i=>{if(!rs[i-1])$("t"+i).value=hcFmt().at500});
-  if(!rs[0]&&!rs[1]){msg.textContent=`レートがある人は、レートから持ち点を自動で決めます（レート500で${hcFmt().at500}点）。`;return}
+  if(!rs[0]&&!rs[1]){msg.textContent=`レートがある人は、レートから${hcRace()?"先取ラック数":"持ち点"}を自動で決めます（レート500で${hcFmt().at500}${hcUnit()}）。`;return}
   const parts=[];
   /* two lower-rated players: keep their ratio but lift the pair so the stronger one has the format's standard points (rating 500),
      so a match between two beginners is not over too quickly */
   const raw=[1,2].map(i=>rs[i-1]?hcPoints(rs[i-1].r):null);
   const liftTo=Math.round(hcFmt().at500*2/3); /* ロング 40 ・ ミドル 29 ・ ショート 20 */
   const lift=(raw[0]!=null&&raw[1]!=null&&Math.max(raw[0],raw[1])<liftTo)?liftTo/Math.max(raw[0],raw[1]):1;
-  [1,2].forEach(i=>{const r=rs[i-1];if(!r)return;const v=Math.max(1,Math.round(raw[i-1]*lift));$("t"+i).value=v;parts.push(`${r.n} ${v}点（レート${Math.round(r.r)}）`)});
+  [1,2].forEach(i=>{const r=rs[i-1];if(!r)return;const v=Math.max(1,Math.min(hcRace()?7:1e9,Math.round(raw[i-1]*lift)));$("t"+i).value=v;parts.push(`${r.n} ${v}${hcUnit()}（レート${Math.round(r.r)}）`)});
   const missing=[1,2].filter(i=>!rs[i-1]).map(i=>getName(i)||("PLAYER "+i));
-  msg.textContent=parts.join(" ／ ")+`。レートから決めました（レート500で${hcFmt().at500}点）。`
-    +(lift>1?`2人ともレートが低めなので、差はそのままに、上手を${liftTo}点にそろえて増やしています。`:"")
-    +(missing.length?`${missing.join("・")} はレートがないので ${hcFmt().at500}点 にしています。`:"")
+  msg.textContent=parts.join(" ／ ")+`。レートから決めました（レート500で${hcFmt().at500}${hcUnit()}）。`
+    +(lift>1?`2人ともレートが低めなので、差はそのままに、上手を${liftTo}${hcUnit()}にそろえて増やしています。`:"")
+    +(missing.length?`${missing.join("・")} はレートがないので ${hcFmt().at500}${hcUnit()} にしています。`:"")
     +(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
 }
 $("hcAuto").addEventListener("change",updateHandicap);
 $("fmtSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;cfg.fmt=b.dataset.v;
   $("hcAuto").checked=true;updateHandicap();
-  [1,2].forEach(i=>{if(!rateOf(getName(i)))$("t"+i).value=hcFmt().at500})});
+  if(!hcRace())[1,2].forEach(i=>{if(!rateOf(getName(i)))$("t"+i).value=hcFmt().at500})});
 [1,2].forEach(i=>$("t"+i).addEventListener("input",()=>{
   if(!$("hcAuto").checked)return;
   $("hcAuto").checked=false;updateHandicap();
@@ -2290,7 +2338,12 @@ const RULES={
     ["ファウル",["一番小さい番号の球に最初に当てなかった。","球に当てたあと、どの球もクッションに届かず、ポケットにも入らなかった。","手球を落とした（スクラッチ）、球を台の外に飛ばした。","球に体やキューで触れた、二度突き、球が動いているうちに打った、両足が床から離れた。","ファウルのあとは、相手がフリーボール（手球を台のどこにでも置ける）で打ちます。"]],
     ["3ファウル",["同じ人が続けて3回ファウルすると、そのラックは負けです。2回目のファウルのあとに、相手が警告するのが一般的です。"]]
   ]},
-  "8":{ready:false,title:"8ボール",lead:"世界共通ルール（WPA）をもとにした、一般的な8ボールのルールです。細かい扱いはお店のハウスルールを優先してください。",sections:[
+  "8":{ready:true,title:"8ボール（セットマッチ）",lead:"このアプリではセットマッチ（先にきめたラック数を取った人の勝ち）で記録します。球の扱いは世界共通ルール（WPA）をもとにした一般的なルールです。細かい扱いはお店のハウスルールを優先してください。",sections:[
+    ["このアプリでの試合",["1ラックごとに、8番を正しく落とした人（または相手が負けになるファウルをした人の相手）がラックを取ります。","ラックを取った人のスコアをタップして記録します。ブレイクから1人で取り切ったときは「マスワリで獲得」を押します。","先取ラック数（セット数）に先に届いた人の勝ちです。"]],
+    ["ハンデ（12段階）",["2人のレート差から、12段階のハンデを自動で決めます（レート差50ごとに1段階）。","ハンデは「先取ラック数」と「球抜き」の組み合わせです。球抜きは、下手が自分の球を「8番を含めて残り○球」まで落としたら、残りの自分の球を台から取り除いて8番を狙えるハンデです。",
+      "1：5-5 ／ 2：5-5・残り4球 ／ 3：5-5・残り3球 ／ 4：5-4 ／ 5：5-4・残り4球 ／ 6：5-4・残り3球",
+      "7：5-3・残り4球 ／ 8：5-3・残り3球 ／ 9：6-3・残り3球 ／ 10：6-2・残り3球 ／ 11：7-2・残り3球 ／ 12：7-1・残り3球（最大）",
+      "数字は「上手の先取-下手の先取」。ミドルは両方1ラック少なく、ショートは2ラック少なくなります（最低1）。"]],
     ["ラック",["1〜15番を三角に並べ、8番を3列目の真ん中に置きます。","後ろの2つの角には、ローボール（1〜7番）とハイボール（9〜15番）を1個ずつ置きます。"]],
     ["ブレイク",["手球はヘッドストリングの後ろから打ちます。","ボールを1個入れるか、的球を4個以上クッションに届かせないとファウルです。このときは、相手が「そのまま打つ」か「ラックし直す」かを選べます。","ブレイクで8番が入ったら、ブレイクした人が「8番を戻して続ける」か「ラックし直す」かを選びます。負けにはなりません。","ブレイクで手球を落としたらファウルです。テーブルはオープンのまま、相手がヘッドストリングの後ろからフリーボールで打ちます。"]],
     ["オープンテーブルとグループ",["ブレイクのあとは、まだグループ（ロー・ハイ）が決まっていない「オープンテーブル」です。","宣言した球を正しく落とした人が、その球のグループに決まります。相手は残りのグループです。","オープンテーブルで8番に最初に当てるのはファウルです。"]],
@@ -2741,7 +2794,7 @@ function ccNudge(scroll){
 /* phones: size the score board so the whole play screen (score, balls, buttons, clocks) fits without scrolling */
 function fitPlay(){
   const play=$("play"),board=$("board");
-  const on=!!(M&&!play.hidden&&M.mode==="balls"&&window.innerWidth<=820);
+  const on=!!(M&&!play.hidden&&(M.mode==="balls"||M.mode==="race")&&window.innerWidth<=820);
   play.classList.toggle("fit",on);
   if(!on){board.style.height="";return}
   const vh=(window.visualViewport?window.visualViewport.height:window.innerHeight);
@@ -2815,7 +2868,7 @@ function render(){
   meta.querySelector("b").textContent=g.label;$("meta").appendChild(meta);
 
   const board=$("board"),cloth=$("cloth");if(cloth.parentNode===board)$("tableWrap").appendChild(cloth);
-  board.innerHTML="";board.classList.toggle("compact",M.mode==="balls");board.classList.toggle("lanein",M.mode==="balls");
+  board.innerHTML="";board.classList.toggle("compact",M.mode==="balls");board.classList.toggle("lanein",M.mode==="balls");board.classList.toggle("racec",M.mode==="race");
   if(!moreSeen.__init){moreSeen.__init=1;[0,1].forEach(q=>{const r=M.target[q]-M.score[q];moreSeen[M.id+":"+q]=r<=MORE_AT&&r>0?r:r+100})}
   [0,1].forEach(p=>{
     const side=document.createElement("section");side.className="side";side.dataset.p=p;
@@ -2828,6 +2881,8 @@ function render(){
     if(M.teams&&M.teams[p]){const tm=document.createElement("span");tm.className="team";tm.textContent=M.teams[p];nw.appendChild(tm)}
     const nm=document.createElement("div");nm.className="pname";nm.textContent=M.names[p];nw.appendChild(nm);head.appendChild(nw);
     if(isBreak){const c=document.createElement("span");c.className="chip break";c.textContent="ブレイク";head.appendChild(c)}
+    if(M.mode==="race"&&M.hcBalls&&M.hcBalls[p]<8){const c=document.createElement("span");c.className="chip balls";c.textContent=`残り${M.hcBalls[p]}球で抜け`;
+      c.title=`8番を含めて残り${M.hcBalls[p]}球になったら、残りの自分の球を取り除けます`;head.appendChild(c)}
     if(isTurn){const c=document.createElement("span");c.className="chip turn";c.textContent="手番";head.appendChild(c)}
     side.appendChild(head);
 
@@ -2892,12 +2947,12 @@ function render(){
 
 function winRack(p,runout){
   if(M.done)return;snap();
-  M.score[p]++;if(runout)M.runouts[p]++;
+  M.score[p]++;if(runout)M.runouts[p]++;M.rackWins=M.rackWins||[0,0];M.rackWins[p]++;
   L(`ラック${M.rack}: ${M.names[p]} 獲得${runout?"（マスワリ）":""}  ${M.score[0]}-${M.score[1]}`,runout?"":"");
   M.rack++;
   M.breaker=M.breakRule==="winner"?p:1-M.breaker;
   if(M.score[p]>=M.target[p])return finish(p);
-  render();
+  render();ccFollowBreak();
 }
 function foul(p){
   if(M.done)return;snap();M.fouls[p]++;
@@ -2923,7 +2978,7 @@ function markStat(p,k,label){
   if(M.done)return;snap();M[k]=M[k]||[0,0];M[k][p]++;
   L(`ラック${M.rack}: ${M.names[p]} ${label}`);render();toast(`${M.names[p]} ${label}`);
 }
-function histRec(){return{id:String(M.id),game:M.game,fmt:M.fmt||null,league:M.league||null,names:M.names,teams:M.teams||["",""],score:M.score,target:M.target,start:M.start,end:M.end,
+function histRec(){return{id:String(M.id),game:M.game,fmt:M.fmt||null,hcBalls:M.hcBalls||null,league:M.league||null,names:M.names,teams:M.teams||["",""],score:M.score,target:M.target,start:M.start,end:M.end,
   aces:M.aces||[0,0],zips:M.zips||[0,0],runouts:M.runouts||[0,0],fouls:M.fouls||[0,0],racks:M.rack-1,rackWins:M.rackWins||[0,0],
   status:"pending",recordedBy:myName||null}}
 /* anyone except the person who recorded may approve: the opponent, or any third party (when a scorer recorded, either player too) */
