@@ -331,10 +331,17 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .cc-alert button{border:2px solid #fff;background:transparent;color:#fff;border-radius:10px;padding:8px 12px;font-weight:800;font-size:13px;white-space:nowrap}
 .shotclock.nudge{border:2px solid var(--red);box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 25%,transparent)}
 .sc-card.need{border-color:var(--red)}
-.sc-card.need .cc-side{border-color:var(--red)}
-.sc-card.locked .sc-time,.sc-card.locked .sc-bar,.sc-card.locked .sc-btns{opacity:.35}
-.sc-card.locked .sc-time{cursor:default}
-.sc-card.locked .sc-used{display:block!important;color:var(--muted)}
+/* chess clock in front, shot clock behind: the card flips to the shot clock when that player's chess time runs out */
+.sc-card.locked .sc-time,.sc-card.locked .sc-bar,.sc-card.locked .sc-btns,.sc-card.locked .sc-used{display:none!important}
+.sc-card.locked .cc-side{flex:1;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:16px 6px;border-width:2px;border-radius:14px;min-height:96px}
+.sc-card.locked .cc-time{font-size:clamp(44px,13vw,72px)!important}
+.sc-card.locked .cc-lab{font-size:12px}
+.sc-card.locked .cc-hint{font-size:12px;font-weight:700;color:var(--pc)}
+.sc-card.locked .cc-side.run{box-shadow:0 0 0 3px color-mix(in srgb,var(--pc) 30%,transparent)}
+.sc-card.need .cc-side{display:none}
+.sc-card.need{animation:scFlip .6s ease-out;transform-origin:50% 50%}
+@keyframes scFlip{0%{transform:perspective(600px) rotateY(90deg);opacity:.3}100%{transform:perspective(600px) rotateY(0);opacity:1}}
+@media (prefers-reduced-motion:reduce){.sc-card.need{animation:none}}
 .cc-help{margin:0;font-size:11px;color:var(--muted);text-align:center}
 .cc-step{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
 .cc-step button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px;font-weight:700}
@@ -2747,7 +2754,7 @@ function ccDraw(){
   [0,1].forEach(i=>{const t=ccNow(i),el=$("cc"+i);
     $("ccTime"+i).textContent=ccFmt(t);
     el.classList.toggle("run",CC.run===i);el.classList.toggle("low",t<=60000&&t>0);el.classList.toggle("over",CC.over[i]);
-    $("ccHint"+i).textContent=CC.over[i]?"切れ":CC.run===i?"タップで交代":"";
+    $("ccHint"+i).textContent=CC.over[i]?"切れ":CC.run===i?"打ち終わったらタップ":CC.run>=0?"相手の番":"";
     if(M)$("ccName"+i).textContent=M.names[i]||("プレイヤー"+(i+1));
   });
   const started=CC.last>=0||CC.run>=0;
