@@ -2934,7 +2934,7 @@ function render(){
 
     const btn=document.createElement("button");btn.type="button";btn.className="score-btn";
     const remain=Math.max(0,M.target[p]-M.score[p]);
-    btn.innerHTML=`<span class="num">${M.score[p]}</span><span class="race">${M.mode==="race"?`<span class="rc"><small>先取</small><b>${M.target[p]}</b></span><span class="rc left"><small>あと</small><b>${remain}</b></span>`:`<span class="rc"><small>持ち点</small><b>${M.target[p]}</b></span><span class="rc left"><small>あと</small><b>${remain}</b></span>`}</span><span class="tap"></span>`;
+    btn.innerHTML=`<span class="num">${M.score[p]}</span><span class="race">${M.mode==="race"?`<span class="rc"><small>先取</small><b>${M.target[p]}</b></span>`:`<span class="rc"><small>持ち点</small><b>${M.target[p]}</b></span><span class="rc left"><small>あと</small><b>${remain}</b></span>`}</span><span class="tap"></span>`;
     btn.querySelector(".tap").textContent=M.mode==="race"?"タップでラック獲得":M.mode==="balls"?"落としたボールをここへドラッグ":"タップで +1";
     btn.setAttribute("aria-label",`${M.names[p]} ${M.score[p]}`);
     /* "○モア": 10 points or fewer left to the target */
