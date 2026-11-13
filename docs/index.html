@@ -126,10 +126,25 @@ button{cursor:pointer}
 .me-pick .primary{background:var(--cue);color:#1b1b1b;padding:11px 18px;font-size:15px}
 .me-name{font-weight:700;font-size:18px;overflow-wrap:anywhere}
 .me-main{display:flex;align-items:flex-end;gap:14px}
-.cls{display:inline-block;font:800 11px/1 var(--f-body);letter-spacing:.04em;padding:3px 7px;border-radius:6px;vertical-align:middle;color:#fff;background:#8a958f}
-.cls-bg{background:#9aa39e}.cls-rk{background:#6f9a85}.cls-c{background:#1f7a4d}.cls-cp{background:#2a8f7a}
-.cls-b{background:#2457a6}.cls-bp{background:#3d6fd1}.cls-am{background:#7a4fb0}.cls-a{background:#c2412d}
-.cls-sa{background:linear-gradient(135deg,#e2b53b,#b98a14);color:#1b1b1b}.cls-pro{background:linear-gradient(135deg,#151515,#4a4a4a);color:#ffe08a;box-shadow:0 0 0 1px #e2b53b}
+.cls{position:relative;overflow:hidden;display:inline-block;font:900 11px/1 var(--f-body);letter-spacing:.05em;padding:4px 8px 3px;border-radius:5px;vertical-align:middle;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -1px 0 rgba(0,0,0,.25),0 1px 2px rgba(0,0,0,.18);flex:none}
+.cls::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0) 55%);pointer-events:none}
+.cls-bg{background:linear-gradient(135deg,#7d8489,#565c61 60%,#3f4448)}
+.cls-rk{background:linear-gradient(135deg,#d9895a,#a65a2e 55%,#7a3d1c)}
+.cls-c{background:linear-gradient(135deg,#c79a5b,#8f6430 55%,#6b4820)}
+.cls-cp{background:linear-gradient(135deg,#e2b77a,#a8763a 50%,#7d5524);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 0 0 1px #c9965a,0 1px 2px rgba(0,0,0,.2)}
+.cls-b{background:linear-gradient(135deg,#eef1f4,#aab3bc 50%,#7f8a95);color:#1e252c;text-shadow:0 1px 0 rgba(255,255,255,.6)}
+.cls-bp{background:linear-gradient(135deg,#ffffff,#b9c4d0 45%,#7c8da0);color:#162230;text-shadow:0 1px 0 rgba(255,255,255,.7);box-shadow:inset 0 1px 0 #fff,0 0 0 1px #9fb0c2,0 1px 3px rgba(60,90,130,.35)}
+.cls-am{background:linear-gradient(135deg,#f6dc8c,#d3a73c 50%,#a87b18);color:#3a2800;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.cls-a{background:linear-gradient(135deg,#fff0a8,#f0c030 40%,#c08a00 75%,#e8b520);color:#3a2500;text-shadow:0 1px 0 rgba(255,255,255,.55);box-shadow:inset 0 1px 0 #fff6c8,0 0 0 1px #d6a514,0 1px 4px rgba(200,150,0,.45)}
+.cls-sa{background:linear-gradient(120deg,#f4f7fa,#c9d6e2 30%,#ffffff 50%,#a9bccd 70%,#e3ebf2);color:#1f3346;text-shadow:0 1px 0 #fff;box-shadow:inset 0 1px 0 #fff,0 0 0 1px #b7c8d8,0 0 8px rgba(160,200,235,.75)}
+.cls-pro{background:linear-gradient(135deg,#0d0d10,#2a2a33 50%,#0d0d10);color:transparent;text-shadow:none;box-shadow:0 0 0 1px #000,0 0 0 2px #e6c25a,0 0 10px rgba(230,194,90,.55)}
+.cls-pro::before{content:attr(data-l);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-top:1px;background:linear-gradient(90deg,#ffe38a,#ff9de0,#9fd8ff,#b8ffcc,#ffe38a);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:holo 3.5s linear infinite}
+.cls-sa::after,.cls-pro::after{background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%);background-size:250% 100%;animation:shine 2.8s ease-in-out infinite}
+@keyframes holo{to{background-position:-200% 0}}
+@keyframes shine{0%{background-position:150% 0}60%,100%{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){.cls-pro::before,.cls-sa::after,.cls-pro::after{animation:none}}
+.rk-nl{display:flex;align-items:center;gap:6px;min-width:0}
+.rk-nl b{min-width:0}
 .me-side .cls{font-size:13px;padding:4px 9px;margin-bottom:4px}
 .me-rate{font:900 clamp(72px,20vw,112px)/.85 var(--f-display);font-variant-numeric:tabular-nums;color:var(--cue)}
 .me-side{font-size:13px;line-height:1.5;opacity:.9;padding-bottom:6px}
@@ -991,7 +1006,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
   <details class="sheet how">
     <summary>レートの見方</summary>
-    <p class="hint">クラス：Beginner（〜199）／Rookie（200〜）／C（300〜）／C+（400〜）／B（500〜）／B+（600〜）／A-（700〜）／A（800〜）／SA（900〜）／Pro（1000〜）</p>
+    <p class="hint">クラス：Beginner（〜199・アイアン）／Rookie（200〜・カッパー）／C（300〜・ブロンズ）／C+（400〜・ブロンズ）／B（500〜・シルバー）／B+（600〜・シルバー）／A-（700〜・ゴールド）／A（800〜・ゴールド）／SA（900〜・プラチナ）／Pro（1000〜・ブラックダイヤ）</p>
     <p class="hint">勝ち負けではなく、各ラックをどちらが取ったか（9番を落としたか）で計算します。レート差100点で1ラックあたりの勝ち比が2:1、200点差で4:1です。</p>
     <p class="hint">新しい試合が入るたびに全試合からまとめて計算し直すので、強い人から取った1ラックはそのぶん高く評価されます。基準は500点です。</p>
     <p class="hint">取ったラックと取られたラックの合計が100未満の人は「暫定」です。試合が少ないうちは500点の近くに留まり、ラック数が増えるほど実力に近づきます。</p>
@@ -1623,7 +1638,8 @@ function renderRanking(){
     const ol=sl.querySelector("ol");let prev=null,rank=0;
     rows.forEach((r,i)=>{const v=def.val(r)+"|"+r.w;if(v!==prev){rank=i+1;prev=v}
       const li=document.createElement("li");li.className="rk"+(rank<=3?" top":"");
-      li.innerHTML=`<span class="rk-ball r${Math.min(rank,4)}"><span>${rank}</span></span><div class="rk-name"><b></b><small></small></div><div class="rk-val"><b></b><small></small></div>`;
+      const rr=rateRows.find(x=>x.n===r.n);
+      li.innerHTML=`<span class="rk-ball r${Math.min(rank,4)}"><span>${rank}</span></span><div class="rk-name"><span class="rk-nl"><b></b>${rr?classTag(rr.r):""}</span><small></small></div><div class="rk-val"><b></b><small></small></div>`;
       li.querySelector(".rk-name b").textContent=r.n;li.querySelector(".rk-name small").textContent=r.t||"";
       li.querySelector(".rk-val b").textContent=def.fmt(r);li.querySelector(".rk-val small").textContent=def.sub(r);
       ol.appendChild(li)});
@@ -1673,11 +1689,11 @@ function renderRate(h){
   const ol=$("rateList");ol.innerHTML="";
   rows.forEach((r,i)=>{
     const li=document.createElement("li");li.className="rk"+(i<3?" top":"");
-    li.innerHTML=`<span class="rk-ball r${Math.min(i+1,4)}"><span>${i+1}</span></span><div class="rk-name"><b></b><small></small></div><div class="rk-val"><b></b><small></small></div>`;
+    li.innerHTML=`<span class="rk-ball r${Math.min(i+1,4)}"><span>${i+1}</span></span><div class="rk-name"><span class="rk-nl"><b></b>${classTag(r.r)}</span><small></small></div><div class="rk-val"><b></b><small></small></div>`;
     li.querySelector(".rk-name b").textContent=r.n;
     li.querySelector(".rk-name small").textContent=[r.t,`${r.g}試合 ${r.won}/${r.racks}ラック`].filter(Boolean).join(" ・ ");
     const vb=li.querySelector(".rk-val b");vb.textContent=Math.round(r.r);if(r.prov)vb.classList.add("prov");
-    li.querySelector(".rk-val small").innerHTML=classTag(r.r)+" "+(r.racks===0&&r.start!=null?"開始レート":r.prov?"暫定":"確定");
+    li.querySelector(".rk-val small").textContent=(r.racks===0&&r.start!=null?"開始レート":r.prov?"暫定":"確定");
     ol.appendChild(li)});
   $("rateNote").textContent=rows.length
     ?`ラックの勝敗が記録された ${count} 試合から計算しています。レートを付ける前に終わった試合は入りません。`
@@ -1694,7 +1710,7 @@ function rateClass(r){
   const C=[[1000,"Pro","pro"],[900,"SA","sa"],[800,"A","a"],[700,"A-","am"],[600,"B+","bp"],[500,"B","b"],[400,"C+","cp"],[300,"C","c"],[200,"Rookie","rk"],[0,"Beginner","bg"]];
   const v=Math.round(+r||0),c=C.find(x=>v>=x[0]);return {label:c[1],key:c[2]};
 }
-function classTag(r){const c=rateClass(r);return `<span class="cls cls-${c.key}">${c.label}</span>`}
+function classTag(r){const c=rateClass(r);return `<span class="cls cls-${c.key}" data-l="${c.label}">${c.label}</span>`}
 function hcRace(){try{return GAMES[cfg.game].mode==="race"}catch(e){return false}}
 function hcUnit(){return hcRace()?"ラック":"点"}
 function hcFormats(){return hcRace()
