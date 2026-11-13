@@ -595,6 +595,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit .board.lanein{flex:none}
 /* 8-ball set match on phones: both players side by side, everything on one screen */
 #play.fit .board.racec{grid-template-columns:minmax(0,1fr) minmax(0,1fr);flex:none;gap:8px}
+#play.fit .board.racec.l8,.board.compact.lanein.l8{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
 #play.fit .board.racec .side{padding:8px;gap:6px}
 #play.fit .board.racec .side-head .pname{font-size:16px}
 #play.fit .board.racec .score-btn{min-height:0;gap:6px}
@@ -608,6 +609,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit .board.racec .side-tools{flex-direction:column;gap:4px}
 #play.fit .board.racec .side-tools button{padding:7px 4px;font-size:12px}
 #play.fit .board.racec .stats{display:none}
+#play.fit .board.l8 .pips{display:none}
+#play.fit .board.l8 .side-head .team{display:none}
+#play.fit .board.l8 .side-tools button{padding:6px 2px}
+#play.fit .board.l8 .grp-btn{padding:3px 10px;font-size:12px}
 #play.fit .board.lanein .side{padding:8px;gap:6px}
 #play.fit .board.lanein .score-btn{min-height:0}
 #play.fit .board.lanein .score-btn .num{font-size:clamp(64px,21vw,140px)}
@@ -658,6 +663,44 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .side-head{display:flex;align-items:center;gap:8px;min-width:0}
 .pname{font-weight:700;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
 .chip{font-size:11px;font-weight:700;letter-spacing:.06em;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.grp-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:28px}
+.hc-note{flex-basis:100%;margin:0;font-size:11px;line-height:1.4;color:var(--muted)}
+.hc-note b{display:inline-block;margin-right:6px;padding:1px 6px;border-radius:6px;background:var(--red);color:#fff;font-size:10px}
+.hc-use{flex-basis:100%;display:flex;flex-direction:column;gap:2px;text-align:left;border:0;border-radius:10px;padding:6px 8px;background:var(--red);color:#fff;animation:goPulse 1.2s ease-in-out infinite}
+.hc-use b{font-size:13px}
+.hc-use span{font-size:10px;line-height:1.35;opacity:.95}
+.grp-q{font-size:11px;font-weight:800;color:var(--muted)}
+.grp-btn{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:800}
+.grp-btn.low{border-color:#e2b53b}
+.grp-btn.high{border-color:#2457a6}
+.chip.grp{cursor:pointer;background:var(--bg);color:var(--ink);border:1px solid var(--line);font-size:11px;padding:3px 8px}
+.chip.grp.low{background:#e2b53b;color:#1b1b1b;border-color:#e2b53b}
+.chip.grp.high{background:#f5f3ec;color:#1b1b1b;border:2px solid #2457a6}
+.chip.balls.go{border:0;cursor:pointer;animation:goPulse 1.2s ease-in-out infinite}
+@keyframes goPulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 35%,transparent)}}
+/* 8-ball lane */
+.balls8{display:grid;grid-template-columns:repeat(2,var(--ball,40px));column-gap:var(--bgap,6px);row-gap:var(--bgap,6px);justify-content:center;align-content:center;height:100%}
+.b8col{display:grid;grid-auto-rows:var(--ball,40px);row-gap:var(--bgap,6px);justify-items:center}
+.b8lab{font-size:10px;font-weight:800;color:var(--muted);text-align:center;line-height:1;align-self:end;height:12px}
+.b8col .tb,.b8col .slot{width:var(--ball,40px);height:var(--ball,40px)}
+.b8eight{grid-column:1/-1;display:grid;place-items:center;padding-top:calc(var(--bgap,6px) + 2px)}
+.tb.eight,.slot.eight{width:calc(var(--ball,40px)*1.45);height:calc(var(--ball,40px)*1.45)}
+.tb.eight{background:radial-gradient(circle at 35% 30%,#4a4a4a,#0b0b0b 60%);box-shadow:0 0 0 2px #e2b53b,0 0 14px 3px rgba(226,181,59,.75),0 4px 8px rgba(0,0,0,.4);animation:eightGlow 1.8s ease-in-out infinite}
+.tb.eight span{background:#fff;color:#111;font-size:1.25em;font-weight:900;width:56%}
+.tb.eight::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px dashed rgba(226,181,59,.8);animation:eightSpin 8s linear infinite;pointer-events:none}
+@keyframes eightGlow{50%{box-shadow:0 0 0 3px #ffe08a,0 0 24px 7px rgba(226,181,59,.9),0 4px 8px rgba(0,0,0,.4)}}
+@keyframes eightSpin{to{transform:rotate(360deg)}}
+.slot{--pc:var(--line)}
+.balls8 .slot{border-color:var(--pc);color:var(--pc)}
+.balls8 .slot.rm{border-style:dotted;opacity:.5}
+.eight-win{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:8;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;animation:eightWin 1.4s cubic-bezier(.2,1.4,.4,1) forwards}
+.eight-win b{display:grid;place-items:center;width:90px;height:90px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a4a4a,#0b0b0b 60%);color:#111;font:900 40px/1 var(--f-display);box-shadow:0 0 0 4px #e2b53b,0 0 40px 10px rgba(226,181,59,.8)}
+.eight-win b::before{content:"8";display:grid;place-items:center;width:48px;height:48px;border-radius:50%;background:#fff}
+.eight-win b{font-size:0}
+.eight-win b::before{font:900 34px/48px var(--f-display);text-align:center}
+.eight-win span{font:900 22px/1 var(--f-body);color:#fff;-webkit-text-stroke:1px #8a6408;text-shadow:0 3px 0 #b98a14}
+@keyframes eightWin{0%{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(-20deg)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.1) rotate(4deg)}75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-70%) scale(1)}}
+@media (prefers-reduced-motion:reduce){.tb.eight,.tb.eight::after{animation:none}}
 .chip.balls{background:var(--red);color:#fff;font-size:11px;padding:3px 7px;letter-spacing:0;flex:none;max-width:100%;box-sizing:border-box;overflow:hidden;text-overflow:ellipsis}
 .board.racec .side-head{flex-wrap:wrap;row-gap:4px}
 .board.racec .side-head .pname-wrap{flex:1 1 4.5em}
@@ -1679,7 +1722,7 @@ function updateHandicap(){
     $("t1").value=h.race[0];$("t2").value=h.race[1];cfg.hcBalls=h.balls;
     const nm=i=>getName(i+1)||("PLAYER "+(i+1)),w=1-h.strong;
     $("hcMsg").textContent=`ハンデ ${h.lvl+1}/12（レート差 ${h.diff}）：${nm(h.strong)} ${h.race[h.strong]}先取 ／ ${nm(w)} ${h.race[w]}先取`
-      +(h.balls[w]<8?`。${nm(w)} は自分の球が「8番を含めて残り${h.balls[w]}球」になったら、残りの自分の球を取り除いて8番を狙えます。`:"。")
+      +(h.balls[w]<8?`。${nm(w)} さんは、自分の球が8番を含めて残り${h.balls[w]}球になったら、残りの自分の球を取り除いて8番を狙えます。`:"。")
       +(rs.some(r=>!r)?"レートがない人はレート500として計算しています。":"")+(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
     return;
   }
@@ -2807,7 +2850,8 @@ function fitPlay(){
   board.style.height=h+"px";
   const lane=$("cloth"),lp=lane?parseFloat(getComputedStyle(lane).paddingTop)*2+2:14;
   const g=Math.max(2,Math.min(6,Math.round(h/90)));
-  const ball=Math.max(17,Math.min(56,Math.floor((h-lp-8*g)/9)));
+  const l8=M.mode==="race"&&M.game==="8";
+  const ball=l8?Math.max(16,Math.min(48,Math.floor((h-lp-12-9*g)/(7+1.45+.3)))):Math.max(17,Math.min(56,Math.floor((h-lp-8*g)/9)));
   play.style.setProperty("--ball",ball+"px");play.style.setProperty("--bgap",g+"px");
 }
 window.addEventListener("resize",()=>{clearTimeout(fitPlay.t);fitPlay.t=setTimeout(fitPlay,120)});
@@ -2868,7 +2912,8 @@ function render(){
   meta.querySelector("b").textContent=g.label;$("meta").appendChild(meta);
 
   const board=$("board"),cloth=$("cloth");if(cloth.parentNode===board)$("tableWrap").appendChild(cloth);
-  board.innerHTML="";board.classList.toggle("compact",M.mode==="balls");board.classList.toggle("lanein",M.mode==="balls");board.classList.toggle("racec",M.mode==="race");
+  board.innerHTML="";board.classList.toggle("compact",M.mode==="balls");const lane8=M.mode==="race"&&M.game==="8";
+  board.classList.toggle("lanein",M.mode==="balls"||lane8);board.classList.toggle("racec",M.mode==="race");board.classList.toggle("compact",M.mode==="balls"||lane8);board.classList.toggle("l8",lane8);
   if(!moreSeen.__init){moreSeen.__init=1;[0,1].forEach(q=>{const r=M.target[q]-M.score[q];moreSeen[M.id+":"+q]=r<=MORE_AT&&r>0?r:r+100})}
   [0,1].forEach(p=>{
     const side=document.createElement("section");side.className="side";side.dataset.p=p;
@@ -2881,10 +2926,11 @@ function render(){
     if(M.teams&&M.teams[p]){const tm=document.createElement("span");tm.className="team";tm.textContent=M.teams[p];nw.appendChild(tm)}
     const nm=document.createElement("div");nm.className="pname";nm.textContent=M.names[p];nw.appendChild(nm);head.appendChild(nw);
     if(isBreak){const c=document.createElement("span");c.className="chip break";c.textContent="ブレイク";head.appendChild(c)}
-    if(M.mode==="race"&&M.hcBalls&&M.hcBalls[p]<8){const c=document.createElement("span");c.className="chip balls";c.textContent=`残り${M.hcBalls[p]}球で抜け`;
+    if(M.mode==="race"&&M.game!=="8"&&M.hcBalls&&M.hcBalls[p]<8){const c=document.createElement("span");c.className="chip balls";c.textContent=`ハンデ：残り${M.hcBalls[p]}球から球抜き`;
       c.title=`8番を含めて残り${M.hcBalls[p]}球になったら、残りの自分の球を取り除けます`;head.appendChild(c)}
     if(isTurn){const c=document.createElement("span");c.className="chip turn";c.textContent="手番";head.appendChild(c)}
     side.appendChild(head);
+    if(M.mode==="race"&&M.game==="8")side.appendChild(groupRow(p));
 
     const btn=document.createElement("button");btn.type="button";btn.className="score-btn";
     const remain=Math.max(0,M.target[p]-M.score[p]);
@@ -2902,7 +2948,7 @@ function render(){
       else if(prev!==remain)mb.classList.add("tick");
     }
     moreSeen[M.id+":"+p]=inMore?remain:(remain>MORE_AT?remain+100:0);
-    btn.onclick=()=>{if(M.mode==="race")winRack(p,false);else if(M.mode==="balls")dropSel(p);else addPts(p,1,"1球")};
+    btn.onclick=()=>{if(M.mode==="race"&&M.game==="8")dropSel(p);else if(M.mode==="race")winRack(p,false);else if(M.mode==="balls")dropSel(p);else addPts(p,1,"1球")};
     side.appendChild(btn);
 
     if(M.mode==="race"&&M.target[p]<=25){
@@ -2915,7 +2961,7 @@ function render(){
     const mk=(t,fn)=>{const b=document.createElement("button");b.type="button";b.textContent=t;b.onclick=fn;tools.appendChild(b)};
     if(M.mode==="race"){
       mk("マスワリで獲得",()=>winRack(p,true));
-      mk("ファウル",()=>foul(p));
+      if(M.game!=="8")mk("ファウル",()=>foul(p));
     }else if(M.mode==="pts"){
       mk("+5",()=>addPts(p,5,"+5"));
       mk("ファウル −1",()=>foul(p));
@@ -2932,8 +2978,9 @@ function render(){
     board.appendChild(side);
   });
 
-  $("tableWrap").hidden=M.mode!=="balls";
+  $("tableWrap").hidden=!(M.mode==="balls"||lane8);
   if(M.mode==="balls"){board.insertBefore(cloth,board.children[1]||null);renderTable()}
+  else if(lane8){board.insertBefore(cloth,board.children[1]||null);renderTable8()}
   requestAnimationFrame(fitPlay);
   $("swapTurn").hidden=M.mode!=="pts";
   $("newRack").hidden=M.mode!=="balls";
@@ -2948,6 +2995,7 @@ function render(){
 function winRack(p,runout){
   if(M.done)return;snap();
   M.score[p]++;if(runout)M.runouts[p]++;M.rackWins=M.rackWins||[0,0];M.rackWins[p]++;
+  M.p8=[];M.grp=[null,null];M.removed=[];M.dead=[];
   L(`ラック${M.rack}: ${M.names[p]} 獲得${runout?"（マスワリ）":""}  ${M.score[0]}-${M.score[1]}`,runout?"":"");
   M.rack++;
   M.breaker=M.breakRule==="winner"?p:1-M.breaker;
@@ -3118,6 +3166,84 @@ function renderTable(){
   });
   cl.appendChild(tg);
 }
+/* ---------- 8-ball lane: low balls (1–7) and high balls (9–15) between the players, the 8 set apart ---------- */
+const isLow=n=>n>=1&&n<=7,isHigh=n=>n>=9&&n<=15;
+function grpOf(n){return isLow(n)?"low":isHigh(n)?"high":null}
+function gone8(n){return (M.p8||[]).some(x=>x.n===n)||(M.removed||[]).includes(n)}
+/* balls (8 included) the player still has to clear, once groups are decided */
+function left8(p){const g=(M.grp||[])[p];if(!g)return null;
+  let c=0;for(let n=1;n<=15;n++)if(grpOf(n)===g&&!gone8(n))c++;return c+1}
+function ball8El(n){
+  const dead=(M.dead||[]).includes(n);
+  const e=document.createElement("button");e.type="button";
+  e.className="tb"+(n>8?" stripe":"")+(n===8?" eight":"")+(selBall===n?" sel":"")+(dead?" dead":"");
+  e.dataset.n=n;e.style.setProperty("--c",BALLS[(n-1)%8]);e.innerHTML=`<span>${n}</span>`;
+  e.setAttribute("aria-label",n===8?"8番（ラックを取った人へ）":`${n}番`);
+  e.addEventListener("pointerdown",ev=>startDrag(ev,e,n));
+  e.addEventListener("keydown",ev=>{if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();toggleSel(n)}});
+  return e;
+}
+function slot8(n){const sl=document.createElement("span");sl.className="slot"+(n===8?" eight":"");sl.textContent=n;
+  const who=(M.p8||[]).find(x=>x.n===n);if(who)sl.style.setProperty("--pc",who.p===0?"var(--p1)":"var(--p2)");
+  if((M.removed||[]).includes(n))sl.classList.add("rm");sl.setAttribute("aria-label",`${n}番 済み`);return sl}
+function renderTable8(){
+  const cl=$("cloth");cl.innerHTML="";
+  const tl=$("turnline");tl.innerHTML="";
+  tl.append(selBall?`${selBall}番を選択中。落とした人のスコアをタップ`:"落とした人のスコアへドラッグ。8番はラックを取った人へ");
+  const box=document.createElement("div");box.className="balls8";
+  const col=(from,lab,cls)=>{const c=document.createElement("div");c.className="b8col "+cls;
+    const h=document.createElement("span");h.className="b8lab";h.textContent=lab;c.appendChild(h);
+    for(let n=from;n<from+7;n++)c.appendChild(gone8(n)?slot8(n):ball8El(n));return c};
+  box.appendChild(col(1,"ロー","lo"));box.appendChild(col(9,"ハイ","hi"));
+  const e8=document.createElement("div");e8.className="b8eight";e8.appendChild(gone8(8)?slot8(8):ball8El(8));
+  box.appendChild(e8);cl.appendChild(box);
+}
+function pocket8(n,p){
+  if(M.done)return;snap();
+  M.p8=M.p8||[];M.grp=M.grp||[null,null];
+  if(n===8){
+    L(`ラック${M.rack}: 8番 → ${M.names[p]}`);
+    const side=$("board").querySelector(`.side[data-p="${p}"]`);
+    if(side&&!matchMedia("(prefers-reduced-motion:reduce)").matches){const fx=document.createElement("div");fx.className="eight-win";fx.innerHTML="<b>8</b><span>ラック獲得</span>";side.appendChild(fx);setTimeout(()=>fx.remove(),1400)}
+    undoStack.pop(); /* winRack takes its own snapshot */
+    winRack(p,false);return;
+  }
+  M.p8.push({n,p});
+  L(`${M.names[p]} ${n}番`);
+  render();
+  /* ball-removal handicap: tell the player when they may take their remaining balls off */
+  [0,1].forEach(i=>{const N=M.hcBalls&&M.hcBalls[i],lft=left8(i);
+    if(N&&N<8&&lft!=null&&lft<=N&&lft>1&&!(M.toldRm||{})[M.rack+":"+i]){M.toldRm=M.toldRm||{};M.toldRm[M.rack+":"+i]=1;
+      toast(`${M.names[i]}さんは8番を含めて残り${lft}球になりました。ハンデで、残りの自分の球を取り除けます`)}});
+}
+/* which group each player has: chosen by tapping ロー / ハイ (the table stays open until someone legally takes a group) */
+function setGroup(p,g){if(M.done)return;snap();M.grp=g?[null,null]:[null,null];
+  if(g){M.grp[p]=g;M.grp[1-p]=g==="low"?"high":"low";L(`${M.names[p]} は ${g==="low"?"ロー（1〜7）":"ハイ（9〜15）"}`)}
+  else L("グループを決め直し");render()}
+function groupRow(p){
+  const r=document.createElement("div");r.className="grp-row";
+  const g=M.grp&&M.grp[p];
+  if(!g){
+    const lab=document.createElement("span");lab.className="grp-q";lab.textContent="グループ";r.appendChild(lab);
+    [["low","ロー"],["high","ハイ"]].forEach(([k,t])=>{const b=document.createElement("button");b.type="button";b.className="grp-btn "+k;b.textContent=t;
+      b.setAttribute("aria-label",`${M.names[p]} を${t}にする`);b.onclick=e=>{e.stopPropagation();setGroup(p,k)};r.appendChild(b)});
+  }else{
+    const b=document.createElement("button");b.type="button";b.className="chip grp "+g;b.textContent=g==="low"?"ロー 1〜7":"ハイ 9〜15";
+    b.title="タップでグループを決め直す";b.onclick=e=>{e.stopPropagation();setGroup(p,null)};r.appendChild(b);
+  }
+  const N=M.hcBalls&&M.hcBalls[p];
+  if(N&&N<8){const lft=left8(p);
+    if(g&&lft!=null&&lft<=N&&lft>1){const b=document.createElement("button");b.type="button";b.className="hc-use";
+      b.innerHTML=`<b>ハンデが使えます</b><span>タップで残りの自分の球を取り除く</span>`;b.onclick=e=>{e.stopPropagation();removeOwn(p)};r.appendChild(b)}
+    else{const c=document.createElement("p");c.className="hc-note";
+      c.innerHTML=`<b>ハンデ</b>8番を含めて残り${N}球になったら、残りの自分の球を取り除けます`;r.appendChild(c)}}
+  return r;
+}
+function removeOwn(p){
+  if(M.done)return;const g=M.grp&&M.grp[p];if(!g)return;snap();M.removed=M.removed||[];
+  for(let n=1;n<=15;n++)if(grpOf(n)===g&&!gone8(n))M.removed.push(n);
+  L(`${M.names[p]} ハンデで残りの自分の球を取り除きました`);render();
+}
 function toggleSel(n){selBall=selBall===n?null:n;render();if(selBall){const p=$("board").querySelector(".score-btn");p&&p.focus()}}
 function dropSel(p){
   if(!selBall||M.done)return;const n=selBall;selBall=null;
@@ -3169,7 +3295,9 @@ function sinkTo(el,pkEl,done,dx,dy){
   setTimeout(done,matchMedia("(prefers-reduced-motion:reduce)").matches?0:230);
 }
 function doPocket(n,i){
-  lastPop=null;pocket(n,i);
+  lastPop=null;
+  if(M.mode==="race"&&M.game==="8"){pocket8(n,i);return}
+  pocket(n,i);
   if(!lastPop||M.mode!=="balls")return;
   const t=$("board").querySelector(`.side[data-p="${lastPop.p}"]`);if(!t)return;
   t.classList.add("flash");
