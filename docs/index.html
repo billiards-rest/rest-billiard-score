@@ -2976,8 +2976,17 @@ function nextRack(auto,winner){
     M.breaker=(M.breakRule==="winner"&&winner!=null)?winner:1-M.breaker;
     M.turn=M.breaker;
   }
-  render();
+  render();ccFollowBreak();
   if(auto)toast(g.endBall?`${g.endBall}番イン。次のラック（ブレイク: ${M.names[M.breaker]}）`:"全球入りました。次のラックへ");
+}
+/* the chess clock follows the break: when the break passes to the other player on a new rack, their clock runs */
+function ccFollowBreak(){
+  try{
+    if(!CC.on||!M)return;const b=M.breaker;
+    if(CC.run>=0){if(CC.run!==b){if(CC.left[b]>0)ccStart(b);else ccPause()}}
+    else if(CC.last>=0)CC.last=b;   /* paused: 「再開」 resumes on the breaker's side */
+    ccDraw();
+  }catch(e){}
 }
 $("newRack").onclick=()=>nextRack(false);
 $("swapTurn").onclick=()=>{snap();M.turn=1-M.turn;render()};
