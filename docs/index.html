@@ -126,6 +126,11 @@ button{cursor:pointer}
 .me-pick .primary{background:var(--cue);color:#1b1b1b;padding:11px 18px;font-size:15px}
 .me-name{font-weight:700;font-size:18px;overflow-wrap:anywhere}
 .me-main{display:flex;align-items:flex-end;gap:14px}
+.cls{display:inline-block;font:800 11px/1 var(--f-body);letter-spacing:.04em;padding:3px 7px;border-radius:6px;vertical-align:middle;color:#fff;background:#8a958f}
+.cls-bg{background:#9aa39e}.cls-rk{background:#6f9a85}.cls-c{background:#1f7a4d}.cls-cp{background:#2a8f7a}
+.cls-b{background:#2457a6}.cls-bp{background:#3d6fd1}.cls-am{background:#7a4fb0}.cls-a{background:#c2412d}
+.cls-sa{background:linear-gradient(135deg,#e2b53b,#b98a14);color:#1b1b1b}.cls-pro{background:linear-gradient(135deg,#151515,#4a4a4a);color:#ffe08a;box-shadow:0 0 0 1px #e2b53b}
+.me-side .cls{font-size:13px;padding:4px 9px;margin-bottom:4px}
 .me-rate{font:900 clamp(72px,20vw,112px)/.85 var(--f-display);font-variant-numeric:tabular-nums;color:var(--cue)}
 .me-side{font-size:13px;line-height:1.5;opacity:.9;padding-bottom:6px}
 .me-side b{font:800 22px/1 var(--f-display)}
@@ -986,6 +991,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
   <details class="sheet how">
     <summary>レートの見方</summary>
+    <p class="hint">クラス：Beginner（〜199）／Rookie（200〜）／C（300〜）／C+（400〜）／B（500〜）／B+（600〜）／A-（700〜）／A（800〜）／SA（900〜）／Pro（1000〜）</p>
     <p class="hint">勝ち負けではなく、各ラックをどちらが取ったか（9番を落としたか）で計算します。レート差100点で1ラックあたりの勝ち比が2:1、200点差で4:1です。</p>
     <p class="hint">新しい試合が入るたびに全試合からまとめて計算し直すので、強い人から取った1ラックはそのぶん高く評価されます。基準は500点です。</p>
     <p class="hint">取ったラックと取られたラックの合計が100未満の人は「暫定」です。試合が少ないうちは500点の近くに留まり、ラック数が増えるほど実力に近づきます。</p>
@@ -1671,7 +1677,7 @@ function renderRate(h){
     li.querySelector(".rk-name b").textContent=r.n;
     li.querySelector(".rk-name small").textContent=[r.t,`${r.g}試合 ${r.won}/${r.racks}ラック`].filter(Boolean).join(" ・ ");
     const vb=li.querySelector(".rk-val b");vb.textContent=Math.round(r.r);if(r.prov)vb.classList.add("prov");
-    li.querySelector(".rk-val small").textContent=r.racks===0&&r.start!=null?"開始レート":r.prov?"暫定":"確定";
+    li.querySelector(".rk-val small").innerHTML=classTag(r.r)+" "+(r.racks===0&&r.start!=null?"開始レート":r.prov?"暫定":"確定");
     ol.appendChild(li)});
   $("rateNote").textContent=rows.length
     ?`ラックの勝敗が記録された ${count} 試合から計算しています。レートを付ける前に終わった試合は入りません。`
@@ -1683,6 +1689,12 @@ function rateOf(n){return (rateRows||[]).find(x=>x.n===n)||null}
 function hcStrong(){const a=rateOf(getName(1)),b=rateOf(getName(2));if(!a||!b||a===b)return 0;return a.r>=b.r?1:2}
 /* match formats: ロング (normal) and ショート (a quick, casual game) */
 /* each player's 持ち点 is proportional to their own rating: rating 500 → the format's points (rating range 100–1000) */
+/* rating classes: each band of 100 rating points */
+function rateClass(r){
+  const C=[[1000,"Pro","pro"],[900,"SA","sa"],[800,"A","a"],[700,"A-","am"],[600,"B+","bp"],[500,"B","b"],[400,"C+","cp"],[300,"C","c"],[200,"Rookie","rk"],[0,"Beginner","bg"]];
+  const v=Math.round(+r||0),c=C.find(x=>v>=x[0]);return {label:c[1],key:c[2]};
+}
+function classTag(r){const c=rateClass(r);return `<span class="cls cls-${c.key}">${c.label}</span>`}
 function hcRace(){try{return GAMES[cfg.game].mode==="race"}catch(e){return false}}
 function hcUnit(){return hcRace()?"ラック":"点"}
 function hcFormats(){return hcRace()
@@ -1717,7 +1729,7 @@ function updateHandicap(){
   const rs=[rateOf(getName(1)),rateOf(getName(2))];
   if(hcRace()&&$("hcAuto").checked){
     [1,2].forEach(i=>{const el=$("pr"+i),r=rs[i-1];el.className="prate"+(r?(r.prov?" prov":""):" none");
-      el.textContent=r?`${Math.round(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
+      el.innerHTML=r?`${Math.round(r.r)} ${classTag(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
     const h=eightHandicap(rs[0]?rs[0].r:500,rs[1]?rs[1].r:500);
     $("t1").value=h.race[0];$("t2").value=h.race[1];cfg.hcBalls=h.balls;
     const nm=i=>getName(i+1)||("PLAYER "+(i+1)),w=1-h.strong;
@@ -1728,7 +1740,7 @@ function updateHandicap(){
   }
   if(hcRace())cfg.hcBalls=null;
   [1,2].forEach(i=>{const el=$("pr"+i),r=rs[i-1];el.className="prate"+(r?(r.prov?" prov":""):" none");
-    el.textContent=r?`${Math.round(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
+    el.innerHTML=r?`${Math.round(r.r)} ${classTag(r.r)}${r.prov?" 暫定":""}`:"レートなし"});
   const msg=$("hcMsg");
   if(!$("hcAuto").checked){msg.textContent=hcRace()?"先取ラック数は手動で入れています。":"持ち点は手動で入れています。";return}
   [1,2].forEach(i=>{if(!rs[i-1])$("t"+i).value=hcFmt().at500});
@@ -1794,7 +1806,7 @@ function renderMe(){
     return;
   }
   el.querySelector(".me-rate").textContent=Math.round(r.r);
-  el.querySelector(".me-side").innerHTML=`<b>${i+1}位</b> / ${rateRows.length}人<br>${r.prov?"暫定":"確定"}`;
+  el.querySelector(".me-side").innerHTML=`${classTag(r.r)}<br><b>${i+1}位</b> / ${rateRows.length}人<br>${r.prov?"暫定":"確定"}`;
   el.querySelector(".me-stats").textContent=`${r.g}試合 ・ ${r.won}/${r.racks}ラック獲得${r.prov?` ・ あと${R_PROV-r.racks}ラックで確定`:""}`;
   const others=rateRows.filter(o=>o!==r);
   if(others.length){
@@ -1810,7 +1822,7 @@ function renderMe(){
 function fillCmp(){
   $("cmpSheet").hidden=rateRows.length<2;if(rateRows.length<2)return;
   ["cmpA","cmpB"].forEach((id,i)=>{const sel=$(id),prev=sel.value;sel.innerHTML="";
-    rateRows.forEach(r=>{const o=document.createElement("option");o.value=r.n;o.textContent=`${r.n}（${Math.round(r.r)}）`;sel.appendChild(o)});
+    rateRows.forEach(r=>{const o=document.createElement("option");o.value=r.n;o.textContent=`${r.n}（${Math.round(r.r)} ${rateClass(r.r).label}）`;sel.appendChild(o)});
     sel.value=rateRows.some(r=>r.n===prev)?prev:rateRows[i].n});
   renderCmp();
 }
