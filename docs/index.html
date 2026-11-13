@@ -588,7 +588,11 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit .board.lanein{flex:none}
 #play.fit .board.lanein .side{padding:8px;gap:6px}
 #play.fit .board.lanein .score-btn{min-height:0}
-#play.fit .board.lanein .score-btn .num{font-size:clamp(44px,13vw,96px)}
+#play.fit .board.lanein .score-btn .num{font-size:clamp(64px,21vw,140px)}
+#play.fit .board.lanein .score-btn{gap:6px}
+#play.fit .board.lanein .score-btn .race{gap:10px}
+#play.fit .board.lanein .score-btn .rc b{font-size:clamp(24px,7.5vw,40px)}
+#play.fit .board.lanein .score-btn .rc small{font-size:11px}
 #play.fit .board.lanein .lane{padding:6px 5px}
 #play.fit .board.lanein .balls{width:var(--ball,40px);gap:var(--bgap,4px)}
 #play.fit #tableWrap{gap:0!important}
@@ -606,7 +610,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit .sc-used:empty{display:none}
 #play.fit .sc-head{display:none}
 #play.fit .board.lanein .score-btn .tap{display:none}
-#play.fit .board.lanein .score-btn .race{font-size:12px}
+
 #play.fit .board.lanein .side-head .pname{font-size:16px}
 #play.fit .bar .meta{font-size:12px;line-height:1.35}
 #play.fit .bar .ghost{padding:6px 10px}
@@ -615,7 +619,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit .sc-btns button{font-size:11px;letter-spacing:-.02em;padding:6px 0}
 #play.fit .footer-tools button{padding:7px 6px}
 #play.fit .cc-ctl button{padding:4px 10px}
-@media (max-height:700px){#play.fit .turnline{display:none}#play.fit .sc-time{font-size:34px}#play.fit .sc-card .cc-time{font-size:20px}}
+@media (max-height:700px){#play.fit .turnline{display:none}#play.fit .board.lanein .score-btn .num{font-size:clamp(48px,15vw,90px)}#play.fit .board.lanein .score-btn .rc b{font-size:22px}#play.fit .board.lanein .score-btn .rc small{font-size:10px}#play.fit .sc-time{font-size:34px}#play.fit .sc-card .cc-time{font-size:20px}}
 .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bar .meta{flex:1;min-width:0;font-size:13px;color:var(--muted)}
 .bar .meta b{color:var(--ink)}
@@ -634,7 +638,11 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .score-btn{flex:1;min-height:150px;border:0;border-radius:12px;background:var(--pc);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;user-select:none;touch-action:manipulation}
 .score-btn:active{filter:brightness(1.1)}
 .score-btn .num{font-family:var(--f-display);font-weight:900;font-size:clamp(96px,22vw,200px);line-height:.9;font-variant-numeric:tabular-nums}
-.score-btn .race{font-size:14px;opacity:.85}
+.score-btn .race{display:flex;gap:14px;align-items:flex-end;justify-content:center;flex-wrap:wrap;line-height:1}
+.score-btn .rc{display:flex;flex-direction:column;align-items:center;gap:2px}
+.score-btn .rc small{font-size:12px;font-weight:700;opacity:.8;letter-spacing:.04em}
+.score-btn .rc b{font:900 clamp(26px,7vw,40px)/1 var(--f-display);font-variant-numeric:tabular-nums}
+.score-btn .rc.left b{color:#ffe08a}
 .score-btn .tap{font-size:12px;opacity:.7}
 .score-btn:disabled{opacity:.6;cursor:default}
 .pips{display:flex;flex-wrap:wrap;gap:5px}
@@ -2797,7 +2805,7 @@ function render(){
 
     const btn=document.createElement("button");btn.type="button";btn.className="score-btn";
     const remain=Math.max(0,M.target[p]-M.score[p]);
-    btn.innerHTML=`<span class="num">${M.score[p]}</span><span class="race">${M.mode==="race"?`${M.target[p]} 先 ・ あと ${remain}`:`持ち点 ${M.target[p]} ・ あと ${remain}`}</span><span class="tap"></span>`;
+    btn.innerHTML=`<span class="num">${M.score[p]}</span><span class="race">${M.mode==="race"?`<span class="rc"><small>先取</small><b>${M.target[p]}</b></span><span class="rc left"><small>あと</small><b>${remain}</b></span>`:`<span class="rc"><small>持ち点</small><b>${M.target[p]}</b></span><span class="rc left"><small>あと</small><b>${remain}</b></span>`}</span><span class="tap"></span>`;
     btn.querySelector(".tap").textContent=M.mode==="race"?"タップでラック獲得":M.mode==="balls"?"落としたボールをここへドラッグ":"タップで +1";
     btn.setAttribute("aria-label",`${M.names[p]} ${M.score[p]}`);
     /* "○モア": 10 points or fewer left to the target */
