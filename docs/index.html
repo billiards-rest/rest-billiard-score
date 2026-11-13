@@ -3215,7 +3215,7 @@ function pocket8(n,p){
   /* ball-removal handicap: tell the player when they may take their remaining balls off */
   [0,1].forEach(i=>{const N=M.hcBalls&&M.hcBalls[i],lft=left8(i);
     if(N&&N<8&&lft!=null&&lft<=N&&lft>1&&!(M.toldRm||{})[M.rack+":"+i]){M.toldRm=M.toldRm||{};M.toldRm[M.rack+":"+i]=1;
-      toast(`${M.names[i]}さんは8番を含めて残り${lft}球になりました。ハンデで、残りの自分の球を取り除けます`)}});
+      toast(`${M.names[i]}さん：ハンデで残りの自分の球 ${lft-1}個 を台から取り除けます。取り除いたら赤いボタンをタップしてください`)}});
 }
 /* which group each player has: chosen by tapping ロー / ハイ (the table stays open until someone legally takes a group) */
 function setGroup(p,g){if(M.done)return;snap();M.grp=g?[null,null]:[null,null];
@@ -3233,11 +3233,22 @@ function groupRow(p){
     b.title="タップでグループを決め直す";b.onclick=e=>{e.stopPropagation();setGroup(p,null)};r.appendChild(b);
   }
   const N=M.hcBalls&&M.hcBalls[p];
-  if(N&&N<8){const lft=left8(p);
-    if(g&&lft!=null&&lft<=N&&lft>1){const b=document.createElement("button");b.type="button";b.className="hc-use";
-      b.innerHTML=`<b>ハンデが使えます</b><span>タップで残りの自分の球を取り除く</span>`;b.onclick=e=>{e.stopPropagation();removeOwn(p)};r.appendChild(b)}
-    else{const c=document.createElement("p");c.className="hc-note";
-      c.innerHTML=`<b>ハンデ</b>8番を含めて残り${N}球になったら、残りの自分の球を取り除けます`;r.appendChild(c)}}
+  if(N&&N<8){
+    const keep=N-1;                               /* own balls that may be taken off */
+    const own=g?left8(p)-1:7;                     /* own group balls still on the table */
+    const need=Math.max(0,own-keep);              /* own balls still to pocket before the handicap applies */
+    if(g&&own>0&&need===0){
+      const b=document.createElement("button");b.type="button";b.className="hc-use";
+      b.innerHTML=`<b>ハンデ：自分の球 残り${own}個を取り除けます</b><span>台から取り除いたらタップ → 8番を狙って続行</span>`;
+      b.onclick=e=>{e.stopPropagation();removeOwn(p)};r.appendChild(b);
+    }else if(g&&own===0){
+      const c=document.createElement("p");c.className="hc-note";c.innerHTML=`<b>ハンデ</b>自分の球はもうありません。8番を狙います`;r.appendChild(c);
+    }else{
+      const c=document.createElement("p");c.className="hc-note";
+      c.innerHTML=g?`<b>ハンデ</b>自分の球をあと${need}個落とすと、残り${keep}個を取り除けます`
+                   :`<b>ハンデ</b>グループが決まったら、自分の球を${7-keep}個落とすと、残り${keep}個を取り除けます`;
+      r.appendChild(c);
+    }}
   return r;
 }
 function ask8(p){
@@ -3257,6 +3268,7 @@ function removeOwn(p){
   if(M.done)return;const g=M.grp&&M.grp[p];if(!g)return;snap();M.removed=M.removed||[];
   for(let n=1;n<=15;n++)if(grpOf(n)===g&&!gone8(n))M.removed.push(n);
   L(`${M.names[p]} ハンデで残りの自分の球を取り除きました`);render();
+  toast(`${M.names[p]}さん：取り除きました。8番を狙って続けてください`);
 }
 function toggleSel(n){selBall=selBall===n?null:n;render();if(selBall){const p=$("board").querySelector(".score-btn");p&&p.focus()}}
 function dropSel(p){
