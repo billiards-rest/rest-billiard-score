@@ -1001,7 +1001,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
   <details class="sheet how">
     <summary>レートの見方</summary>
-    <p class="hint">クラス：Beginner（〜199・アイアン）／Rookie（200〜・カッパー）／C（300〜・ブロンズ）／C+（400〜・ブロンズ）／B（500〜・シルバー）／B+（600〜・シルバー）／A-（700〜・ゴールド）／A（800〜・ゴールド）／SA（900〜・プラチナ）／Pro（1000〜・ブラックダイヤ）</p>
+    <p class="hint">クラス：Beginner（〜199・アイアン）／Rookie（200〜・カッパー）／C（300〜・ブロンズ）／C+（400〜・ブロンズ）／B（500〜・シルバー）／B+（600〜・シルバー）／A-（700〜・ゴールド）／A（800〜・ゴールド）／SA（900〜・プラチナ）／Pro（1000・ブラックダイヤ）。レートの上限は1000です</p>
     <p class="hint">勝ち負けではなく、各ラックをどちらが取ったか（9番を落としたか）で計算します。レート差100点で1ラックあたりの勝ち比が2:1、200点差で4:1です。</p>
     <p class="hint">新しい試合が入るたびに全試合からまとめて計算し直すので、強い人から取った1ラックはそのぶん高く評価されます。基準は500点です。</p>
     <p class="hint">取ったラックと取られたラックの合計が100未満の人は「暫定」です。試合が少ないうちは500点の近くに留まり、ラック数が増えるほど実力に近づきます。</p>
@@ -1654,7 +1654,7 @@ function markDots(){const sl=$("rkSlider");rkIndex=sl.clientWidth?Math.round(sl.
 $("rkSlider").addEventListener("scroll",()=>{clearTimeout(markDots.t);markDots.t=setTimeout(markDots,60)},{passive:true});
 $("rkSlider").addEventListener("keydown",e=>{if(e.key==="ArrowRight"){e.preventDefault();goSlide(rkIndex+1)}if(e.key==="ArrowLeft"){e.preventDefault();goSlide(rkIndex-1)}});
 /* ---------- skill rating (Fargo-style, per rack) ---------- */
-const R_SCALE=100,R_BASE=500,R_PRIOR=4,R_PRIOR_START=10,R_PROV=100;
+const R_MAX=1000,R_SCALE=100,R_BASE=500,R_PRIOR=4,R_PRIOR_START=10,R_PROV=100;
 const rackP=(ra,rb)=>1/(1+Math.pow(2,(rb-ra)/R_SCALE));
 var rateRows=[];
 function computeRatings(h){
@@ -1676,7 +1676,7 @@ function computeRatings(h){
   }
   const rk={},won={},g={};players.forEach(p=>{rk[p]=0;won[p]=0;g[p]=0});
   ms.forEach(m=>{const n=m.ar+m.br;rk[m.a]+=n;rk[m.b]+=n;won[m.a]+=m.ar;won[m.b]+=m.br;g[m.a]++;g[m.b]++});
-  return {count:ms.length,rows:[...players].map(p=>({n:p,t:team[p]||"",r:R_SCALE*Math.log2(s[p]),racks:rk[p],won:won[p],g:g[p],prov:rk[p]<R_PROV,start:wP[p]===R_PRIOR_START?Math.round(+init[p]):null}))
+  return {count:ms.length,rows:[...players].map(p=>({n:p,t:team[p]||"",r:Math.min(R_MAX,R_SCALE*Math.log2(s[p])),racks:rk[p],won:won[p],g:g[p],prov:rk[p]<R_PROV,start:wP[p]===R_PRIOR_START?Math.round(+init[p]):null}))
     .sort((x,y)=>y.r-x.r)};
 }
 function renderRate(h){
