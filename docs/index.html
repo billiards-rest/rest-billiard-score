@@ -181,6 +181,22 @@ button{cursor:pointer}
 
 /* approval */
 .hist-item.pending{background:color-mix(in srgb,var(--cue) 10%,transparent);border-radius:10px;padding-inline:8px}
+.entry-card{gap:12px;border:2px solid var(--cue)}
+.en-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.en-tag{font:800 12px/1 var(--f-body);padding:5px 9px 4px;border-radius:999px;background:var(--cue);color:#fff}
+.en-tag.closed{background:var(--muted)}
+.en-name{margin:0;font-size:20px;font-weight:900;line-height:1.3}
+.en-meta{font-size:14px;color:var(--muted);line-height:1.6}
+.en-count{font-weight:800}
+.en-list{display:flex;flex-wrap:wrap;gap:6px;list-style:none;margin:0;padding:0}
+.en-chip{display:inline-flex;flex-direction:row;align-items:center;height:38px;box-sizing:border-box;white-space:nowrap;color:var(--ink,inherit);gap:4px;padding:4px 6px 4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-weight:700;font-size:14px;max-width:100%}
+.en-chip.mine{border-color:var(--cue);background:color-mix(in srgb,var(--cue) 10%,transparent)}
+.en-chip .cls .medal{width:16px;height:22px}.en-chip .cls b{font-size:11px}
+.en-x{border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;width:28px;height:28px;border-radius:50%;cursor:pointer}
+.en-x:hover{background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red)}
+.en-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.en-form select,.en-form input{flex:1 1 160px;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;font:inherit}
+.en-form .primary{flex:none}
 .rated-tag{display:inline-block;font:800 10px/1 var(--f-body);letter-spacing:.04em;color:#fff;background:var(--cue);border-radius:4px;padding:3px 5px 2px;margin-right:6px;vertical-align:1px}
 .rated-btn{grid-column:1/-1;justify-self:start;font:700 12px/1 var(--f-body);padding:7px 10px;border-radius:999px;border:1px dashed var(--line);background:transparent;color:var(--muted);cursor:pointer}
 .rated-btn.on{border-style:solid;border-color:var(--cue);color:var(--cue);background:color-mix(in srgb,var(--cue) 8%,transparent)}
@@ -838,6 +854,8 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     </div>
   </header>
 
+  <section class="sheet entry-card" id="entryCard" aria-label="大会エントリー" hidden></section>
+
   <section class="sheet" aria-labelledby="h-new">
     <h2 id="h-new">新しい試合</h2>
     <div class="lg-banner" id="lgBanner" hidden role="status"><div><b id="lgBannerTitle"></b><span id="lgBannerSub"></span></div><button class="ghost" type="button" id="lgCancel">リーグ戦をやめる</button></div>
@@ -925,6 +943,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
   </div>
   <div id="tourView" class="page" hidden>
+    <section class="sheet entry-card" id="entryCard2" aria-label="大会エントリー" hidden></section>
     <section class="next-card" id="tourMe" aria-label="あなたの状況" hidden></section>
     <section class="sheet league-sum" id="tourHead"></section>
     <div id="tourBody" class="page"></div>
@@ -1105,6 +1124,21 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <div class="row"><button class="ghost danger" type="button" id="sClear">日程をすべて消す</button></div>
   </section>
 
+  <section class="sheet" id="entryAdmin" aria-labelledby="h-ea">
+    <h2 id="h-ea">大会のエントリー受付</h2>
+    <p class="hint">ここで受付を始めると、みんなのアプリの「試合」タブと「日程 › トーナメント」にエントリーのボタンが出ます。</p>
+    <div class="field"><label for="eName">大会名</label><input id="eName" maxlength="40" autocomplete="off" placeholder="例：第13回ハウストーナメント"></div>
+    <div class="grid2">
+      <div class="field"><label for="eWhen">日時</label><input id="eWhen" maxlength="40" autocomplete="off" placeholder="例：11月21日(土) 13:00 START"></div>
+      <div class="field"><label for="eFee">参加費</label><input id="eFee" maxlength="20" autocomplete="off" placeholder="例：2,000円"></div>
+      <div class="field"><label for="eNote">ひとこと（任意）</label><input id="eNote" maxlength="60" autocomplete="off" placeholder="例：12:30より練習可"></div>
+      <div class="field"><label for="eCap">定員（任意）</label><input id="eCap" type="number" inputmode="numeric" min="2" max="256" placeholder="なし"></div>
+    </div>
+    <label class="hc-toggle" for="eOpen"><input type="checkbox" id="eOpen" checked><span>エントリーを受け付ける</span></label>
+    <div class="row"><button class="primary" type="button" id="eSave">保存する</button><button class="ghost" type="button" id="eNew">新しい大会として受付を始める</button><button class="ghost danger" type="button" id="eEnd" hidden>受付を消す</button></div>
+    <div class="row"><button class="primary" type="button" id="eClose" hidden>締め切ってトーナメントを作る</button></div>
+    <p class="hint" id="eMsg"></p>
+  </section>
   <section class="sheet" id="tourAdmin" aria-labelledby="h-ta">
     <h2 id="h-ta">トーナメントを作る</h2>
     <p class="hint">単発の大会用です。個人戦とチーム戦を選べます。ダブルイリミネーションで勝ち残りを決めてから、シングルイリミネーションで優勝を決めます。</p>
@@ -1117,7 +1151,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <div class="field">
       <label for="tPlayers" id="tPlayersLab">参加者（1行に1人）</label>
       <textarea id="tPlayers" rows="6"></textarea>
-      <div class="row"><button class="ghost" type="button" id="tFromRoster">登録メンバーを読み込む</button></div>
+      <div class="row"><button class="ghost" type="button" id="tFromRoster">登録メンバーを読み込む</button><button class="ghost" type="button" id="tFromEntry">エントリーした人を読み込む</button></div>
     </div>
     <div class="grid2">
       <div class="field"><label for="tFormat">形式</label><select id="tFormat"><option value="de">ダブル → シングル</option><option value="se">シングルのみ</option></select></div>
@@ -2402,7 +2436,8 @@ $("tMake").onclick=()=>{
   const seed=$("tSeed").value;
   if(seed==="random"){for(let i=ps.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ps[i],ps[j]]=[ps[j],ps[i]]}}
   if(seed==="rate"){const rv=n=>{if(tKind==="team"){const t=teamRate(n);return t==null?-1e9:t}const r=rateOf(n);return r?r.r:-1e9};ps=ps.map((n,i)=>[n,i]).sort((a,b)=>rv(b[0])-rv(a[0])||a[1]-b[1]).map(x=>x[0])}
-  tour={id:newId(),name:$("tName").value.trim()||"トーナメント",format:$("tFormat").value,q:+$("tQ").value||2,players:ps,kind:tKind,created:Date.now()};
+  const fromEntry=entryCfg&&!entryCfg.open&&entryList().length&&ps.length===entryList().length&&entryList().every(e=>ps.includes(e.name));
+  tour={id:newId(),name:$("tName").value.trim()||"トーナメント",format:$("tFormat").value,q:+$("tQ").value||2,players:ps,kind:tKind,created:Date.now(),...(fromEntry?{entryId:entryCfg.id}:{})};
   if(tourDb){tourDb.set({...tour,players:[...ps]}).catch(()=>toast("トーナメントを保存できませんでした"))}else store.set("cb_tour",tour);
   renderTour();msg.textContent=`${ps.length}${tU()}の${tKind==="team"?"チーム":"個人"}トーナメントを作りました。日程タブの「トーナメント」で見られます。`;
 };
@@ -2412,6 +2447,114 @@ $("tDel").onclick=()=>{
   if(tourDb){tourDb.delete().catch(()=>toast("削除できませんでした"))}else store.set("cb_tour",null);
   renderTour();toast("トーナメントを削除しました");
 };
+/* ---------- tournament entry: the admin opens it (config/entry), anyone enters from the app (entries) ---------- */
+var entryCfg=store.get("cb_entrycfg",null),entries=store.get("cb_entries",[]),entryDb=null,entryCol=null;
+function entryList(){return entryCfg?entries.filter(e=>e&&e.eid===entryCfg.id&&e.name).sort((a,b)=>(a.at||0)-(b.at||0)):[]}
+function entryMembers(){return [...new Set(roster.teams.flatMap(t=>t.members))]}
+function canCancelEntry(e){return isOwner||!db||(!!myId&&e.uid===myId)}
+function addEntry(name){
+  name=(name||"").trim();if(!name){toast("名前を選ぶか入れてください");return}
+  if(!entryCfg||!entryCfg.open){toast("今はエントリーを受け付けていません");return}
+  const L=entryList();
+  if(L.some(e=>e.name===name)){toast(`${name} さんはエントリー済みです`);return}
+  if(entryCfg.cap&&L.length>=entryCfg.cap){toast("定員に達しています");return}
+  const rec={id:newId(),eid:entryCfg.id,name,team:teamOf(name)||"",at:Date.now(),uid:myId||null,by:myName||null};
+  if(!myName&&entryMembers().includes(name)){myName=name;store.set("cb_me",name);if(meDoc)meDoc.set({name}).catch(()=>{});try{renderMe()}catch(e){}}
+  if(entryCol){entryCol.doc(rec.id).set(rec).then(()=>toast(`${name} さんのエントリーを受け付けました`)).catch(()=>toast("エントリーできませんでした。通信を確認するか、お店に伝えてください"))}
+  else{entries=[...entries,rec];store.set("cb_entries",entries);toast(`${name} さんのエントリーを受け付けました`)}
+  renderEntry();
+}
+function cancelEntry(e){
+  if(entryCol){entryCol.doc(e.id).delete().then(()=>toast(`${e.name} さんのエントリーを取り消しました`)).catch(()=>toast("取り消せませんでした"))}
+  else{entries=entries.filter(x=>x.id!==e.id);store.set("cb_entries",entries);renderEntry()}
+}
+function renderEntry(){
+  const L=entryList(),members=entryMembers();
+  ["entryCard","entryCard2"].forEach(cid=>{
+    const el=$(cid);if(!el)return;el.innerHTML="";
+    if(!entryCfg||!entryCfg.name){el.hidden=true;return}
+    el.hidden=false;
+    const full=!!entryCfg.cap&&L.length>=entryCfg.cap,open=!!entryCfg.open&&!full;
+    const top=document.createElement("div");top.className="en-top";
+    const tg=document.createElement("span");tg.className="en-tag"+(open?"":" closed");tg.textContent=open?"エントリー受付中":full?"定員に達しました":"受付終了";
+    top.appendChild(tg);el.appendChild(top);
+    const h=document.createElement("div");h.className="en-name";h.setAttribute("role","heading");h.setAttribute("aria-level","2");h.textContent=entryCfg.name;el.appendChild(h);
+    const meta=document.createElement("div");meta.className="en-meta";
+    meta.textContent=[entryCfg.when,entryCfg.fee&&`参加費 ${entryCfg.fee}`,entryCfg.note].filter(Boolean).join(" ・ ");
+    if(meta.textContent)el.appendChild(meta);
+    const cnt=document.createElement("div");cnt.className="en-count";cnt.textContent=`エントリー ${L.length}人`+(entryCfg.cap?` ／ 定員 ${entryCfg.cap}人`:"");el.appendChild(cnt);
+    if(L.length){
+      const ul=document.createElement("ul");ul.className="en-list";
+      L.forEach(e=>{const li=document.createElement("li");li.className="en-chip"+(e.name===myName?" mine":"");
+        const nm=document.createElement("span");nm.textContent=e.name;li.appendChild(nm);
+        const r=rateOf(e.name);if(r)li.insertAdjacentHTML("beforeend",classTag(r.r));
+        if(canCancelEntry(e)){const x=document.createElement("button");x.type="button";x.className="en-x";x.textContent="×";x.setAttribute("aria-label",`${e.name} さんのエントリーを取り消す`);
+          x.onclick=()=>{if(x.dataset.armed){cancelEntry(e)}else{x.dataset.armed="1";x.textContent="取消?";x.style.width="auto";x.style.padding="0 6px";setTimeout(()=>{if(x.isConnected){delete x.dataset.armed;x.textContent="×";x.style.width="";x.style.padding=""}},3000)}};li.appendChild(x)}
+        ul.appendChild(li)});
+      el.appendChild(ul);
+    }
+    if(!open)return;
+    const f=document.createElement("form");f.className="en-form";
+    const sel=document.createElement("select");sel.setAttribute("aria-label","エントリーする人");
+    const o0=document.createElement("option");o0.value="";o0.textContent="名前を選ぶ";sel.appendChild(o0);
+    members.filter(n=>!L.some(e=>e.name===n)).forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o)});
+    const oo=document.createElement("option");oo.value="__other";oo.textContent="リストにない（名前を入れる）";sel.appendChild(oo);
+    if(myName&&members.includes(myName)&&!L.some(e=>e.name===myName))sel.value=myName;
+    const inp=document.createElement("input");inp.maxLength=20;inp.placeholder="お名前";inp.autocomplete="off";inp.setAttribute("aria-label","お名前");inp.hidden=true;
+    sel.onchange=()=>{inp.hidden=sel.value!=="__other";if(!inp.hidden)inp.focus()};
+    const b=document.createElement("button");b.type="submit";b.className="primary";b.textContent="エントリーする";
+    f.append(sel,inp,b);
+    f.onsubmit=ev=>{ev.preventDefault();addEntry(sel.value==="__other"?inp.value:sel.value)};
+    el.appendChild(f);
+    const hn=document.createElement("p");hn.className="hint";hn.textContent="登録メンバーにいない人は、当日お店で最初のレートを決めます。";
+    if(!members.length||true)el.appendChild(hn);
+  });
+  renderEntryAdmin();
+}
+/* when the entry is closed, the entrants go straight into "トーナメントを作る" (unless the admin typed their own list) */
+var tManual=false;
+function entryToTour(force){
+  const L=entryList();if(!entryCfg||!L.length)return false;
+  if(!force&&(entryCfg.open||tManual||(tour&&tour.entryId===entryCfg.id)))return false;
+  if(tKind==="team"){const b=$("tKind").querySelector('[data-v="solo"]');b&&b.click()}
+  $("tPlayers").value=L.map(e=>e.name).join("\n");$("tName").value=entryCfg.name;renderTourPlan();
+  $("tMsg").textContent=`「${entryCfg.name}」にエントリーした ${L.length}人を入れました。組み合わせを選んで「この内容でトーナメントを作る」を押してください。`;
+  return true;
+}
+function renderEntryAdmin(){
+  if(!$("entryAdmin"))return;
+  entryToTour(false);
+  $("eClose").hidden=!(entryCfg&&entryCfg.open&&entryList().length);
+  if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#entryAdmin"))return;
+  const c=entryCfg||{};$("eName").value=c.name||"";$("eWhen").value=c.when||"";$("eFee").value=c.fee||"";$("eNote").value=c.note||"";$("eCap").value=c.cap||"";
+  $("eOpen").checked=c.name?!!c.open:true;$("eEnd").hidden=!c.name;
+  $("eMsg").textContent=c.name?`いま「${c.name}」の受付${c.open?"中":"を止めています"}。エントリー ${entryList().length}人。`:"まだ受付をしていません。";
+}
+function saveEntryCfg(fresh){
+  const name=$("eName").value.trim();if(!name){$("eMsg").textContent="大会名を入れてください。";return}
+  const cap=Math.round(+$("eCap").value)||0;
+  entryCfg={id:fresh||!entryCfg?newId():entryCfg.id,name,when:$("eWhen").value.trim(),fee:$("eFee").value.trim(),note:$("eNote").value.trim(),cap:cap>=2?cap:0,open:$("eOpen").checked};
+  store.set("cb_entrycfg",entryCfg);
+  if(entryDb)entryDb.set(entryCfg).then(()=>toast(fresh?"新しい大会の受付を始めました":"保存しました")).catch(()=>toast("保存できませんでした"));
+  if(document.activeElement)document.activeElement.blur();renderEntry();
+}
+$("eSave").onclick=()=>saveEntryCfg(false);
+$("eClose").onclick=()=>{$("eOpen").checked=false;saveEntryCfg(false);tManual=false;entryToTour(true);
+  $("tourAdmin").scrollIntoView({behavior:"smooth",block:"start"});toast("受付を締め切りました。エントリーした人をトーナメントに入れました")};
+$("tPlayers").addEventListener("input",()=>{tManual=true});
+let eNewArmed=false;
+$("eNew").onclick=()=>{
+  if(entryCfg&&entryList().length&&!eNewArmed){eNewArmed=true;$("eNew").textContent="もう一度押して新しく始める";$("eMsg").textContent="今の大会のエントリー一覧は表示されなくなります。";setTimeout(()=>{eNewArmed=false;$("eNew").textContent="新しい大会として受付を始める"},4000);return}
+  eNewArmed=false;$("eNew").textContent="新しい大会として受付を始める";saveEntryCfg(true);
+};
+let eEndArmed=false;
+$("eEnd").onclick=()=>{
+  if(!eEndArmed){eEndArmed=true;$("eEnd").textContent="もう一度押して消す";setTimeout(()=>{eEndArmed=false;$("eEnd").textContent="受付を消す"},3000);return}
+  eEndArmed=false;$("eEnd").textContent="受付を消す";entryCfg=null;store.set("cb_entrycfg",null);
+  if(entryDb)entryDb.delete().catch(()=>toast("消せませんでした"));renderEntry();toast("受付をアプリから消しました");
+};
+$("tFromEntry").onclick=()=>{if(!entryList().length){toast("まだエントリーした人がいません");return}
+  tManual=false;entryToTour(true);toast(`エントリーした ${entryList().length}人を読み込みました`)};
 /* ---- league / tournament switch on the schedule tab ---- */
 let schedView=null;
 function setSchedView(v){
@@ -3461,6 +3604,10 @@ $("adminBtn").onclick=async()=>{
   },()=>{});
   appCfgDb=db.doc("config/app");
   appCfgDb.onSnapshot(sn=>{if(sn.exists){const d=sn.data()||{};store.set("cb_appcfg",{shotBase:d.shotBase,shotEx:d.shotEx,chessMin:d.chessMin,chessOn:d.chessOn});scApplyCfg(d.shotBase,d.shotEx,false);ccApplyCfg(d.chessMin||30,d.chessOn!==false,false)}},()=>{});
+  entryDb=db.doc("config/entry");
+  entryDb.onSnapshot(sn=>{entryCfg=sn.exists?sn.data()||null:null;if(entryCfg&&!entryCfg.id)entryCfg=null;store.set("cb_entrycfg",entryCfg);renderEntry()},()=>{});
+  entryCol=db.collection("entries");
+  entryCol.onSnapshot(sn=>{entries=sn.docs.map(d=>d.data());renderEntry()},()=>{});
   ratedDb=db.doc("config/rated");
   ratedDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};ratedCfg={on:Array.isArray(d.on)?d.on:[],off:Array.isArray(d.off)?d.off:[],league:!!d.league};store.set("cb_rated",ratedCfg);renderHistory()},()=>{});
   rosterDb=db.doc("config/roster");
@@ -3481,7 +3628,7 @@ $("adminBtn").onclick=async()=>{
 let cur=store.get("cb_cur",null);if(cur&&!GAMES[cur.game]){cur=null;store.set("cb_cur",null)}
 $("resumeBtn").hidden=!(cur||BW);if(cur)M=cur;
 $("resumeBtn").onclick=()=>{if(store.get("cb_bowl_cur",null)&&(!store.get("cb_cur",null)||cfg.game==="bowl")){BW=store.get("cb_bowl_cur",BW);openBowl();return}M=store.get("cb_cur",M);undoStack=[];openPlay()};
-renderHistory();
+renderHistory();renderEntry();
 let startPage="match";try{startPage=sessionStorage.getItem("cb_page")||"match"}catch(e){}
 showPage(startPage==="settings"?"match":startPage);
 })();

@@ -20,6 +20,8 @@ service cloud.firestore {
     match /matches/{id}     { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
     match /bowl/{id}        { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
     match /tourResults/{id} { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
+    // 大会のエントリー：誰でも見られる・エントリーできる・取り消せる
+    match /entries/{id}     { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
 
     // 各スマホの「自分の名前」
     match /data/users/{uid}/{doc} { allow read: if true; allow create, update: if okDoc(); allow delete: if true; }
