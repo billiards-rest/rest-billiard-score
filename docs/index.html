@@ -1135,7 +1135,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <div class="field"><label for="eName">大会名</label><input id="eName" maxlength="40" autocomplete="off" placeholder="例：第13回ハウストーナメント"></div>
     <div class="grid2">
       <div class="field"><label for="eWhen">日時</label><input id="eWhen" maxlength="40" autocomplete="off" placeholder="例：11月21日(土) 13:00 START"></div>
-      <div class="field"><label for="eFee">参加費</label><input id="eFee" maxlength="20" autocomplete="off" placeholder="例：2,000円"></div>
+      <div class="field"><label for="eFee">参加費</label><input id="eFee" maxlength="20" autocomplete="off" placeholder="例：￥2,000" value="￥2,000"></div>
       <div class="field"><label for="eNote">ひとこと（任意）</label><input id="eNote" maxlength="60" autocomplete="off" placeholder="例：12:30より練習可"></div>
       <div class="field"><label for="eCap">定員（任意）</label><input id="eCap" type="number" inputmode="numeric" min="2" max="256" placeholder="なし"></div>
     </div>
@@ -2535,7 +2535,7 @@ function renderEntryAdmin(){
   entryToTour(false);
   $("eClose").hidden=!(entryCfg&&entryCfg.open&&entryList().length);
   if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#entryAdmin"))return;
-  const c=entryCfg||{};$("eGame").value=c.game||"9";$("eFmt").value=c.fmt||"long";$("eFmt").disabled=$("eGame").value==="bowl";$("eName").value=c.name||"";$("eWhen").value=c.when||"";$("eFee").value=c.fee||"";$("eNote").value=c.note||"";$("eCap").value=c.cap||"";
+  const c=entryCfg||{};$("eGame").value=c.game||"9";$("eFmt").value=c.fmt||"long";$("eFmt").disabled=$("eGame").value==="bowl";$("eName").value=c.name||"";$("eWhen").value=c.when||"";$("eFee").value=c.name?(c.fee||""):"￥2,000";$("eNote").value=c.note||"";$("eCap").value=c.cap||"";
   $("eOpen").checked=c.name?!!c.open:true;$("eEnd").hidden=!c.name;
   $("eMsg").textContent=c.name?`いま「${c.name}」（${entryGameLabel()||"種目なし"}）の受付${c.open?"中":"を止めています"}。エントリー ${entryList().length}人。`:"まだ受付をしていません。";
 }
