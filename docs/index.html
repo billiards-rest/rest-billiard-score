@@ -184,6 +184,7 @@ button{cursor:pointer}
 .entry-card{gap:12px;border:2px solid var(--cue)}
 .en-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .en-tag{font:800 12px/1 var(--f-body);padding:5px 9px 4px;border-radius:999px;background:var(--cue);color:#fff}
+.en-tag.game{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .en-tag.closed{background:var(--muted)}
 .en-name{margin:0;font-size:20px;font-weight:900;line-height:1.3}
 .en-meta{font-size:14px;color:var(--muted);line-height:1.6}
@@ -1127,6 +1128,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   <section class="sheet" id="entryAdmin" aria-labelledby="h-ea">
     <h2 id="h-ea">大会のエントリー受付</h2>
     <p class="hint">ここで受付を始めると、みんなのアプリの「試合」タブと「日程 › トーナメント」にエントリーのボタンが出ます。</p>
+    <div class="grid2">
+      <div class="field"><label for="eGame">種目</label><select id="eGame"><option value="9">9ボール（RESTルール）</option><option value="8">8ボール（セットマッチ）</option><option value="10">10ボール</option><option value="bowl">ボーラード</option></select></div>
+      <div class="field"><label for="eFmt">試合の長さ</label><select id="eFmt"><option value="long">ロング（通常）</option><option value="middle">ミドル</option><option value="short">ショート</option></select></div>
+    </div>
     <div class="field"><label for="eName">大会名</label><input id="eName" maxlength="40" autocomplete="off" placeholder="例：第13回ハウストーナメント"></div>
     <div class="grid2">
       <div class="field"><label for="eWhen">日時</label><input id="eWhen" maxlength="40" autocomplete="off" placeholder="例：11月21日(土) 13:00 START"></div>
@@ -2449,6 +2454,8 @@ $("tDel").onclick=()=>{
 };
 /* ---------- tournament entry: the admin opens it (config/entry), anyone enters from the app (entries) ---------- */
 var entryCfg=store.get("cb_entrycfg",null),entries=store.get("cb_entries",[]),entryDb=null,entryCol=null;
+const ENTRY_GAMES={"9":"9ボール","8":"8ボール","10":"10ボール","bowl":"ボーラード"},ENTRY_FMTS={long:"ロング",middle:"ミドル",short:"ショート"};
+function entryGameLabel(){if(!entryCfg||!entryCfg.game)return "";const g=ENTRY_GAMES[entryCfg.game]||"";return g+(entryCfg.game!=="bowl"&&ENTRY_FMTS[entryCfg.fmt]?`・${ENTRY_FMTS[entryCfg.fmt]}`:"")}
 function entryList(){return entryCfg?entries.filter(e=>e&&e.eid===entryCfg.id&&e.name).sort((a,b)=>(a.at||0)-(b.at||0)):[]}
 function entryMembers(){return [...new Set(roster.teams.flatMap(t=>t.members))]}
 function canCancelEntry(e){return isOwner||!db||(!!myId&&e.uid===myId)}
@@ -2477,7 +2484,9 @@ function renderEntry(){
     const full=!!entryCfg.cap&&L.length>=entryCfg.cap,open=!!entryCfg.open&&!full;
     const top=document.createElement("div");top.className="en-top";
     const tg=document.createElement("span");tg.className="en-tag"+(open?"":" closed");tg.textContent=open?"エントリー受付中":full?"定員に達しました":"受付終了";
-    top.appendChild(tg);el.appendChild(top);
+    top.appendChild(tg);
+    const gl=entryGameLabel();if(gl){const gt=document.createElement("span");gt.className="en-tag game";gt.textContent=gl;top.appendChild(gt)}
+    el.appendChild(top);
     const h=document.createElement("div");h.className="en-name";h.setAttribute("role","heading");h.setAttribute("aria-level","2");h.textContent=entryCfg.name;el.appendChild(h);
     const meta=document.createElement("div");meta.className="en-meta";
     meta.textContent=[entryCfg.when,entryCfg.fee&&`参加費 ${entryCfg.fee}`,entryCfg.note].filter(Boolean).join(" ・ ");
@@ -2526,19 +2535,20 @@ function renderEntryAdmin(){
   entryToTour(false);
   $("eClose").hidden=!(entryCfg&&entryCfg.open&&entryList().length);
   if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#entryAdmin"))return;
-  const c=entryCfg||{};$("eName").value=c.name||"";$("eWhen").value=c.when||"";$("eFee").value=c.fee||"";$("eNote").value=c.note||"";$("eCap").value=c.cap||"";
+  const c=entryCfg||{};$("eGame").value=c.game||"9";$("eFmt").value=c.fmt||"long";$("eFmt").disabled=$("eGame").value==="bowl";$("eName").value=c.name||"";$("eWhen").value=c.when||"";$("eFee").value=c.fee||"";$("eNote").value=c.note||"";$("eCap").value=c.cap||"";
   $("eOpen").checked=c.name?!!c.open:true;$("eEnd").hidden=!c.name;
-  $("eMsg").textContent=c.name?`いま「${c.name}」の受付${c.open?"中":"を止めています"}。エントリー ${entryList().length}人。`:"まだ受付をしていません。";
+  $("eMsg").textContent=c.name?`いま「${c.name}」（${entryGameLabel()||"種目なし"}）の受付${c.open?"中":"を止めています"}。エントリー ${entryList().length}人。`:"まだ受付をしていません。";
 }
 function saveEntryCfg(fresh){
   const name=$("eName").value.trim();if(!name){$("eMsg").textContent="大会名を入れてください。";return}
   const cap=Math.round(+$("eCap").value)||0;
-  entryCfg={id:fresh||!entryCfg?newId():entryCfg.id,name,when:$("eWhen").value.trim(),fee:$("eFee").value.trim(),note:$("eNote").value.trim(),cap:cap>=2?cap:0,open:$("eOpen").checked};
+  entryCfg={id:fresh||!entryCfg?newId():entryCfg.id,game:$("eGame").value,fmt:$("eFmt").value,name,when:$("eWhen").value.trim(),fee:$("eFee").value.trim(),note:$("eNote").value.trim(),cap:cap>=2?cap:0,open:$("eOpen").checked};
   store.set("cb_entrycfg",entryCfg);
   if(entryDb)entryDb.set(entryCfg).then(()=>toast(fresh?"新しい大会の受付を始めました":"保存しました")).catch(()=>toast("保存できませんでした"));
   if(document.activeElement)document.activeElement.blur();renderEntry();
 }
 $("eSave").onclick=()=>saveEntryCfg(false);
+$("eGame").addEventListener("change",()=>{$("eFmt").disabled=$("eGame").value==="bowl"});
 $("eClose").onclick=()=>{$("eOpen").checked=false;saveEntryCfg(false);tManual=false;entryToTour(true);
   $("tourAdmin").scrollIntoView({behavior:"smooth",block:"start"});toast("受付を締め切りました。エントリーした人をトーナメントに入れました")};
 $("tPlayers").addEventListener("input",()=>{tManual=true});
