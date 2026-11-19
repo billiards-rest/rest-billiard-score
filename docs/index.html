@@ -1654,7 +1654,7 @@ function markDots(){const sl=$("rkSlider");rkIndex=sl.clientWidth?Math.round(sl.
 $("rkSlider").addEventListener("scroll",()=>{clearTimeout(markDots.t);markDots.t=setTimeout(markDots,60)},{passive:true});
 $("rkSlider").addEventListener("keydown",e=>{if(e.key==="ArrowRight"){e.preventDefault();goSlide(rkIndex+1)}if(e.key==="ArrowLeft"){e.preventDefault();goSlide(rkIndex-1)}});
 /* ---------- skill rating (Fargo-style, per rack) ---------- */
-const R_MAX=1000,R_SCALE=100,R_BASE=500,R_PRIOR=4,R_PRIOR_START=10,R_PROV=100;
+const R_MAX=1000,R_SCALE=100,R_BASE=500,R_PRIOR=12,R_PRIOR_START=30,R_PROV=100;
 const rackP=(ra,rb)=>1/(1+Math.pow(2,(rb-ra)/R_SCALE));
 var rateRows=[];
 function computeRatings(h){
