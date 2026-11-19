@@ -189,6 +189,8 @@ button{cursor:pointer}
 .prate.none{font:500 11px/1.2 var(--f-body);color:var(--muted);padding:8px 10px}
 .prate:not(.none){display:inline-flex;flex-wrap:wrap;row-gap:2px;align-items:center;gap:4px;max-width:100%;box-sizing:border-box}.prate .cls .medal{width:16px;height:22px}.prate .cls b{font-size:12px}.prate small{font:700 11px/1 var(--f-body);color:var(--muted)}
 .hc{display:flex;flex-direction:column;gap:6px;background:color-mix(in srgb,var(--cue) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--cue) 55%,var(--line));border-radius:14px;padding:12px 14px}
+.mrate{display:flex;flex-direction:column;gap:4px;margin-top:8px}.mrate label{font-size:12px;margin:0}.mrate input{width:100%;box-sizing:border-box}
+.team-card.solo{border-style:dashed}
 .hc-toggle{display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer}
 .hc-toggle input{width:20px;height:20px;accent-color:var(--felt);flex:none}
 .hc-msg{margin:0;font-size:13px;line-height:1.55}
@@ -900,14 +902,14 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <div class="pblock">
         <span class="ptag">PLAYER 1</span>
         <div class="field"><label for="tm1">チーム</label><select id="tm1"></select><input id="tm1x" maxlength="20" autocomplete="off" placeholder="チーム名を入力" hidden></div>
-        <div class="field"><label for="n1">名前</label><div class="name-row"><select id="n1"></select><span class="prate" id="pr1" aria-live="polite"></span></div><input id="n1x" maxlength="16" autocomplete="off" placeholder="名前を入力" hidden></div>
+        <div class="field"><label for="n1">名前</label><div class="name-row"><select id="n1"></select><span class="prate" id="pr1" aria-live="polite"></span></div><input id="n1x" maxlength="16" autocomplete="off" placeholder="名前を入力" hidden><div class="mrate" id="n1rw" hidden><label for="n1r">レート（手入力）</label><input id="n1r" type="number" inputmode="numeric" min="0" max="1000" step="1" placeholder="例：400"></div></div>
         <div class="field target" id="t1field"><label for="t1" id="t1lab">持ち点</label><input id="t1" type="number" inputmode="numeric" min="1" max="999" value="5"></div>
       </div>
       <div class="vs" aria-hidden="true">VS</div>
       <div class="pblock b">
         <span class="ptag">PLAYER 2</span>
         <div class="field"><label for="tm2">チーム</label><select id="tm2"></select><input id="tm2x" maxlength="20" autocomplete="off" placeholder="チーム名を入力" hidden></div>
-        <div class="field"><label for="n2">名前</label><div class="name-row"><select id="n2"></select><span class="prate" id="pr2" aria-live="polite"></span></div><input id="n2x" maxlength="16" autocomplete="off" placeholder="名前を入力" hidden></div>
+        <div class="field"><label for="n2">名前</label><div class="name-row"><select id="n2"></select><span class="prate" id="pr2" aria-live="polite"></span></div><input id="n2x" maxlength="16" autocomplete="off" placeholder="名前を入力" hidden><div class="mrate" id="n2rw" hidden><label for="n2r">レート（手入力）</label><input id="n2r" type="number" inputmode="numeric" min="0" max="1000" step="1" placeholder="例：400"></div></div>
         <div class="field target"><label for="t2" id="t2lab">持ち点</label><input id="t2" type="number" inputmode="numeric" min="1" max="999" value="5"></div>
       </div>
     </div>
@@ -1532,7 +1534,9 @@ function syncSetup(){
 syncSetup();
 /* ---------- roster ---------- */
 const OTHER="__other";
-let roster=store.get("cb_roster",{teams:[]});
+let roster=store.get("cb_roster",{teams:[]});if(!Array.isArray(roster.solo))roster.solo=[];
+/* every registered player: members of teams plus individual members who have no team */
+function allMembers(){return [...new Set([...(roster.solo||[]),...roster.teams.flatMap(t=>t.members)])]}
 function getTeam(i){const v=$("tm"+i).value;return v===OTHER?$("tm"+i+"x").value.trim():v}
 function getName(i){const v=$("n"+i).value;return v===OTHER?$("n"+i+"x").value.trim():v}
 function fillTeams(i){
@@ -1546,7 +1550,7 @@ function fillNames(i){
   const sel=$("n"+i),cur=sel.value,team=$("tm"+i).value;sel.innerHTML="";
   const add=(v,t)=>{const o=document.createElement("option");o.value=v;o.textContent=t;sel.appendChild(o)};
   const t=roster.teams.find(x=>x.name===team);
-  const list=t?t.members:(team===""?roster.teams.flatMap(x=>x.members):[]);
+  const list=t?t.members:(team===""?allMembers():[]);
   [...new Set(list)].forEach(m=>add(m,m));add(OTHER,"その他（手入力）");
   const other=[$("n1").value,$("n2").value][2-i];
   sel.value=[...sel.options].some(o=>o.value===cur)&&cur?cur:(list.find(m=>m!==other)||OTHER);
@@ -1567,22 +1571,26 @@ function saveRoster(){
 }
 function renderRoster(){
   const el=$("rosterList");el.innerHTML="";
-  if(!roster.teams.length){const p=document.createElement("p");p.className="hint";p.textContent="まだチームがありません。下の欄にチーム名を入れて追加してください。";el.appendChild(p)}
-  roster.teams.forEach((t,ti)=>{
-    const card=document.createElement("div");card.className="team-card";
+  if(!Array.isArray(roster.solo))roster.solo=[];
+  const groups=[{name:"個人メンバー（チームなし）",members:roster.solo,solo:true},...roster.teams];
+  groups.forEach((t,gi)=>{
+    const ti=t.solo?"s":gi-1;
+    const card=document.createElement("div");card.className="team-card"+(t.solo?" solo":"");
     const head=document.createElement("div");head.className="team-head";
     const b=document.createElement("b");b.textContent=t.name;head.appendChild(b);
+    if(t.solo){card.appendChild(head);const sh=document.createElement("p");sh.className="hint";sh.textContent="チームに入っていない人はここに登録します。あとからチームに入れても大丈夫です。";card.appendChild(sh)}
+    else{
     const del=document.createElement("button");del.type="button";del.className="ghost danger";del.textContent="チームを削除";
-    del.onclick=()=>{if(del.dataset.armed){roster.teams.splice(ti,1);saveRoster();renderRoster();renderPickers();toast(`${t.name} を削除しました`)}
+    del.onclick=()=>{if(del.dataset.armed){roster.teams.splice(gi-1,1);saveRoster();renderRoster();renderPickers();toast(`${t.name} を削除しました`)}
       else{del.dataset.armed="1";del.textContent="もう一度押して削除";setTimeout(()=>{if(del.isConnected){delete del.dataset.armed;del.textContent="チームを削除"}},3000)}};
-    head.appendChild(del);card.appendChild(head);
+    head.appendChild(del);card.appendChild(head);}
     const ms=document.createElement("div");ms.className="members";
-    if(!t.members.length){const e=document.createElement("span");e.className="empty";e.textContent="メンバーがまだいません";ms.appendChild(e)}
+    if(!t.members.length){const e=document.createElement("span");e.className="empty";e.textContent=t.solo?"個人メンバーはまだいません":"メンバーがまだいません";ms.appendChild(e)}
     t.members.forEach((m,mi)=>{const c=document.createElement("span");c.className="mchip";c.append(m);
       const iv=roster.init&&roster.init[m];
       if(iv!=null&&iv!==""){const st=document.createElement("small");st.className="mstart";st.textContent=`開始 ${iv}`;c.appendChild(st)}
       const x=document.createElement("button");x.type="button";x.textContent="✕";x.setAttribute("aria-label",`${m} を外す`);
-      x.onclick=()=>{t.members.splice(mi,1);if(roster.init&&!roster.teams.some(tt=>tt.members.includes(m)))delete roster.init[m];saveRoster();renderRoster();renderPickers();renderRate(lastHist)};c.appendChild(x);ms.appendChild(c)});
+      x.onclick=()=>{t.members.splice(mi,1);if(roster.init&&!allMembers().includes(m))delete roster.init[m];saveRoster();renderRoster();renderPickers();renderRate(lastHist)};c.appendChild(x);ms.appendChild(c)});
     card.appendChild(ms);
     const f=document.createElement("form");f.className="addrow";
     const inp=document.createElement("input");inp.maxLength=16;inp.placeholder="メンバーの名前";inp.autocomplete="off";inp.id="addm"+ti;
@@ -1592,8 +1600,8 @@ function renderRoster(){
     const hint=document.createElement("p");hint.className="hint start-hint";
     hint.textContent="開始レートは新しく登録するときだけ入れられます。目安：初心者 300〜400、ふつう 500、上級 600〜700。空欄なら500から始まり、試合を重ねると実力に近づきます。";
     f.append(inp,rt,btn);f.onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;
-      if(t.members.includes(v)){toast("同じ名前がすでにいます");return}
-      const known=roster.teams.some(tt=>tt.members.includes(v))||(rateRows||[]).some(r=>r.n===v);
+      if(t.members.includes(v)||(t.solo&&allMembers().includes(v))){toast("同じ名前がすでにいます");return}
+      const known=allMembers().includes(v)||(rateRows||[]).some(r=>r.n===v);
       const raw=rt.value.trim();
       if(raw!==""){
         const r=Math.round(+raw);
@@ -1601,6 +1609,7 @@ function renderRoster(){
         if(known){toast(`${v} はすでに登録済みなので、開始レートは変えられません`)}
         else{roster.init=roster.init||{};roster.init[v]=r}
       }
+      if(!t.solo)roster.solo=(roster.solo||[]).filter(x=>x!==v);
       t.members.push(v);saveRoster();renderRoster();renderPickers();renderRate(lastHist);const n=$("addm"+ti);n&&n.focus()};
     card.appendChild(f);card.appendChild(hint);el.appendChild(card);
   });
@@ -1609,6 +1618,7 @@ $("addTeamForm").onsubmit=e=>{e.preventDefault();const v=$("newTeam").value.trim
   if(roster.teams.some(t=>t.name===v)){toast("同じチーム名がすでにあります");return}
   roster.teams.push({name:v,members:[]});$("newTeam").value="";saveRoster();renderRoster();renderPickers();
   const n=$("addm"+(roster.teams.length-1));n&&n.focus()};
+/* when an individual member is added to a team, they leave the individual list */
 /* ---------- pages (bottom tabs) ---------- */
 function showPage(p){
   if(p==="settings"&&$("openSettings").hidden)p="match";
@@ -1764,6 +1774,7 @@ function computeRatings(h){
      and registered members appear with it even before their first match */
   const init=(roster&&roster.init)||{};
   (roster&&roster.teams||[]).forEach(t=>t.members.forEach(m=>{if(Number.isFinite(+init[m])){players.add(m);if(!team[m])team[m]=t.name}}));
+  ((roster&&roster.solo)||[]).forEach(m=>{if(Number.isFinite(+init[m]))players.add(m)});
   const toS=r=>Math.pow(2,r/R_SCALE);
   const sP={},wP={};players.forEach(p=>{const r=+init[p];const has=Number.isFinite(r)&&init[p]!==null&&init[p]!=="";sP[p]=toS(has?r:R_BASE);wP[p]=has?R_PRIOR_START:R_PRIOR});
   const s={};players.forEach(p=>s[p]=sP[p]);
@@ -1811,7 +1822,12 @@ function renderRate(h){
 }
 /* ---------- rating-based handicap on the match setup ---------- */
 function rateOf(n){return (rateRows||[]).find(x=>x.n===n)||null}
-function hcStrong(){const a=rateOf(getName(1)),b=rateOf(getName(2));if(!a||!b||a===b)return 0;return a.r>=b.r?1:2}
+/* rating used for the handicap: the registered rating, or one typed in for a practice player who has none */
+function setupRate(i){const n=getName(i),r=rateOf(n);if(r)return r;
+  const w=$("n"+i+"rw"),v=$("n"+i+"r").value;if(!w||w.hidden||v===""||isNaN(+v))return null;
+  return {n:n||("PLAYER "+i),r:Math.max(0,Math.min(1000,+v)),prov:false,manual:true}}
+function syncManualRate(){[1,2].forEach(i=>{const w=$("n"+i+"rw");if(w)w.hidden=!!rateOf(getName(i))||!getName(i)})}
+function hcStrong(){const a=setupRate(1),b=setupRate(2);if(!a||!b||a===b)return 0;return a.r>=b.r?1:2}
 /* match formats: ロング (normal) and ショート (a quick, casual game) */
 /* each player's 持ち点 is proportional to their own rating: rating 500 → the format's points (rating range 100–1000) */
 /* rating classes: each band of 100 rating points */
@@ -1904,7 +1920,7 @@ function giveAward(name,kind,detail,title){
 }
 function renderAwardAdmin(){
   const sel=$("awName");if(!sel)return;const prev=sel.value;sel.innerHTML="";
-  const names=[...new Set([...roster.teams.flatMap(t=>t.members),...rateRows.map(r=>r.n)])];
+  const names=[...new Set([...allMembers(),...rateRows.map(r=>r.n)])];
   const o0=document.createElement("option");o0.value="";o0.textContent="選手を選ぶ";sel.appendChild(o0);
   names.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o)});
   if(names.includes(prev))sel.value=prev;
@@ -1951,22 +1967,22 @@ function eightHandicap(ra,rb){
   return {lvl,diff:Math.round(diff),race,balls,strong};
 }
 function updateHandicap(){
-  renderFmt();
-  const rs=[rateOf(getName(1)),rateOf(getName(2))];
+  renderFmt();syncManualRate();
+  const rs=[setupRate(1),setupRate(2)];
   if(hcRace()&&$("hcAuto").checked){
     [1,2].forEach(i=>{const el=$("pr"+i),r=rs[i-1];el.className="prate"+(r?(r.prov?" prov":""):" none");
-      el.innerHTML=r?`${Math.round(r.r)}${classTag(r.r)}${r.prov?"<small>暫定</small>":""}`:"レートなし"});
+      el.innerHTML=r?`${Math.round(r.r)}${classTag(r.r)}${r.manual?"<small>手入力</small>":r.prov?"<small>暫定</small>":""}`:"レートなし"});
     const h=eightHandicap(rs[0]?rs[0].r:500,rs[1]?rs[1].r:500);
     $("t1").value=h.race[0];$("t2").value=h.race[1];cfg.hcBalls=h.balls;
     const nm=i=>getName(i+1)||("PLAYER "+(i+1)),w=1-h.strong;
     $("hcMsg").textContent=`ハンデ ${h.lvl+1}/12（レート差 ${h.diff}）：${nm(h.strong)} ${h.race[h.strong]}先取 ／ ${nm(w)} ${h.race[w]}先取`
       +(h.balls[w]<8?`。${nm(w)} さんは、自分の球が8番を含めて残り${h.balls[w]}球になったら、残りの自分の球を取り除いて8番を狙えます。`:"。")
-      +(rs.some(r=>!r)?"レートがない人はレート500として計算しています。":"")+(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
+      +(rs.some(r=>!r)?"レートがない人はレート500として計算しています（名前の下でレートを手入力できます）。":"")+(rs.some(r=>r&&r.manual)?"手入力のレートはハンデを決めるためだけに使います。":"")+(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
     return;
   }
   if(hcRace())cfg.hcBalls=null;
   [1,2].forEach(i=>{const el=$("pr"+i),r=rs[i-1];el.className="prate"+(r?(r.prov?" prov":""):" none");
-    el.innerHTML=r?`${Math.round(r.r)}${classTag(r.r)}${r.prov?"<small>暫定</small>":""}`:"レートなし"});
+    el.innerHTML=r?`${Math.round(r.r)}${classTag(r.r)}${r.manual?"<small>手入力</small>":r.prov?"<small>暫定</small>":""}`:"レートなし"});
   const msg=$("hcMsg");
   if(!$("hcAuto").checked){msg.textContent=hcRace()?"先取ラック数は手動で入れています。":"持ち点は手動で入れています。";return}
   [1,2].forEach(i=>{if(!rs[i-1])$("t"+i).value=hcFmt().at500});
@@ -1981,13 +1997,16 @@ function updateHandicap(){
   const missing=[1,2].filter(i=>!rs[i-1]).map(i=>getName(i)||("PLAYER "+i));
   msg.textContent=parts.join(" ／ ")+`。レートから決めました（レート500で${hcFmt().at500}${hcUnit()}）。`
     +(lift>1?`2人ともレートが低めなので、差はそのままに、レートが高い人を${liftTo}${hcUnit()}にそろえて増やしています。`:"")
-    +(missing.length?`${missing.join("・")} はレートがないので ${hcFmt().at500}${hcUnit()} にしています。`:"")
+    +(missing.length?`${missing.join("・")} はレートがないので ${hcFmt().at500}${hcUnit()} にしています（名前の下でレートを手入力できます）。`:"")
+    +(rs.some(r=>r&&r.manual)?"手入力のレートはハンデを決めるためだけに使い、レートの記録には入りません。":"")
     +(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
 }
 $("hcAuto").addEventListener("change",updateHandicap);
 $("fmtSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;cfg.fmt=b.dataset.v;
   $("hcAuto").checked=true;updateHandicap();
-  if(!hcRace())[1,2].forEach(i=>{if(!rateOf(getName(i)))$("t"+i).value=hcFmt().at500})});
+  if(!hcRace())[1,2].forEach(i=>{if(!setupRate(i))$("t"+i).value=hcFmt().at500})});
+[1,2].forEach(i=>{$("n"+i+"r").addEventListener("input",()=>{$("hcAuto").checked=true;updateHandicap()});
+  $("n"+i+"x").addEventListener("input",()=>updateHandicap())});
 [1,2].forEach(i=>$("t"+i).addEventListener("input",()=>{
   if(!$("hcAuto").checked)return;
   $("hcAuto").checked=false;updateHandicap();
@@ -2000,7 +2019,7 @@ function setMe(name){
   renderMe();
 }
 function knownNames(){
-  const s=new Set();roster.teams.forEach(t=>t.members.forEach(m=>s.add(m)));rateRows.forEach(r=>s.add(r.n));
+  const s=new Set();allMembers().forEach(m=>s.add(m));rateRows.forEach(r=>s.add(r.n));
   return [...s].sort((a,b)=>a.localeCompare(b,"ja"));
 }
 function renderMe(){
@@ -2142,7 +2161,7 @@ function renderPlan(){
     <p class="hint">${fmtDay($("gStart").value)} 〜 ${fmtDay(p.end)}（${p.days}日間）。各${gKind==="solo"?"自":"チーム"} ${p.rr.length-(p.bye?+$("gRounds").value:0)} 試合${p.bye?`、${gKind==="solo"?"人":"チーム"}数が奇数なので各${gKind==="solo"?"自":"チーム"} ${+$("gRounds").value} 節はお休み`:""}。${p.per<3?"1節の期間がかなり短いです。期間を延ばすか1回総当たりにすると余裕が出ます。":""}</p>`;
 }
 ["gTeams","gStart","gMonths","gRounds"].forEach(id=>$(id).addEventListener("input",renderPlan));
-$("gFromRoster").onclick=()=>{$("gTeams").value=gKind==="solo"?[...new Set(roster.teams.flatMap(t=>t.members))].join("\n"):roster.teams.map(t=>t.name).join("\n");renderPlan()};
+$("gFromRoster").onclick=()=>{$("gTeams").value=gKind==="solo"?allMembers().join("\n"):roster.teams.map(t=>t.name).join("\n");renderPlan()};
 let genArmed=false;
 $("gMake").onclick=()=>{
   const teams=parseTeams(),start=$("gStart").value,months=+$("gMonths").value,rounds=+$("gRounds").value,msg=$("gMsg");
@@ -2573,7 +2592,7 @@ function renderTourPlan(){
     <p class="hint">${B.de?`${S}枠のダブルイリミネーションで、勝者側から${(+qsel.value)/2}${tU()}・敗者側から${(+qsel.value)/2}${tU()}が勝ち残り、ベスト${qsel.value}のシングルトーナメントで優勝を決めます。2回負けるまで敗退しません。`:`${S}枠のシングルイリミネーション。1回負けたら敗退です。`}${byes?` 上位の${byes}人は1回戦が不戦勝です。`:""}</p>`;
 }
 ["tPlayers","tFormat","tQ","tSeed"].forEach(id=>$(id).addEventListener("input",renderTourPlan));
-$("tFromRoster").onclick=()=>{$("tPlayers").value=tKind==="team"?roster.teams.map(t=>t.name).join("\n"):[...new Set(roster.teams.flatMap(t=>t.members))].join("\n");renderTourPlan()};
+$("tFromRoster").onclick=()=>{$("tPlayers").value=tKind==="team"?roster.teams.map(t=>t.name).join("\n"):allMembers().join("\n");renderTourPlan()};
 function renderTourAdmin(){
   if(!$("tPlayers").value.trim()&&tour){if(tour.kind&&tour.kind!==tKind){const b=$("tKind").querySelector(`[data-v="${tour.kind}"]`);b&&b.click()}$("tPlayers").value=tour.players.join("\n")}
   if(!$("tName").value&&tour)$("tName").value=tour.name||"";
@@ -2605,7 +2624,7 @@ var entryCfg=store.get("cb_entrycfg",null),entries=store.get("cb_entries",[]),en
 const ENTRY_GAMES={"9":"9ボール","8":"8ボール","10":"10ボール","bowl":"ボーラード"},ENTRY_FMTS={long:"ロング",middle:"ミドル",short:"ショート"};
 function entryGameLabel(){if(!entryCfg||!entryCfg.game)return "";const g=ENTRY_GAMES[entryCfg.game]||"";return g+(entryCfg.game!=="bowl"&&ENTRY_FMTS[entryCfg.fmt]?`・${ENTRY_FMTS[entryCfg.fmt]}`:"")}
 function entryList(){return entryCfg?entries.filter(e=>e&&e.eid===entryCfg.id&&e.name).sort((a,b)=>(a.at||0)-(b.at||0)):[]}
-function entryMembers(){return [...new Set(roster.teams.flatMap(t=>t.members))]}
+function entryMembers(){return allMembers()}
 function canCancelEntry(e){return isOwner||!db||(!!myId&&e.uid===myId)}
 function addEntry(name){
   name=(name||"").trim();if(!name){toast("名前を選ぶか入れてください");return}
@@ -3782,8 +3801,8 @@ $("adminBtn").onclick=async()=>{
   ratedDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};ratedCfg={on:Array.isArray(d.on)?d.on:[],off:Array.isArray(d.off)?d.off:[],league:!!d.league};store.set("cb_rated",ratedCfg);renderHistory()},()=>{});
   rosterDb=db.doc("config/roster");
   rosterDb.onSnapshot(sn=>{
-    if(sn.exists){const d=sn.data();roster={teams:(d.teams||[]).map(t=>({name:t.name,members:[...(t.members||[])]})),init:{...(d.init||{})}}}
-    else{const local=store.get("cb_roster",{teams:[]});roster=local;if(isOwner&&local.teams.length&&!sn.metadata.fromCache)saveRoster()}
+    if(sn.exists){const d=sn.data();roster={teams:(d.teams||[]).map(t=>({name:t.name,members:[...(t.members||[])]})),solo:[...(d.solo||[])],init:{...(d.init||{})}}}
+    else{const local=store.get("cb_roster",{teams:[]});if(!Array.isArray(local.solo))local.solo=[];roster=local;if(isOwner&&(local.teams.length||local.solo.length)&&!sn.metadata.fromCache)saveRoster()}
     $("rosterNote").textContent="ここに登録したチームとメンバーは、お店の全員の端末で共通です。変更できるのは管理者だけです。";
     if(!$("settings").hidden)renderRoster();renderPickers();renderSched();
   },()=>{});
