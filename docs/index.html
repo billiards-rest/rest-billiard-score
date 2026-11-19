@@ -1054,7 +1054,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   <details class="sheet how">
     <summary>レートの見方</summary>
     <p class="hint">クラス：Starter（〜99・ウッド）／Beginner（100〜・アイアン）／Rookie（200〜・カッパー）／C（300〜・ブロンズ）／C+（400〜・ブロンズ）／B（500〜・シルバー）／A-（600〜・ゴールド）／A（700〜・ゴールド）／SA（800〜・プラチナ）／Pro（900〜・ブラックダイヤ）。レートの上限は1000です</p>
-    <p class="hint">レートに入るのは、管理者がレート対象に決めた試合だけです。履歴で「レート対象」の印が付いている試合が対象です。</p>
+    <p class="hint">レートと勲章に入るのは、管理者がレート対象に決めた試合だけです。履歴で「レート対象」の印が付いている試合が対象です。</p>
     <p class="hint">勝ち負けではなく、各ラックをどちらが取ったか（9番を落としたか）で計算します。レート差100点で1ラックあたりの勝ち比が2:1、200点差で4:1です。</p>
     <p class="hint">新しい試合が入るたびに全試合からまとめて計算し直すので、強い人から取った1ラックはそのぶん高く評価されます。基準は500点です。</p>
     <p class="hint">取ったラックと取られたラックの合計が100未満の人は「暫定」です。試合が少ないうちは500点の近くに留まり、ラック数が増えるほど実力に近づきます。</p>
@@ -1086,7 +1086,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
   <section class="sheet" aria-labelledby="h-award">
     <h2 id="h-award">勲章を贈る</h2>
-    <p class="hint">ブレイクランアウト・ブレイクエース・ウィンジップ・勝利数・試合数・連勝の勲章は、試合の記録から自動でもらえます。年度MVPや大会優勝などは、ここから管理者が贈ります。</p>
+    <p class="hint">ブレイクランアウト・ブレイクエース・ウィンジップ・勝利数・試合数・連勝の勲章は、レート対象の試合（管理者が認めた試合）の記録から自動でもらえます。年度MVPや大会優勝などは、ここから管理者が贈ります。</p>
     <div class="grid2">
       <div class="field"><label for="awName">選手</label><select id="awName"></select></div>
       <div class="field"><label for="awKind">勲章</label><select id="awKind"><option value="mvpY">年度MVP</option><option value="mvpM">月間MVP</option><option value="champ">大会優勝</option><option value="runner">準優勝</option><option value="special">特別賞</option></select></div>
@@ -1099,7 +1099,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
   <section class="sheet" aria-labelledby="h-ratedset">
     <h2 id="h-ratedset">レートに反映する試合</h2>
-    <p class="hint">レートは、管理者が決めた試合だけで計算します。履歴の各試合にある「レートに反映する」で1試合ずつ選べます（管理者でログインしているときだけ出ます）。</p>
+    <p class="hint">レートと勲章は、管理者が決めた試合だけで動きます。履歴の各試合にある「レートに反映する」で1試合ずつ選べます（管理者でログインしているときだけ出ます）。</p>
     <label class="hc-toggle" for="ratedLeagueIn"><input type="checkbox" id="ratedLeagueIn"><span>リーグ戦の試合は自動でレートに反映する</span></label>
     <p class="hint" id="ratedCount"></p>
   </section>
@@ -1654,7 +1654,7 @@ function renderHistory(){
   const mine=real.filter(m=>m.status==="pending"&&canApprove(m));
   const bd=$("histBadge");bd.textContent=mine.length;bd.hidden=!mine.length;
   $("rankEmpty").hidden=!!ok.length;
-  lastAll=real;okHist=ok;renderRate(ok.filter(isRated));renderRatedSet();renderAwardAdmin();
+  lastAll=real;okHist=ok.filter(isRated);renderRate(okHist);renderRatedSet();renderAwardAdmin();
   lastHist=ok;renderSched();
   const el=$("hist");el.innerHTML="";
   if(!h.length){el.innerHTML='<p class="hint">まだ試合はありません。終了した試合がここに並びます。</p>';$("clearHist").hidden=true;$("playersSheet").hidden=true;$("rankSheet").hidden=true;return}
@@ -1861,7 +1861,7 @@ function badgeSvg(type,tier){
     ${spark?'<path class="bd-spark" d="M40 6.5l1.2 2.7 2.7 1.2-2.7 1.2L40 14.3l-1.2-2.7-2.7-1.2 2.7-1.2z" fill="#fff"/><path class="bd-spark s2" d="M7.5 34l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z" fill="#fff"/>':""}
   </svg>`;
 }
-/* counts and streaks for one player from the approved history (all games, rated or not) */
+/* counts and streaks for one player — only the matches the admin made count (same as the rating) */
 function playerBadgeStats(name,h){
   const st={runout:0,ace:0,zip:0,win:0,games:0,streak:0};let cur=0;
   [...h].sort((a,b)=>(a.end||0)-(b.end||0)).forEach(m=>{const i=m.names.indexOf(name);if(i<0)return;
@@ -1891,7 +1891,7 @@ var okHist=[];
 function renderBadgesInto(el,name){
   const {earned,next}=playerBadges(name);
   el.innerHTML=`<div class="bdg-head"><p class="me-vs-h">勲章</p><span class="bdg-count">${earned.length}個</span></div>
-    ${earned.length?`<ul class="bdg-grid">${earned.map(badgeHTML).join("")}</ul>`:`<p class="bdg-empty">試合をすると、ブレイクランアウトや連勝などで勲章がもらえます。</p>`}
+    ${earned.length?`<ul class="bdg-grid">${earned.map(badgeHTML).join("")}</ul>`:`<p class="bdg-empty">レート対象の試合（管理者が認めた試合）で、ブレイクランアウトや連勝などの勲章がもらえます。</p>`}
     ${next.length?`<p class="bdg-next-h">これから狙える勲章</p><ul class="bdg-grid">${next.map(badgeHTML).join("")}</ul>`:""}`;
 }
 /* admin: award badges (年度MVP・月間MVP・大会優勝・準優勝・特別賞), kept in config/awards */
