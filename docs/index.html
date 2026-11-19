@@ -2539,7 +2539,7 @@ function renderEntryAdmin(){
   entryToTour(false);
   $("eClose").hidden=!(entryCfg&&entryCfg.open&&entryList().length);
   if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#entryAdmin"))return;
-  const c=entryCfg||{};$("eGame").value=c.game||"9";$("eFmt").value=c.fmt||"long";$("eFmt").disabled=$("eGame").value==="bowl";$("eName").value=c.name||"";$("eWhen").value=c.name?(c.when||""):nextThirdSat();$("eFee").value=c.name?(c.fee||""):"￥2,000";$("eNote").value=c.note||"";$("eCap").value=c.cap||"";
+  const c=entryCfg||{};$("eGame").value=c.game||"9";$("eFmt").value=c.fmt||"long";$("eFmt").disabled=$("eGame").value==="bowl";$("eName").value=c.name||"";$("eWhen").value=c.name?(c.when||""):nextThirdSat();$("eFee").value=c.name?(c.fee||""):"￥2,000";$("eNote").value=c.name?(c.note||""):"12:30より練習可";$("eCap").value=c.cap||"";
   $("eOpen").checked=c.name?!!c.open:true;$("eEnd").hidden=!c.name;
   $("eMsg").textContent=c.name?`いま「${c.name}」（${entryGameLabel()||"種目なし"}）の受付${c.open?"中":"を止めています"}。エントリー ${entryList().length}人。`:"まだ受付をしていません。";
 }
