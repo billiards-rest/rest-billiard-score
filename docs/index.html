@@ -145,6 +145,35 @@ button{cursor:pointer}
 .me-side b{font:800 22px/1 var(--f-display)}
 .me-stats{font-size:13px;opacity:.85}
 .me-vs{display:flex;flex-direction:column;gap:6px}
+.me-badges{display:flex;flex-direction:column;gap:6px}
+.bdg-head{display:flex;align-items:baseline;justify-content:space-between}
+.bdg-count{font:800 12px/1 var(--f-body);opacity:.85}
+.bdg-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:10px 6px}
+.bdg{display:flex;flex-direction:column;align-items:center;text-align:center;gap:1px;min-width:0}
+.bdg-svg{width:58px;height:68px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));transition:transform .2s}
+.bdg:not(.locked):hover .bdg-svg{transform:translateY(-2px) rotate(-4deg)}
+.bdg b{font:800 11px/1.25 var(--f-body);max-width:100%;white-space:nowrap;letter-spacing:-.03em}
+.bdg small{font:700 11px/1.25 var(--f-body);opacity:.8;max-width:100%;overflow-wrap:anywhere}
+.bdg em{font:700 10px/1.25 var(--f-body);font-style:normal;opacity:.6}
+.bdg.t5 .bdg-svg{filter:drop-shadow(0 0 6px rgba(230,180,34,.8)) drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.bdg.t4 .bdg-svg{filter:drop-shadow(0 0 5px rgba(160,205,245,.85)) drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.bdg.award b{color:#ffd76a}
+.bdg.locked .bdg-svg{filter:grayscale(1) brightness(.75);opacity:.38}
+.bdg.locked b,.bdg.locked small{opacity:.55}
+.bdg-next-h{margin:4px 0 0;font:700 11px/1 var(--f-body);opacity:.6}
+.bdg-empty{margin:0;font-size:12px;opacity:.75}
+.bi{fill:#fff;stroke:rgba(0,0,0,.22);stroke-width:.6;stroke-linejoin:round}
+.bd-spark{transform-origin:center;transform-box:fill-box;animation:twinkle 2.4s ease-in-out infinite}
+.bd-spark.s2{animation-delay:1.2s}
+@keyframes twinkle{0%,100%{opacity:.25;transform:scale(.6)}50%{opacity:1;transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.bd-spark{animation:none}.bdg .bdg-svg{transition:none}}
+.aw-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.aw-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:6px 10px}
+.aw-row .bdg-svg{width:34px;height:40px;flex:none}
+.aw-t{display:flex;flex-direction:column;min-width:0;flex:1}
+.aw-t b{font-size:14px}.aw-t small{font-size:12px;color:var(--muted)}
+.aw-x{flex:none;font-size:12px;padding:6px 10px}
+.t-award{margin-top:8px;flex-wrap:wrap}
 .me-vs-h{margin:6px 0 0;font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.75}
 .me-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(70px,38%) 3.2em;gap:10px;align-items:center;font-size:13px}
 .me-row .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -1055,6 +1084,19 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <button class="primary" type="submit">チームを追加</button>
     </form>
   </section>
+  <section class="sheet" aria-labelledby="h-award">
+    <h2 id="h-award">勲章を贈る</h2>
+    <p class="hint">ブレイクランアウト・ブレイクエース・ウィンジップ・勝利数・試合数・連勝の勲章は、試合の記録から自動でもらえます。年度MVPや大会優勝などは、ここから管理者が贈ります。</p>
+    <div class="grid2">
+      <div class="field"><label for="awName">選手</label><select id="awName"></select></div>
+      <div class="field"><label for="awKind">勲章</label><select id="awKind"><option value="mvpY">年度MVP</option><option value="mvpM">月間MVP</option><option value="champ">大会優勝</option><option value="runner">準優勝</option><option value="special">特別賞</option></select></div>
+      <div class="field" id="awTitleRow" hidden><label for="awTitle">賞の名前</label><input id="awTitle" maxlength="16" autocomplete="off" placeholder="例：ベストマナー賞"></div>
+      <div class="field"><label for="awDetail">いつ・どの大会（任意）</label><input id="awDetail" maxlength="30" autocomplete="off" placeholder="例：2026年度／第13回ハウストーナメント"></div>
+    </div>
+    <div class="row"><button class="primary" type="button" id="awGive">この勲章を贈る</button></div>
+    <ul class="aw-list" id="awList"></ul>
+    <p class="hint" id="awEmpty">まだ贈った勲章はありません。</p>
+  </section>
   <section class="sheet" aria-labelledby="h-ratedset">
     <h2 id="h-ratedset">レートに反映する試合</h2>
     <p class="hint">レートは、管理者が決めた試合だけで計算します。履歴の各試合にある「レートに反映する」で1試合ずつ選べます（管理者でログインしているときだけ出ます）。</p>
@@ -1612,7 +1654,7 @@ function renderHistory(){
   const mine=real.filter(m=>m.status==="pending"&&canApprove(m));
   const bd=$("histBadge");bd.textContent=mine.length;bd.hidden=!mine.length;
   $("rankEmpty").hidden=!!ok.length;
-  lastAll=real;renderRate(ok.filter(isRated));renderRatedSet();
+  lastAll=real;okHist=ok;renderRate(ok.filter(isRated));renderRatedSet();renderAwardAdmin();
   lastHist=ok;renderSched();
   const el=$("hist");el.innerHTML="";
   if(!h.length){el.innerHTML='<p class="hint">まだ試合はありません。終了した試合がここに並びます。</p>';$("clearHist").hidden=true;$("playersSheet").hidden=true;$("rankSheet").hidden=true;return}
@@ -1783,6 +1825,102 @@ const STAR="M12 15.6L13.3 19.1L17 19.3L14.1 21.6L15.1 25.2L12 23.1L8.9 25.2L9.9 
 function medalSvg(k){const pro=k==="pro";
   return `<svg class="medal" viewBox="0 0 24 33" aria-hidden="true"><path d="M3.5 0h6.2l4.6 13.5h-6.2z" fill="url(#rb-${k})"/><path d="M14.3 0h6.2l-4.6 13.5H9.7z" fill="url(#rb-${k})"/>${pro?'<path d="M5.4 0h1.4l4.6 13.5H10zM17.2 0h1.4L14 13.5h-1.4z" fill="#e6b422"/>':'<path d="M6.6 0h1.2l4.6 13.5h-1.2zM16.2 0h1.2l-4.6 13.5h-1.2z" fill="rgba(255,255,255,.35)"/>'}<circle cx="12" cy="21" r="10.6" fill="${pro?"url(#md-gold)":"rgba(0,0,0,.25)"}"/><circle cx="12" cy="21" r="10" fill="url(#md-${k})"/><circle cx="12" cy="21" r="7.6" fill="none" stroke="${pro?"url(#md-gold)":"rgba(255,255,255,.55)"}" stroke-width="1"/><circle cx="12" cy="21" r="7" fill="none" stroke="rgba(0,0,0,.18)" stroke-width=".6"/><path d="${STAR}" fill="${pro?"url(#md-gold)":"rgba(255,255,255,.5)"}" stroke="${pro?"none":"rgba(0,0,0,.22)"}" stroke-width=".5"/><ellipse cx="8.4" cy="16.4" rx="4.2" ry="2.2" transform="rotate(-35 8.4 16.4)" fill="rgba(255,255,255,${pro?".18":".55"})"/></svg>`}
 function classTag(r){const c=rateClass(r);return `<span class="cls cls-${c.key}" title="${c.label}">${medalSvg(c.key)}<b>${c.label}</b></span>`}
+
+/* ================= 勲章（badges） ================= */
+/* each type: colours for the face (a→b) and ribbon, and a small white icon drawn around (24,24) */
+const BADGE_T={
+  runout:{label:"ブレイクランアウト",a:"#ffb347",b:"#ff5e3a",rb:"#c2361b",icon:'<path d="M26.5 12.5 16.5 26h6.5l-2 9.5L31.5 21h-6.5z" class="bi"/>'},
+  ace:{label:"ブレイクエース",a:"#ffe27a",b:"#f2a900",rb:"#b77b00",icon:'<circle cx="24" cy="24" r="8.6" fill="#fff" stroke="rgba(0,0,0,.25)" stroke-width=".8"/><circle cx="24" cy="24" r="4.4" fill="#fff" stroke="#f2a900" stroke-width="1.2"/><text x="24" y="27.2" text-anchor="middle" font-size="8.5" font-weight="900" fill="#222">9</text><path d="M33.5 14.5l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z" fill="#fff"/>'},
+  zip:{label:"ウィンジップ",a:"#c9a4ff",b:"#7b4dff",rb:"#4f26c4",icon:'<text x="24" y="30.5" text-anchor="middle" font-size="17" font-weight="900" class="bi">0</text><path d="M15.5 33.5h17" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1.6 2.2"/>'},
+  win:{label:"勝利",a:"#79e8b0",b:"#11a067",rb:"#0b6e47",icon:'<path d="M17.5 15h13v4.5a6.5 6.5 0 0 1-13 0z" class="bi"/><path d="M17.5 16.5h-2.6a2.8 2.8 0 0 0 3.3 4.6M30.5 16.5h2.6a2.8 2.8 0 0 1-3.3 4.6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M22.3 26h3.4v3.2h3v3H19.3v-3h3z" class="bi"/>'},
+  games:{label:"試合数",a:"#86ccff",b:"#2f7be0",rb:"#1d4f9c",icon:'<path d="M19.5 13.5v21" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/><path d="M20 14.5h11l-3 4 3 4H20z" class="bi"/>'},
+  streak:{label:"連勝",a:"#ff9ec0",b:"#ff3d6e",rb:"#c21d4a",icon:'<path d="M24 12.5c3 4 7.2 6.6 7.2 12.3a7.2 7.2 0 0 1-14.4 0c0-3.6 2-5.7 3.6-7.2 0 3 1.5 4.6 3.1 4.6 0-4.2-1.6-6.7.5-9.7z" class="bi"/>'},
+  mvp:{label:"MVP",a:"#c3a0ff",b:"#5b2bd6",rb:"#3a1696",icon:'<path d="M15.5 30.5 14.5 18l5.6 4.4L24 15l3.9 7.4 5.6-4.4-1 12.5z" class="bi"/><rect x="15.5" y="31.5" width="17" height="2.6" rx="1.2" fill="#fff"/><circle cx="24" cy="25.5" r="1.6" fill="#ff5c8a"/>'},
+  champ:{label:"大会優勝",a:"#ffe48f",b:"#e39b00",rb:"#c2361b",icon:'<path d="M17.5 14.5h13v5a6.5 6.5 0 0 1-13 0z" class="bi"/><path d="M17.5 16h-2.6a2.8 2.8 0 0 0 3.3 4.6M30.5 16h2.6a2.8 2.8 0 0 1-3.3 4.6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M22.3 26h3.4v3.2h3v3H19.3v-3h3z" class="bi"/><text x="24" y="21.6" text-anchor="middle" font-size="6.5" font-weight="900" fill="#e39b00">1</text>'},
+  runner:{label:"準優勝",a:"#e7eef6",b:"#8aa1bb",rb:"#2f62b8",icon:'<path d="M17.5 14.5h13v5a6.5 6.5 0 0 1-13 0z" class="bi"/><path d="M17.5 16h-2.6a2.8 2.8 0 0 0 3.3 4.6M30.5 16h2.6a2.8 2.8 0 0 1-3.3 4.6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M22.3 26h3.4v3.2h3v3H19.3v-3h3z" class="bi"/><text x="24" y="21.6" text-anchor="middle" font-size="6.5" font-weight="900" fill="#8aa1bb">2</text>'},
+  special:{label:"特別賞",a:"#86f2e2",b:"#12b09d",rb:"#0b7a6c",icon:'<path d="M24 13.5l3 6.4 7 .8-5.2 4.8 1.4 6.9L24 29l-6.2 3.4 1.4-6.9-5.2-4.8 7-.8z" class="bi"/>'}
+};
+const TIER_RIM=["","md-c","md-b","md-a","md-sa","md-pro"],TIER_NAME=["","ブロンズ","シルバー","ゴールド","プラチナ","ダイヤ"];
+const BADGE_STEPS={runout:[1,5,10,30,50],ace:[1,5,10,30,50],zip:[1,5,10,30,50],win:[1,10,30,50,100],games:[10,30,50,100,300],streak:[3,5,7,10,15]};
+const AWARD_KINDS={mvpY:{type:"mvp",label:"年度MVP",tier:5},mvpM:{type:"mvp",label:"月間MVP",tier:3},champ:{type:"champ",label:"大会優勝",tier:3},runner:{type:"runner",label:"準優勝",tier:2},special:{type:"special",label:"特別賞",tier:4}};
+const RIM_PATH=(()=>{let d="";for(let i=0;i<32;i++){const a=-Math.PI/2+i*Math.PI/16,r=i%2?20.6:23;d+=(i?"L":"M")+(24+r*Math.cos(a)).toFixed(2)+" "+(24+r*Math.sin(a)).toFixed(2)}return d+"Z"})();
+(function(){const d=document.createElementNS("http://www.w3.org/2000/svg","svg");d.setAttribute("width","0");d.setAttribute("height","0");d.setAttribute("aria-hidden","true");d.style.cssText="position:absolute;width:0;height:0;overflow:hidden";
+  d.innerHTML="<defs>"+Object.entries(BADGE_T).map(([k,t])=>`<linearGradient id="bd-${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.a}"/><stop offset="1" stop-color="${t.b}"/></linearGradient>`).join("")+"</defs>";
+  document.body.appendChild(d)})();
+function badgeSvg(type,tier){
+  const t=BADGE_T[type],tr=Math.max(1,Math.min(5,tier||1)),spark=tr>=3;
+  return `<svg class="bdg-svg" viewBox="0 0 48 56" aria-hidden="true">
+    <path d="M15 37l6.5 2-2 15-3.6-3.6L12 54z" fill="${t.rb}"/><path d="M33 37l-6.5 2 2 15 3.6-3.6L36 54z" fill="${t.rb}"/>
+    <path d="M17.6 40.5l2.6.8-.9 6.6M30.4 40.5l-2.6.8.9 6.6" stroke="rgba(255,255,255,.35)" stroke-width="1" fill="none"/>
+    <path d="${RIM_PATH}" fill="url(#${TIER_RIM[tr]})" stroke="rgba(0,0,0,.28)" stroke-width=".6"/>
+    <circle cx="24" cy="24" r="16.2" fill="rgba(0,0,0,.22)"/>
+    <circle cx="24" cy="24" r="15.4" fill="url(#bd-${type})"/>
+    <circle cx="24" cy="24" r="13.4" fill="none" stroke="rgba(255,255,255,.45)" stroke-width=".8" stroke-dasharray="1.4 1.6"/>
+    ${t.icon}
+    <ellipse cx="18.5" cy="15.5" rx="6" ry="2.6" transform="rotate(-30 18.5 15.5)" fill="rgba(255,255,255,.38)"/>
+    ${spark?'<path class="bd-spark" d="M40 6.5l1.2 2.7 2.7 1.2-2.7 1.2L40 14.3l-1.2-2.7-2.7-1.2 2.7-1.2z" fill="#fff"/><path class="bd-spark s2" d="M7.5 34l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z" fill="#fff"/>':""}
+  </svg>`;
+}
+/* counts and streaks for one player from the approved history (all games, rated or not) */
+function playerBadgeStats(name,h){
+  const st={runout:0,ace:0,zip:0,win:0,games:0,streak:0};let cur=0;
+  [...h].sort((a,b)=>(a.end||0)-(b.end||0)).forEach(m=>{const i=m.names.indexOf(name);if(i<0)return;
+    st.games++;st.runout+=(m.runouts||[0,0])[i];st.ace+=(m.aces||[0,0])[i];st.zip+=(m.zips||[0,0])[i];
+    const won=m.score[i]>m.score[1-i];if(won){st.win++;cur++;st.streak=Math.max(st.streak,cur)}else cur=0;});
+  return st;
+}
+var awardsCfg=store.get("cb_awards",{list:[]}),awardsDb=null;
+if(!awardsCfg||!Array.isArray(awardsCfg.list))awardsCfg={list:[]};
+function playerBadges(name){
+  const st=playerBadgeStats(name,okHist||[]);
+  const earned=[],next=[];
+  awardsCfg.list.filter(a=>a.name===name).sort((a,b)=>(b.at||0)-(a.at||0)).forEach(a=>{const k=AWARD_KINDS[a.kind];if(!k)return;
+    earned.push({type:k.type,tier:k.tier,title:a.kind==="special"&&a.title?a.title:k.label,sub:a.kind==="special"?(a.detail||""):(a.detail||a.title||""),award:true})});
+  Object.keys(BADGE_STEPS).forEach(k=>{const steps=BADGE_STEPS[k],v=st[k];let tier=0;steps.forEach((x,i)=>{if(v>=x)tier=i+1});
+    const nx=steps[tier];const unit=k==="streak"?"連勝":k==="games"?"試合":k==="win"?"勝":"回";
+    const label=BADGE_T[k].label;
+    if(tier)earned.push({type:k,tier,title:label,sub:`${k==="streak"?"最高 ":""}${v}${unit}`,next:nx?`${TIER_NAME[tier+1]}まで あと${nx-v}`:"MAX"});
+    else next.push({type:k,tier:1,title:label,sub:`あと${nx-v}${unit}`,locked:true});
+  });
+  return {earned,next};
+}
+function badgeHTML(b){return `<li class="bdg${b.locked?" locked":""}${b.award?" award":""} t${b.tier}" title="${escAttr(b.title)}${b.locked?"（未獲得）":` ${TIER_NAME[b.tier]||""}`}">${badgeSvg(b.type,b.tier)}<b>${escHTML(b.title)}</b><small>${escHTML(b.sub||"")}</small>${b.next&&!b.locked?`<em>${escHTML(b.next)}</em>`:""}</li>`}
+function escHTML(x){return String(x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function escAttr(x){return escHTML(x).replace(/'/g,"&#39;")}
+var okHist=[];
+function renderBadgesInto(el,name){
+  const {earned,next}=playerBadges(name);
+  el.innerHTML=`<div class="bdg-head"><p class="me-vs-h">勲章</p><span class="bdg-count">${earned.length}個</span></div>
+    ${earned.length?`<ul class="bdg-grid">${earned.map(badgeHTML).join("")}</ul>`:`<p class="bdg-empty">試合をすると、ブレイクランアウトや連勝などで勲章がもらえます。</p>`}
+    ${next.length?`<p class="bdg-next-h">これから狙える勲章</p><ul class="bdg-grid">${next.map(badgeHTML).join("")}</ul>`:""}`;
+}
+/* admin: award badges (年度MVP・月間MVP・大会優勝・準優勝・特別賞), kept in config/awards */
+function saveAwards(){store.set("cb_awards",awardsCfg);if(awardsDb)awardsDb.set(awardsCfg).catch(()=>toast("保存できませんでした。管理者でログインしているか確認してください"));renderMe();renderAwardAdmin()}
+function giveAward(name,kind,detail,title){
+  if(!name||!AWARD_KINDS[kind]){toast("選手と勲章を選んでください");return false}
+  if(awardsCfg.list.some(a=>a.name===name&&a.kind===kind&&(a.detail||"")===(detail||"")&&(a.title||"")===(title||""))){toast("同じ勲章をもう贈っています");return false}
+  awardsCfg={list:[...awardsCfg.list,{id:newId(),name,kind,detail:detail||"",title:title||"",at:Date.now()}]};saveAwards();
+  toast(`${name} さんに「${kind==="special"&&title?title:AWARD_KINDS[kind].label}」の勲章を贈りました`);return true;
+}
+function renderAwardAdmin(){
+  const sel=$("awName");if(!sel)return;const prev=sel.value;sel.innerHTML="";
+  const names=[...new Set([...roster.teams.flatMap(t=>t.members),...rateRows.map(r=>r.n)])];
+  const o0=document.createElement("option");o0.value="";o0.textContent="選手を選ぶ";sel.appendChild(o0);
+  names.forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o)});
+  if(names.includes(prev))sel.value=prev;
+  $("awTitleRow").hidden=$("awKind").value!=="special";
+  const ul=$("awList");ul.innerHTML="";
+  [...awardsCfg.list].sort((a,b)=>(b.at||0)-(a.at||0)).forEach(a=>{const k=AWARD_KINDS[a.kind];if(!k)return;
+    const li=document.createElement("li");li.className="aw-row";
+    li.innerHTML=`${badgeSvg(k.type,k.tier)}<span class="aw-t"><b></b><small></small></span>`;
+    li.querySelector("b").textContent=`${a.name}　${a.kind==="special"&&a.title?a.title:k.label}`;
+    li.querySelector("small").textContent=a.detail||"";
+    const x=document.createElement("button");x.type="button";x.className="ghost aw-x";x.textContent="取り消す";
+    x.onclick=()=>{if(!x.dataset.armed){x.dataset.armed="1";x.textContent="もう一度押して取り消す";setTimeout(()=>{if(x.isConnected){delete x.dataset.armed;x.textContent="取り消す"}},3000);return}
+      awardsCfg={list:awardsCfg.list.filter(y=>y.id!==a.id)};saveAwards();toast("勲章を取り消しました")};
+    li.appendChild(x);ul.appendChild(li)});
+  $("awEmpty").hidden=!!awardsCfg.list.length;
+}
 function hcRace(){try{return GAMES[cfg.game].mode==="race"}catch(e){return false}}
 function hcUnit(){return hcRace()?"ラック":"点"}
 function hcFormats(){return hcRace()
@@ -1884,9 +2022,10 @@ function renderMe(){
   el.innerHTML=`<div class="me-head"><p class="me-tag">MY RATE</p><button type="button" class="me-link" id="meChange">選手を変える</button></div>
     <div class="me-name"></div>
     <div class="me-main"><span class="me-rate"></span><span class="me-side"></span></div>
-    <div class="me-stats"></div><div class="me-vs"></div>`;
+    <div class="me-stats"></div><div class="me-badges"></div><div class="me-vs"></div>`;
   el.querySelector(".me-name").textContent=myName;
   $("meChange").onclick=()=>{meEditing=true;renderMe()};
+  renderBadgesInto(el.querySelector(".me-badges"),myName);
   if(!r){
     el.querySelector(".me-rate").textContent="–";
     el.querySelector(".me-side").textContent="まだレートがありません";
@@ -2330,6 +2469,15 @@ function renderTour(){
   head.querySelector(".t-name").textContent=tour.name||"トーナメント";
   head.querySelector(".t-fmt").textContent=`${tour.players.length}${tour.kind==="team"?"チーム":"人"} ・ ${B.de?`ダブル → ベスト${Math.min(tour.q,B.S/2)}からシングル`:"シングル"}`;
   head.querySelector(".t-champ").textContent=isName(champ)?`優勝 ${champ}`:"";
+  if(admin&&isName(champ)&&tour.kind!=="team"){
+    const runner=st[fin.id].loser,row=document.createElement("div");row.className="row t-award";
+    const mk=(txt,name,kind)=>{const b=document.createElement("button");b.type="button";b.className=kind==="champ"?"primary":"ghost";b.textContent=txt;
+      const done=awardsCfg.list.some(a=>a.name===name&&a.kind===kind&&a.detail===(tour.name||""));if(done){b.disabled=true;b.textContent=txt.replace("贈る","贈りました")}
+      b.onclick=()=>{if(giveAward(name,kind,tour.name||"",""))renderTour()};row.appendChild(b)};
+    mk(`${champ} さんに優勝の勲章を贈る`,champ,"champ");
+    if(isName(runner))mk(`${runner} さんに準優勝の勲章を贈る`,runner,"runner");
+    head.appendChild(row);
+  }
 
   /* my status */
   const myEntry=tour.kind==="team"?myTeam():myName;
@@ -3588,6 +3736,9 @@ function renderAdmin(){
   $("adminState").textContent=isOwner?`管理者としてログイン中（${A.email()}）。設定の変更と履歴の消去ができます。`:"設定の変更と履歴の消去は、管理者だけができます。";
   $("adminBtn").textContent=isOwner?"管理者ログアウト":"管理者ログイン";
 }
+$("awKind").addEventListener("change",()=>{$("awTitleRow").hidden=$("awKind").value!=="special"});
+$("awGive").onclick=()=>{const k=$("awKind").value;if(k==="special"&&!$("awTitle").value.trim()){toast("賞の名前を入れてください");return}
+  if(giveAward($("awName").value,k,$("awDetail").value.trim(),k==="special"?$("awTitle").value.trim():"")){$("awDetail").value="";$("awTitle").value=""}};
 $("ratedLeagueIn").addEventListener("change",e=>{ratedCfg={...ratedCfg,league:e.target.checked,off:[]};saveRated();renderHistory();
   toast(e.target.checked?"リーグ戦の試合をレートに反映します":"リーグ戦の試合の自動反映をやめました")});
 $("adminBtn").onclick=async()=>{
@@ -3625,6 +3776,8 @@ $("adminBtn").onclick=async()=>{
   entryDb.onSnapshot(sn=>{entryCfg=sn.exists?sn.data()||null:null;if(entryCfg&&!entryCfg.id)entryCfg=null;store.set("cb_entrycfg",entryCfg);renderEntry()},()=>{});
   entryCol=db.collection("entries");
   entryCol.onSnapshot(sn=>{entries=sn.docs.map(d=>d.data());renderEntry()},()=>{});
+  awardsDb=db.doc("config/awards");
+  awardsDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};awardsCfg={list:Array.isArray(d.list)?d.list:[]};store.set("cb_awards",awardsCfg);renderMe();renderAwardAdmin()},()=>{});
   ratedDb=db.doc("config/rated");
   ratedDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};ratedCfg={on:Array.isArray(d.on)?d.on:[],off:Array.isArray(d.off)?d.off:[],league:!!d.league};store.set("cb_rated",ratedCfg);renderHistory()},()=>{});
   rosterDb=db.doc("config/roster");
