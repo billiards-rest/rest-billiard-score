@@ -2531,15 +2531,18 @@ function entryToTour(force){
   return true;
 }
 /* default event day: the next third Saturday (this month's if it has not passed yet) */
-function nextThirdSat(){const now=new Date();now.setHours(0,0,0,0);
-  for(let k=0;k<3;k++){const d=new Date(now.getFullYear(),now.getMonth()+k,1);d.setDate(1+((6-d.getDay()+7)%7)+14);if(d>=now)return `${d.getMonth()+1}月${d.getDate()}日(土) 13:00 START`}
-  return ""}
+function nextThirdSatDate(){const now=new Date();now.setHours(0,0,0,0);
+  for(let k=0;k<3;k++){const d=new Date(now.getFullYear(),now.getMonth()+k,1);d.setDate(1+((6-d.getDay()+7)%7)+14);if(d>=now)return d}
+  return now}
+function nextThirdSat(){const d=nextThirdSatDate();return `${d.getMonth()+1}月${d.getDate()}日(土) 13:00 START`}
+/* the house tournament is monthly: November 2026 was the 13th, so the number follows the month of the next event */
+function nextTourNo(){const d=nextThirdSatDate();return 13+(d.getFullYear()-2026)*12+(d.getMonth()-10)}
 function renderEntryAdmin(){
   if(!$("entryAdmin"))return;
   entryToTour(false);
   $("eClose").hidden=!(entryCfg&&entryCfg.open&&entryList().length);
   if(document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#entryAdmin"))return;
-  const c=entryCfg||{};$("eGame").value=c.game||"9";$("eFmt").value=c.fmt||"long";$("eFmt").disabled=$("eGame").value==="bowl";$("eName").value=c.name||"";$("eWhen").value=c.name?(c.when||""):nextThirdSat();$("eFee").value=c.name?(c.fee||""):"￥2,000";$("eNote").value=c.name?(c.note||""):"12:30より練習可";$("eCap").value=c.cap||"";
+  const c=entryCfg||{};$("eGame").value=c.game||"9";$("eFmt").value=c.fmt||"long";$("eFmt").disabled=$("eGame").value==="bowl";$("eName").value=c.name||`第${nextTourNo()}回ハウストーナメント`;$("eWhen").value=c.name?(c.when||""):nextThirdSat();$("eFee").value=c.name?(c.fee||""):"￥2,000";$("eNote").value=c.name?(c.note||""):"12:30より練習可";$("eCap").value=c.cap||"";
   $("eOpen").checked=c.name?!!c.open:true;$("eEnd").hidden=!c.name;
   $("eMsg").textContent=c.name?`いま「${c.name}」（${entryGameLabel()||"種目なし"}）の受付${c.open?"中":"を止めています"}。エントリー ${entryList().length}人。`:"まだ受付をしていません。";
 }
