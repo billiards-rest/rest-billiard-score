@@ -748,6 +748,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .balls8{display:grid;grid-template-columns:repeat(2,var(--ball,40px));column-gap:var(--bgap,6px);row-gap:var(--bgap,6px);justify-content:center;align-content:center;height:100%}
 .b8col{display:grid;grid-auto-rows:var(--ball,40px);row-gap:var(--bgap,6px);justify-items:center}
 .b8lab{font-size:10px;font-weight:800;color:var(--muted);text-align:center;line-height:1;align-self:end;height:12px}
+.b8col .b8lab{max-width:calc(var(--ball,40px) + var(--bgap,6px));overflow:hidden;text-overflow:ellipsis;white-space:nowrap;justify-self:center}
+.b8col.own0 .b8lab{color:var(--p1)}.b8col.own1 .b8lab{color:var(--p2)}
+.b8col.own0,.b8col.own1{border-radius:999px;box-shadow:0 0 0 2px color-mix(in srgb,var(--c8own) 35%,transparent)}
+.b8col.own0{--c8own:var(--p1)}.b8col.own1{--c8own:var(--p2)}
 .b8col .tb,.b8col .slot{width:var(--ball,40px);height:var(--ball,40px)}
 .b8eight{grid-column:1/-1;display:grid;place-items:center;padding-top:calc(var(--bgap,6px) + 2px)}
 .tb.eight,.slot.eight{width:calc(var(--ball,40px)*1.45);height:calc(var(--ball,40px)*1.45)}
@@ -3662,7 +3666,11 @@ function renderTable8(){
   const col=(from,lab,cls)=>{const c=document.createElement("div");c.className="b8col "+cls;
     const h=document.createElement("span");h.className="b8lab";h.textContent=lab;c.appendChild(h);
     for(let n=from;n<from+7;n++)c.appendChild(gone8(n)?slot8(n):ball8El(n));return c};
-  box.appendChild(col(1,"ロー","lo"));box.appendChild(col(9,"ハイ","hi"));
+  /* once groups are chosen, put each player's group next to that player (P1 is on the left, P2 on the right) */
+  const g=M.grp||[null,null],hiFirst=g[0]==="high"||(g[0]==null&&g[1]==="low");
+  const lo=col(1,"ロー","lo"),hi=col(9,"ハイ","hi");
+  [[lo,"low"],[hi,"high"]].forEach(([c,k])=>{const o=g.indexOf(k);if(o>=0){c.classList.add("own"+o);c.querySelector(".b8lab").textContent=(k==="low"?"ロー":"ハイ")+"・"+(M.names[o]||("P"+(o+1)))}});
+  if(hiFirst){box.appendChild(hi);box.appendChild(lo)}else{box.appendChild(lo);box.appendChild(hi)}
   const e8=document.createElement("div");e8.className="b8eight";e8.appendChild(gone8(8)?slot8(8):ball8El(8));
   box.appendChild(e8);cl.appendChild(box);
 }
