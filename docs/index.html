@@ -1056,7 +1056,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   <details class="sheet how">
     <summary>レートの見方</summary>
     <p class="hint">クラス：Starter（〜99・ウッド）／Beginner（100〜・アイアン）／Rookie（200〜・カッパー）／C（300〜・ブロンズ）／C+（400〜・ブロンズ）／B（500〜・シルバー）／A-（600〜・ゴールド）／A（700〜・ゴールド）／SA（800〜・プラチナ）／Pro（900〜・ブラックダイヤ）。レートの上限は1000です</p>
-    <p class="hint">レートと勲章に入るのは、管理者がレート対象に決めた試合だけです。履歴で「レート対象」の印が付いている試合が対象です。</p>
+    <p class="hint">レートと勲章に反映されるのは、お店が採用とした試合のみです。履歴で「レート対象」の印が付いている試合が対象です。</p>
     <p class="hint">勝ち負けではなく、各ラックをどちらが取ったか（9番を落としたか）で計算します。レート差100点で1ラックあたりの勝ち比が2:1、200点差で4:1です。</p>
     <p class="hint">新しい試合が入るたびに全試合からまとめて計算し直すので、強い人から取った1ラックはそのぶん高く評価されます。基準は500点です。</p>
     <p class="hint">取ったラックと取られたラックの合計が100未満の人は「暫定」です。試合が少ないうちは500点の近くに留まり、ラック数が増えるほど実力に近づきます。</p>
@@ -1088,7 +1088,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
   <section class="sheet" aria-labelledby="h-award">
     <h2 id="h-award">勲章を贈る</h2>
-    <p class="hint">ブレイクランアウト・ブレイクエース・ウィンジップ・勝利数・試合数・連勝の勲章は、レート対象の試合（管理者が認めた試合）の記録から自動でもらえます。年度MVPや大会優勝などは、ここから管理者が贈ります。</p>
+    <p class="hint">ブレイクランアウト・ブレイクエース・ウィンジップ・勝利数・試合数・連勝の勲章は、お店が採用とした試合（レート対象の試合）の記録から自動でもらえます。年度MVPや大会優勝などは、ここから管理者が贈ります。</p>
     <div class="grid2">
       <div class="field"><label for="awName">選手</label><select id="awName"></select></div>
       <div class="field"><label for="awKind">勲章</label><select id="awKind"><option value="mvpY">年度MVP</option><option value="mvpM">月間MVP</option><option value="champ">大会優勝</option><option value="runner">準優勝</option><option value="special">特別賞</option></select></div>
@@ -1816,8 +1816,8 @@ function renderRate(h){
     li.querySelector(".rk-val small").textContent=(r.racks===0&&r.start!=null?"開始レート":r.prov?"暫定":"確定");
     ol.appendChild(li)});
   $("rateNote").textContent=count
-    ?`管理者がレート対象に決めた ${count} 試合から計算しています。それ以外の試合はランキングと履歴にだけ入ります。`
-    :"まだレート対象の試合がありません。今は開始レートを表示しています。管理者が履歴で「レートに反映する」にした試合だけで計算します。";
+    ?`お店が採用とした ${count} 試合から計算しています。それ以外の試合はランキングと履歴にだけ入ります。`
+    :"まだレート対象の試合がありません。今は開始レートを表示しています。お店が採用とした試合のみで計算します。";
   fillCmp();renderMe();updateHandicap();
 }
 /* ---------- rating-based handicap on the match setup ---------- */
@@ -1907,7 +1907,7 @@ var okHist=[];
 function renderBadgesInto(el,name){
   const {earned,next}=playerBadges(name);
   el.innerHTML=`<div class="bdg-head"><p class="me-vs-h">勲章</p><span class="bdg-count">${earned.length}個</span></div>
-    ${earned.length?`<ul class="bdg-grid">${earned.map(badgeHTML).join("")}</ul>`:`<p class="bdg-empty">レート対象の試合（管理者が認めた試合）で、ブレイクランアウトや連勝などの勲章がもらえます。</p>`}
+    ${earned.length?`<ul class="bdg-grid">${earned.map(badgeHTML).join("")}</ul>`:`<p class="bdg-empty">お店が採用とした試合で、ブレイクランアウトや連勝などの勲章がもらえます。</p>`}
     ${next.length?`<p class="bdg-next-h">これから狙える勲章</p><ul class="bdg-grid">${next.map(badgeHTML).join("")}</ul>`:""}`;
 }
 /* admin: award badges (年度MVP・月間MVP・大会優勝・準優勝・特別賞), kept in config/awards */
