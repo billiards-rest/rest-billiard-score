@@ -1565,6 +1565,8 @@ function syncNames(){[1,2].forEach(i=>{const n=getName(i);$("fb"+(i-1)).textCont
 });
 let rosterQ=Promise.resolve();
 function saveRoster(){
+  /* start ratings of people no longer registered (team or individual) are dropped */
+  if(roster.init){const keep=new Set(allMembers());Object.keys(roster.init).forEach(n=>{if(!keep.has(n))delete roster.init[n]})}
   const snap=JSON.parse(JSON.stringify(roster));
   if(!rosterDb){store.set("cb_roster",snap);return}
   rosterQ=rosterQ.then(()=>rosterDb.set(snap)).catch(()=>toast("設定を保存できませんでした。変更する権限がないかもしれません"));
