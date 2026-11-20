@@ -2024,13 +2024,23 @@ function renderFmt(){
 }
 /* 8-ball handicap: 12 steps by rating difference (50 per step).
    [stronger player's race, weaker player's race, balls left (8 included) at which the weaker player removes the rest of their group; 8 = none] */
-function eightLadder(){return [[5,5,8],[5,5,4],[5,5,3],[5,4,8],[5,4,4],[5,4,3],[5,3,4],[5,3,3],[6,3,3],[6,2,3],[7,2,3],[7,1,3]]}
+/* 8-ball handicap: 12 steps, each one stronger than the last. [stronger race, weaker race, own balls to pocket before the rest are removed (0 = none)].
+   The stronger player's race is fixed per format (long 5 / middle 4 / short 3), so a bigger gap never makes the match longer. */
+const EIGHT_LADDER={
+  long:  [[5,5,0],[5,4,0],[5,3,0],[5,2,0],[5,2,5],[5,1,0],[5,1,6],[5,1,5],[5,1,4],[5,1,3],[5,1,2],[5,1,1]],
+  middle:[[4,4,0],[4,3,0],[4,2,0],[4,2,6],[4,2,5],[4,1,0],[4,1,6],[4,1,5],[4,1,4],[4,1,3],[4,1,2],[4,1,1]],
+  short: [[3,3,0],[3,2,0],[3,2,6],[3,2,5],[3,2,4],[3,1,0],[3,1,6],[3,1,5],[3,1,4],[3,1,3],[3,1,2],[3,1,1]]};
+function eightLadder(fmt){return EIGHT_LADDER[fmt||"long"]||EIGHT_LADDER.long}
+/* beginner bonus: when the lower-rated player is 300 or below, they get extra help */
+function beginnerBonus(r){r=+r;if(!isFinite(r))return 0;return r<=100?3:r<=200?2:r<=300?1:0}
+function beginnerCut(r){return [1,.9,.8,.7][beginnerBonus(r)]}
 function eightHandicap(ra,rb){
-  const diff=Math.abs(ra-rb),lvl=Math.min(11,Math.floor(diff/50)),[S,W,N]=eightLadder()[lvl];
-  const shift={long:0,middle:1,short:2}[(cfg&&cfg.fmt)||"long"]||0;
-  const strong=ra>=rb?0:1,race=[0,0];race[strong]=Math.max(1,S-shift);race[1-strong]=Math.max(1,W-shift);
-  const balls=[8,8];balls[1-strong]=N;
-  return {lvl,diff:Math.round(diff),race,balls,strong};
+  const diff=Math.abs(ra-rb),strong=ra>=rb?0:1,low=Math.min(ra,rb);
+  const bonus=diff>0?beginnerBonus(low):0,base=Math.min(11,Math.floor(diff/50)),lvl=Math.min(11,base+bonus);
+  const [S,W,K]=eightLadder((cfg&&cfg.fmt)||"long")[lvl];
+  const race=[0,0];race[strong]=S;race[1-strong]=W;
+  const balls=[8,8];balls[1-strong]=K?8-K:8; /* balls left incl. the 8 when the rest may be removed */
+  return {lvl,base,bonus,diff:Math.round(diff),race,balls,strong,pocket:K};
 }
 function updateHandicap(){
   renderFmt();syncManualRate();
@@ -2042,7 +2052,7 @@ function updateHandicap(){
     $("t1").value=h.race[0];$("t2").value=h.race[1];cfg.hcBalls=h.balls;
     const nm=i=>getName(i+1)||("PLAYER "+(i+1)),w=1-h.strong;
     $("hcMsg").textContent=`ハンデ ${h.lvl+1}/12（レート差 ${h.diff}）：${nm(h.strong)} ${h.race[h.strong]}先取 ／ ${nm(w)} ${h.race[w]}先取`
-      +(h.balls[w]<8?`。${nm(w)} さんは、自分の球が8番を含めて残り${h.balls[w]}球になったら、残りの自分の球を取り除いて8番を狙えます。`:"。")
+      +(h.bonus?`（ビギナー補正 +${h.bonus}段階）`:"")+(h.balls[w]<8?`。${nm(w)} さんは、自分の球を${h.pocket}個落としたら、残りの自分の球を取り除いて8番を狙えます。`:"。")
       +(rs.some(r=>!r)?"レートがない人はレート500として計算しています（名前の下でレートを手入力できます）。":"")+(rs.some(r=>r&&r.manual)?"手入力のレートはハンデを決めるためだけに使います。":"")+(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
     return;
   }
@@ -2059,10 +2069,12 @@ function updateHandicap(){
   const raw=[1,2].map(i=>rs[i-1]?hcPoints(rs[i-1].r):null);
   const liftTo=Math.round(hcFmt().at500*2/3); /* ロング 40 ・ ミドル 29 ・ ショート 20 */
   const lift=(raw[0]!=null&&raw[1]!=null&&Math.max(raw[0],raw[1])<liftTo)?liftTo/Math.max(raw[0],raw[1]):1;
-  [1,2].forEach(i=>{const r=rs[i-1];if(!r)return;const v=Math.max(1,Math.min(hcRace()?7:1e9,Math.round(raw[i-1]*lift)));$("t"+i).value=v;parts.push(`${r.n} ${v}${hcUnit()}（レート${Math.round(r.r)}）`)});
+  const lowI=(rs[0]&&rs[1]&&rs[0].r!==rs[1].r)?(rs[0].r<rs[1].r?1:2):0,cut=lowI?beginnerCut(rs[lowI-1].r):1;
+  [1,2].forEach(i=>{const r=rs[i-1];if(!r)return;const v=Math.max(1,Math.min(hcRace()?7:1e9,Math.round(raw[i-1]*lift*(i===lowI?cut:1))));$("t"+i).value=v;parts.push(`${r.n} ${v}${hcUnit()}（レート${Math.round(r.r)}）`)});
   const missing=[1,2].filter(i=>!rs[i-1]).map(i=>getName(i)||("PLAYER "+i));
   msg.textContent=parts.join(" ／ ")+`。レートから決めました（レート500で${hcFmt().at500}${hcUnit()}）。`
     +(lift>1?`2人ともレートが低めなので、差はそのままに、レートが高い人を${liftTo}${hcUnit()}にそろえて増やしています。`:"")
+    +(cut<1?`ビギナー補正：レート${beginnerBonus(rs[lowI-1].r)===3?100:beginnerBonus(rs[lowI-1].r)===2?200:300}以下の${rs[lowI-1].n} さんの持ち点を${Math.round((1-cut)*10)}割減らしています。`:"")
     +(missing.length?`${missing.join("・")} はレートがないので ${hcFmt().at500}${hcUnit()} にしています（名前の下でレートを手入力できます）。`:"")
     +(rs.some(r=>r&&r.manual)?"手入力のレートはハンデを決めるためだけに使い、レートの記録には入りません。":"")
     +(rs.some(r=>r&&r.prov)?"暫定のレートを含むので目安です。":"");
@@ -2823,7 +2835,7 @@ const RULES={
     ["ラック",["9番が落ちたらそのラックは終わりで、次のラックに進みます。","9番を落とした人が、そのラックを取ったことになります（レートの計算に使います）。","ブレイクは「交互ブレイク」か「勝者ブレイク」を試合の前に選びます。"]],
     ["デッドボール",["スコア画面でボールをダブルタップすると、デッドボール（得点にならない球）にできます。もう一度ダブルタップで戻せます。"]],
     ["相手0点でラックを取ったとき",["ブレイクから1人で取り切った：ブレイクランアウト","ブレイクで9番が入った：ブレイクエース","それ以外で相手を0点のまま取った：ウィンジップ","ラックの終わりに出る画面で、どれかを選びます。ランキングで回数を競えます。"]],
-    ["ハンデ",["持ち点は、その人のレートから自動で決めます。","2人ともレートが低めのときは、物足りなくならないように、差の割合はそのままで、レートが高い人の持ち点を少し増やします（ロング40点・ミドル29点・ショート20点にそろえる）。","ロング（通常の試合）：レート500で60点、200で22点。例：300で34点、400で47点、600で73点、700で87点。","ミドル：レート500で43点。例：200で16点、300で25点、400で34点、600で53点、700で62点。","ショート（気軽にできる短い試合）：ロングの半分。レート500で30点。例：200で11点、300で17点、400で23点、600で37点、700で43点。","手動で決めたいときは、試合タブのチェックを外します。"]],
+    ["ハンデ",["持ち点は、その人のレートから自動で決めます。","2人ともレートが低めのときは、物足りなくならないように、差の割合はそのままで、レートが高い人の持ち点を少し増やします（ロング40点・ミドル29点・ショート20点にそろえる）。","ロング（通常の試合）：レート500で60点、200で22点。例：300で34点、400で47点、600で73点、700で87点。","ミドル：レート500で43点。例：200で16点、300で25点、400で34点、600で53点、700で62点。","ショート（気軽にできる短い試合）：ロングの半分。レート500で30点。例：200で11点、300で17点、400で23点、600で37点、700で43点。","ビギナー補正：レートが低い人が300以下ならその人の持ち点を1割、200以下なら2割、100以下なら3割減らします。","手動で決めたいときは、試合タブのチェックを外します。"]],
     ["記録の確定",["試合が終わると記録は「承認待ち」になります。","記録した人以外（対戦相手や第三者）が承認すると確定し、ランキングとレートに入ります。"]]
   ]},
   "10":{ready:false,title:"10ボール",lead:"世界共通ルール（WPA）をもとにした、一般的な10ボールのルールです。細かい扱いはお店のハウスルールを優先してください。",sections:[
@@ -2837,10 +2849,13 @@ const RULES={
   ]},
   "8":{ready:true,title:"8ボール（セットマッチ）",lead:"このアプリではセットマッチ（先にきめたラック数を取った人の勝ち）で記録します。球の扱いは世界共通ルール（WPA）をもとにした一般的なルールです。細かい扱いはお店のハウスルールを優先してください。",sections:[
     ["このアプリでの試合",["1ラックごとに、8番を正しく落とした人（または相手が負けになるファウルをした人の相手）がラックを取ります。","ラックを取った人のスコアをタップして記録します。ブレイクから1人で取り切ったときは「マスワリで獲得」を押します。","先取ラック数（セット数）に先に届いた人の勝ちです。"]],
-    ["ハンデ（12段階）",["2人のレート差から、12段階のハンデを自動で決めます（レート差50ごとに1段階）。","ハンデは「先取ラック数」と「球抜き」の組み合わせです。球抜きは、レートが低い人が自分の球を「8番を含めて残り○球」まで落としたら、残りの自分の球を台から取り除いて8番を狙えるハンデです。",
-      "1：5-5 ／ 2：5-5・残り4球 ／ 3：5-5・残り3球 ／ 4：5-4 ／ 5：5-4・残り4球 ／ 6：5-4・残り3球",
-      "7：5-3・残り4球 ／ 8：5-3・残り3球 ／ 9：6-3・残り3球 ／ 10：6-2・残り3球 ／ 11：7-2・残り3球 ／ 12：7-1・残り3球（最大）",
-      "数字は「レートが高い人の先取-レートが低い人の先取」。ミドルは両方1ラック少なく、ショートは2ラック少なくなります（最低1）。"]],
+    ["ハンデ（12段階）",["2人のレート差から、12段階のハンデを自動で決めます（レート差50ごとに1段階、差が大きいほど必ず強くなります）。","ハンデは「先取ラック数」と「球抜き」の組み合わせです。「○個で8番へ」は、レートが低い人が自分の球をその数だけ落としたら、残りの自分の球を台から取り除いて8番を狙えるハンデです（数が少ないほど強い）。",
+      "ロング（高い人は5先取）：5-5 ／ 5-4 ／ 5-3 ／ 5-2 ／ 5-2・5個 ／ 5-1 ／ 5-1・6個 ／ 5-1・5個 ／ 5-1・4個 ／ 5-1・3個 ／ 5-1・2個 ／ 5-1・1個",
+      "ミドル（高い人は4先取）：4-4 ／ 4-3 ／ 4-2 ／ 4-2・6個 ／ 4-2・5個 ／ 4-1 ／ 4-1・6個 ／ 4-1・5個 ／ 4-1・4個 ／ 4-1・3個 ／ 4-1・2個 ／ 4-1・1個",
+      "ショート（高い人は3先取）：3-3 ／ 3-2 ／ 3-2・6個 ／ 3-2・5個 ／ 3-2・4個 ／ 3-1 ／ 3-1・6個 ／ 3-1・5個 ／ 3-1・4個 ／ 3-1・3個 ／ 3-1・2個 ／ 3-1・1個",
+      "数字は「レートが高い人の先取-レートが低い人の先取」。レートが高い人の先取は決まっているので、レート差が大きくても試合は長くなりません。",
+      "ビギナー補正：レートが低い人が300以下なら+1段階、200以下なら+2段階、100以下なら+3段階、ハンデを強くします。"]],
+
     ["ラック",["1〜15番を三角に並べ、8番を3列目の真ん中に置きます。","後ろの2つの角には、ローボール（1〜7番）とハイボール（9〜15番）を1個ずつ置きます。"]],
     ["ブレイク",["手球はヘッドストリングの後ろから打ちます。","ボールを1個入れるか、的球を4個以上クッションに届かせないとファウルです。このときは、相手が「そのまま打つ」か「ラックし直す」かを選べます。","ブレイクで8番が入ったら、ブレイクした人が「8番を戻して続ける」か「ラックし直す」かを選びます。負けにはなりません。","ブレイクで手球を落としたらファウルです。テーブルはオープンのまま、相手がヘッドストリングの後ろからフリーボールで打ちます。"]],
     ["オープンテーブルとグループ",["ブレイクのあとは、まだグループ（ロー・ハイ）が決まっていない「オープンテーブル」です。","宣言した球を正しく落とした人が、その球のグループに決まります。相手は残りのグループです。","オープンテーブルで8番に最初に当てるのはファウルです。"]],
