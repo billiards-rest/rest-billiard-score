@@ -148,14 +148,14 @@ button{cursor:pointer}
 .me-badges{display:flex;flex-direction:column;gap:6px}
 .bdg-head{display:flex;align-items:baseline;justify-content:space-between}
 .bdg-count{font:800 12px/1 var(--f-body);opacity:.85}
-.bdg-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:10px 6px}
+.bdg-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:12px 6px}
 .bdg{display:flex;flex-direction:column;align-items:center;text-align:center;gap:1px;min-width:0}
-.bdg-svg{width:58px;height:68px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));transition:transform .2s}
+.bdg-svg{width:72px;height:70px;overflow:visible;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));transition:transform .2s}
 .bdg:not(.locked):hover .bdg-svg{transform:translateY(-2px) rotate(-4deg)}
 .bdg b{font:800 11px/1.25 var(--f-body);max-width:100%;white-space:nowrap;letter-spacing:-.03em}
 .bdg small{font:700 11px/1.25 var(--f-body);opacity:.8;max-width:100%;overflow-wrap:anywhere}
 .bdg em{font:700 10px/1.25 var(--f-body);font-style:normal;opacity:.6}
-.bdg.t5 .bdg-svg{filter:drop-shadow(0 0 6px rgba(230,180,34,.8)) drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.bdg.t5 .bdg-svg{filter:drop-shadow(0 0 6px rgba(255,140,220,.7)) drop-shadow(0 2px 2px rgba(0,0,0,.35))}
 .bdg.t4 .bdg-svg{filter:drop-shadow(0 0 5px rgba(160,205,245,.85)) drop-shadow(0 2px 2px rgba(0,0,0,.35))}
 .bdg.award b{color:#ffd76a}
 .bdg.locked .bdg-svg{filter:grayscale(1) brightness(.75);opacity:.38}
@@ -169,7 +169,7 @@ button{cursor:pointer}
 @media (prefers-reduced-motion:reduce){.bd-spark{animation:none}.bdg .bdg-svg{transition:none}}
 .aw-list{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
 .aw-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:6px 10px}
-.aw-row .bdg-svg{width:34px;height:40px;flex:none}
+.aw-row .bdg-svg{width:44px;height:43px;flex:none;overflow:visible}
 .aw-t{display:flex;flex-direction:column;min-width:0;flex:1}
 .aw-t b{font-size:14px}.aw-t small{font-size:12px;color:var(--muted)}
 .aw-x{flex:none;font-size:12px;padding:6px 10px}
@@ -1858,25 +1858,89 @@ const BADGE_T={
 };
 const TIER_RIM=["","md-c","md-b","md-a","md-sa","md-pro"],TIER_NAME=["","ブロンズ","シルバー","ゴールド","プラチナ","ダイヤ"];
 const BADGE_STEPS={runout:[1,5,10,30,50],ace:[1,5,10,30,50],zip:[1,5,10,30,50],win:[1,10,30,50,100],games:[10,30,50,100,300],streak:[3,5,7,10,15]};
-const AWARD_KINDS={mvpY:{type:"mvp",label:"年度MVP",tier:5},mvpM:{type:"mvp",label:"月間MVP",tier:3},champ:{type:"champ",label:"大会優勝",tier:3},runner:{type:"runner",label:"準優勝",tier:2},special:{type:"special",label:"特別賞",tier:4}};
+const AWARD_KINDS={mvpY:{type:"mvp",label:"年度MVP",tier:5},mvpM:{type:"mvp",label:"月間MVP",tier:4},champ:{type:"champ",label:"大会優勝",tier:4},runner:{type:"runner",label:"準優勝",tier:3},special:{type:"special",label:"特別賞",tier:3}};
 const RIM_PATH=(()=>{let d="";for(let i=0;i<32;i++){const a=-Math.PI/2+i*Math.PI/16,r=i%2?20.6:23;d+=(i?"L":"M")+(24+r*Math.cos(a)).toFixed(2)+" "+(24+r*Math.sin(a)).toFixed(2)}return d+"Z"})();
 (function(){const d=document.createElementNS("http://www.w3.org/2000/svg","svg");d.setAttribute("width","0");d.setAttribute("height","0");d.setAttribute("aria-hidden","true");d.style.cssText="position:absolute;width:0;height:0;overflow:hidden";
   d.innerHTML="<defs>"+Object.entries(BADGE_T).map(([k,t])=>`<linearGradient id="bd-${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.a}"/><stop offset="1" stop-color="${t.b}"/></linearGradient>`).join("")+"</defs>";
   document.body.appendChild(d)})();
-function badgeSvg(type,tier){
-  const t=BADGE_T[type],tr=Math.max(1,Math.min(5,tier||1)),spark=tr>=3;
-  return `<svg class="bdg-svg" viewBox="0 0 48 56" aria-hidden="true">
-    <path d="M15 37l6.5 2-2 15-3.6-3.6L12 54z" fill="${t.rb}"/><path d="M33 37l-6.5 2 2 15 3.6-3.6L36 54z" fill="${t.rb}"/>
-    <path d="M17.6 40.5l2.6.8-.9 6.6M30.4 40.5l-2.6.8.9 6.6" stroke="rgba(255,255,255,.35)" stroke-width="1" fill="none"/>
-    <path d="${RIM_PATH}" fill="url(#${TIER_RIM[tr]})" stroke="rgba(0,0,0,.28)" stroke-width=".6"/>
-    <circle cx="24" cy="24" r="16.2" fill="rgba(0,0,0,.22)"/>
-    <circle cx="24" cy="24" r="15.4" fill="url(#bd-${type})"/>
-    <circle cx="24" cy="24" r="13.4" fill="none" stroke="rgba(255,255,255,.45)" stroke-width=".8" stroke-dasharray="1.4 1.6"/>
-    ${t.icon}
-    <ellipse cx="18.5" cy="15.5" rx="6" ry="2.6" transform="rotate(-30 18.5 15.5)" fill="rgba(255,255,255,.38)"/>
-    ${spark?'<path class="bd-spark" d="M40 6.5l1.2 2.7 2.7 1.2-2.7 1.2L40 14.3l-1.2-2.7-2.7-1.2 2.7-1.2z" fill="#fff"/><path class="bd-spark s2" d="M7.5 34l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z" fill="#fff"/>':""}
+/* ===== 勲章 v2: shape by kind (harder = fancier), ornaments by rank ===== */
+const B2_T={
+  games:{en:"GAMES",label:"試合数",shape:"plate",a:"#86ccff",b:"#2f7be0",rb:"#1d4f9c"},
+  win:{en:"WIN",label:"勝利",shape:"seal",a:"#79e8b0",b:"#11a067",rb:"#0b6e47"},
+  streak:{en:"STREAK",label:"連勝",shape:"shield",a:"#ff9ec0",b:"#ff3d6e",rb:"#c21d4a"},
+  zip:{en:"WIN ZIP",label:"ウィンジップ",shape:"gem",a:"#c9a4ff",b:"#7b4dff",rb:"#4f26c4"},
+  runout:{en:"BREAK &amp; RUN",label:"ブレイクランアウト",shape:"star",a:"#ffb347",b:"#ff5e3a",rb:"#c2361b"},
+  ace:{en:"BREAK ACE",label:"ブレイクエース",shape:"sun",a:"#ffe27a",b:"#f2a900",rb:"#b77b00"},
+  mvp:{en:"MVP",label:"MVP",shape:"sun",a:"#c3a0ff",b:"#5b2bd6",rb:"#3a1696"},
+  champ:{en:"CHAMPION",label:"大会優勝",shape:"shield",a:"#ffe48f",b:"#e39b00",rb:"#c2361b"},
+  runner:{en:"RUNNER-UP",label:"準優勝",shape:"shield",a:"#e7eef6",b:"#8aa1bb",rb:"#2f62b8"},
+  special:{en:"SPECIAL",label:"特別賞",shape:"gem",a:"#86f2e2",b:"#12b09d",rb:"#0b7a6c"}
+};
+const B2_RIM={1:["#ecc28c","#a8733a","#5e3d17"],2:["#ffffff","#bcc5ce","#6f7a86"],3:["#fff6c0","#f3c230","#a87800"],4:["#ffffff","#dfe9f2","#8fa7bf"],5:["#5a5a68","#1a1a22","#000000"]};
+function b2Star(n,r1,r2,cx,cy,rot){let d="";rot=rot==null?-Math.PI/2:rot;for(let i=0;i<n*2;i++){const a=rot+i*Math.PI/n,r=i%2?r2:r1;d+=(i?"L":"M")+(cx+r*Math.cos(a)).toFixed(2)+" "+(cy+r*Math.sin(a)).toFixed(2)}return d+"Z"}
+/* body shapes, all centred on (24,24); [outer rim, inner face, icon scale] */
+const B2_SHAPE={
+  plate:[`M10 7h28a5 5 0 0 1 5 5v24a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V12a5 5 0 0 1 5-5z`,`M11.5 10.5h25a3 3 0 0 1 3 3v21a3 3 0 0 1-3 3h-25a3 3 0 0 1-3-3v-21a3 3 0 0 1 3-3z`,.95],
+  seal:[b2Star(16,22,19.8,24,24),`M24 9.4a14.6 14.6 0 1 1 0 29.2a14.6 14.6 0 1 1 0-29.2z`,.95],
+  shield:[`M24 2.5 41.5 8.5v14c0 12.5-8 20.5-17.5 25.5C14.5 43 6.5 35 6.5 22.5v-14z`,`M24 6.6 38 11.4v11.4c0 10-6.4 16.6-14 20.8-7.6-4.2-14-10.8-14-20.8V11.4z`,.92],
+  gem:[`M24 1.5 43.5 12.75v22.5L24 46.5 4.5 35.25v-22.5z`,`M24 6.3 39.3 15.15v17.7L24 41.7 8.7 32.85v-17.7z`,.95],
+  star:[b2Star(8,23,16.5,24,24),`M24 11.6a12.4 12.4 0 1 1 0 24.8a12.4 12.4 0 1 1 0-24.8z`,.82],
+  sun:[b2Star(16,23.5,17,24,24),`M24 11.2a12.8 12.8 0 1 1 0 25.6a12.8 12.8 0 1 1 0-25.6z`,.82]
+};
+const B2_ICON={
+  runout:'<text x="24" y="28.4" text-anchor="middle" font-size="11.5" font-weight="900" letter-spacing="-.4" class="bi">B&amp;R</text><path d="M16 32.5h16" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1.6 2.2"/>',
+  ace:'<circle cx="24" cy="24" r="8.6" fill="#fff" stroke="rgba(0,0,0,.25)" stroke-width=".8"/><circle cx="24" cy="24" r="4.4" fill="#fff" stroke="#f2a900" stroke-width="1.2"/><text x="24" y="27.2" text-anchor="middle" font-size="8.5" font-weight="900" fill="#222">9</text><path d="M33.5 14.5l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z" fill="#fff"/>',
+  zip:'<text x="24" y="30.2" text-anchor="middle" font-size="16" font-weight="900" class="bi">W</text><path d="M15.5 33.5h17" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="1.6 2.2"/>',
+  win:'<path d="M17.5 15h13v4.5a6.5 6.5 0 0 1-13 0z" class="bi"/><path d="M17.5 16.5h-2.6a2.8 2.8 0 0 0 3.3 4.6M30.5 16.5h2.6a2.8 2.8 0 0 1-3.3 4.6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M22.3 26h3.4v3.2h3v3H19.3v-3h3z" class="bi"/>',
+  games:'<path d="M15.70 34.70L23.40 26.44L21.56 24.60L13.30 32.30Z" fill="#6b3a17" stroke="#fff" stroke-width=".7" stroke-linejoin="round"/><path d="M23.40 26.44L32.13 16.93L31.07 15.87L21.56 24.60Z" fill="#fff6e2" stroke="rgba(0,0,0,.25)" stroke-width=".5"/><path d="M32.13 16.93L33.99 14.99L33.01 14.01L31.07 15.87Z" fill="#16233f"/><path d="M34.70 32.30L26.44 24.60L24.60 26.44L32.30 34.70Z" fill="#6b3a17" stroke="#fff" stroke-width=".7" stroke-linejoin="round"/><path d="M26.44 24.60L16.93 15.87L15.87 16.93L24.60 26.44Z" fill="#fff6e2" stroke="rgba(0,0,0,.25)" stroke-width=".5"/><path d="M16.93 15.87L14.99 14.01L14.01 14.99L15.87 16.93Z" fill="#16233f"/>',
+  streak:'<path d="M29.5 21.5 12.5 11.5q3.2 5.3-.8 9.4 6 .2 8.6 6.6z" fill="#ff8a00" stroke="#fff" stroke-width=".9" stroke-linejoin="round"/><path d="M27.5 23 16.5 16.2q1.6 3.4-.6 5.6 3.8.3 5.6 4.6z" fill="#ffe27a"/><circle cx="27" cy="26.5" r="7.4" fill="#fff" stroke="rgba(0,0,0,.25)" stroke-width=".7"/><circle cx="27" cy="26.5" r="3.8" fill="#fff" stroke="#f5c400" stroke-width="1.2"/><text x="27" y="29.3" text-anchor="middle" font-size="7.4" font-weight="900" fill="#222">9</text><rect x="12.3" y="26.2" width="9.6" height="9.6" rx="2.4" fill="#fff" stroke="#e0234f" stroke-width=".9" transform="rotate(-8 17 31)"/><text x="17.1" y="34" text-anchor="middle" font-size="7" font-weight="900" fill="#e0234f" transform="rotate(-8 17 31)">連</text>',
+  mvp:'<path d="M15.5 30.5 14.5 18l5.6 4.4L24 15l3.9 7.4 5.6-4.4-1 12.5z" class="bi"/><rect x="15.5" y="31.5" width="17" height="2.6" rx="1.2" fill="#fff"/><circle cx="24" cy="25.5" r="1.6" fill="#ff5c8a"/>',
+  champ:'<path d="M17.5 14.5h13v5a6.5 6.5 0 0 1-13 0z" class="bi"/><path d="M17.5 16h-2.6a2.8 2.8 0 0 0 3.3 4.6M30.5 16h2.6a2.8 2.8 0 0 1-3.3 4.6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M22.3 26h3.4v3.2h3v3H19.3v-3h3z" class="bi"/><text x="24" y="21.6" text-anchor="middle" font-size="6.5" font-weight="900" fill="#e39b00">1</text>',
+  runner:'<path d="M17.5 14.5h13v5a6.5 6.5 0 0 1-13 0z" class="bi"/><path d="M17.5 16h-2.6a2.8 2.8 0 0 0 3.3 4.6M30.5 16h2.6a2.8 2.8 0 0 1-3.3 4.6" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M22.3 26h3.4v3.2h3v3H19.3v-3h3z" class="bi"/><text x="24" y="21.6" text-anchor="middle" font-size="6.5" font-weight="900" fill="#8aa1bb">2</text>',
+  special:'<path d="M24 13.5l3 6.4 7 .8-5.2 4.8 1.4 6.9L24 29l-6.2 3.4 1.4-6.9-5.2-4.8 7-.8z" class="bi"/>'
+};
+let B2_UID=0;
+function b2Laurel(gid){let s="";for(let i=0;i<8;i++){const deg=118+i*17,t=deg*Math.PI/180,r=24;const x=24+r*Math.cos(t),y=25+r*Math.sin(t);
+  s+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="3.6" ry="1.5" transform="rotate(${(deg+75).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="url(#${gid})" stroke="rgba(0,0,0,.28)" stroke-width=".35"/>`;
+  s+=`<ellipse cx="${(48-x).toFixed(1)}" cy="${y.toFixed(1)}" rx="3.6" ry="1.5" transform="rotate(${(-(deg+75)).toFixed(0)} ${(48-x).toFixed(1)} ${y.toFixed(1)})" fill="url(#${gid})" stroke="rgba(0,0,0,.28)" stroke-width=".35"/>`}
+  return s}
+const B2_WING='<path d="M7 20C1 15-5 15-9 9c4 1.6 7 1.5 9 .6C-3 7.5-5 3.5-5.5-1c3 3.5 6.5 5.5 10 6.4C3 3 2.5 0 3.5-3c2 4.5 4.6 8 7.5 11z" fill="#ffffff" stroke="rgba(0,0,0,.22)" stroke-width=".5" stroke-linejoin="round"/><path d="M-6 9.5c4 2 8 3 11 3M-3 3c3 3 6 4.5 9 5.2" stroke="rgba(0,0,0,.12)" stroke-width=".5" fill="none"/>';
+/* type: key of B2_T, tier 1..5 (bronze..diamond) */
+function badge2Svg(type,tier){
+  const t=B2_T[type],tr=Math.max(1,Math.min(5,tier||1)),sh=B2_SHAPE[t.shape],id="b2"+(++B2_UID),rim=B2_RIM[tr];
+  const sc=sh[2]*.92,icon=`<g transform="translate(24 22.5) scale(${sc}) translate(-24 -24)">${B2_ICON[type]}</g>`;
+  const gold=["#fff1a8","#e6b422","#a87800"];
+  let back="",front="";
+  if(tr>=5)back+=`<path d="${b2Star(24,33,20,24,24)}" fill="url(#${id}ray)" opacity=".7"/>`;
+  if(tr>=3){const big=tr>=4,w=big?B2_WING:`<g transform="translate(7 21) scale(.72) translate(-7 -21)">${B2_WING}</g>`;back+=w+`<g transform="translate(48 0) scale(-1 1)">${w}</g>`}
+  const bc=t.rb,edge=tr>=3?`url(#${id}gd)`:"rgba(0,0,0,.25)";
+  /* banner (帯) across the bottom: the emblem look; silver and up get swallow-tail ends */
+  front+=(tr>=2?`<path d="M2 39.5h6v8H2l2.4-4z" fill="${bc}" filter="brightness(.8)"/><path d="M46 39.5h-6v8h6l-2.4-4z" fill="${bc}"/><path d="M2 39.5h6v8H2l2.4-4z" fill="rgba(0,0,0,.25)"/><path d="M46 39.5h-6v8h6l-2.4-4z" fill="rgba(0,0,0,.25)"/>`:"")
+    +`<path d="M6 37.5h36l-1.2 4 1.2 4H6l1.2-4z" fill="${bc}" stroke="${edge}" stroke-width=".7" stroke-linejoin="round"/>`
+    +`<text x="24" y="43.1" text-anchor="middle" font-size="${t.en.length>9?3.9:4.5}" font-weight="900" fill="#fff" letter-spacing=".45">${t.en}</text>`;
+  if(tr>=5)front+=`<path d="M15.5 -1.5 14.5 -9.5l4.6 3.4L24 -11.5l4.9 5.4 4.6-3.4-1 8z" fill="url(#${id}gd)" stroke="rgba(0,0,0,.3)" stroke-width=".5" stroke-linejoin="round"/><circle cx="24" cy="-5.2" r="1.3" fill="#ff3d6e"/><circle cx="19" cy="-4.4" r=".9" fill="#5ad1ff"/><circle cx="29" cy="-4.4" r=".9" fill="#5ad1ff"/>`;
+  if(tr>=3)front+=`<path class="bd-spark" d="M42 3.5l1.2 2.7 2.7 1.2-2.7 1.2L42 11.3l-1.2-2.7-2.7-1.2 2.7-1.2z" fill="#fff"/><path class="bd-spark s2" d="M5.5 30l.8 1.8 1.8.8-1.8.8-.8 1.8-.8-1.8-1.8-.8 1.8-.8z" fill="#fff"/>`;
+  const ring=tr>=3?`<path d="${sh[1]}" fill="none" stroke="rgba(255,255,255,.5)" stroke-width=".9" stroke-dasharray="1.4 1.6" transform="translate(24 24) scale(.88) translate(-24 -24)"/>`:"";
+  const gems=tr>=4&&(t.shape==="star"||t.shape==="sun")?`<circle cx="24" cy="1.8" r="1.6" fill="#5ad1ff" stroke="#fff" stroke-width=".5"/>`:"";
+  return `<svg class="bdg-svg" viewBox="-10 -13 68 66" aria-hidden="true"><defs>
+    ${tr>=5?`<linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox"><stop offset="0" stop-color="#ff4f9a"/><stop offset=".2" stop-color="#ffb02e"/><stop offset=".4" stop-color="#3fd97e"/><stop offset=".6" stop-color="#36a8ff"/><stop offset=".8" stop-color="#9b6bff"/><stop offset="1" stop-color="#ff4f9a"/><animateTransform attributeName="gradientTransform" type="rotate" values="0 .5 .5;360 .5 .5" dur="6s" repeatCount="indefinite"/></linearGradient>`
+      :`<linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${rim[0]}"/><stop offset=".55" stop-color="${rim[1]}"/><stop offset="1" stop-color="${rim[2]}"/></linearGradient>`}
+    <linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${t.a}"/><stop offset="1" stop-color="${t.b}"/></linearGradient>
+    <linearGradient id="${id}gd" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${gold[0]}"/><stop offset=".5" stop-color="${gold[1]}"/><stop offset="1" stop-color="${gold[2]}"/></linearGradient>
+    <linearGradient id="${id}lf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${tr>=5?"#fff1a8":"#ffffff"}"/><stop offset="1" stop-color="${tr>=5?"#c48f00":"#9fb3c8"}"/></linearGradient>
+    <linearGradient id="${id}gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".3"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <radialGradient id="${id}ray"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#ffd6f0" stop-opacity=".8"/><stop offset="1" stop-color="#9fe0ff" stop-opacity="0"/></radialGradient>
+  </defs>${back}
+    <path d="${sh[0]}" fill="url(#${id}r)" stroke="rgba(0,0,0,.3)" stroke-width=".6" stroke-linejoin="round"/>
+    ${tr>=5?`<path d="${sh[0]}" fill="url(#${id}gl)"/>`:""}
+    <path d="${sh[1]}" fill="rgba(0,0,0,.2)" transform="translate(0 .8)"/>
+    <path d="${sh[1]}" fill="url(#${id}f)"/>${ring}${gems}
+    ${icon}
+    <ellipse cx="17.5" cy="14" rx="6" ry="2.4" transform="rotate(-30 17.5 14)" fill="rgba(255,255,255,.38)"/>${front}
   </svg>`;
 }
+
+function badgeSvg(type,tier){return badge2Svg(type,tier)}
 /* counts and streaks for one player — only the matches the admin made count (same as the rating) */
 function playerBadgeStats(name,h){
   const st={runout:0,ace:0,zip:0,win:0,games:0,streak:0};let cur=0;
