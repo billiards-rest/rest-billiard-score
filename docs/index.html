@@ -678,7 +678,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit .board.l8 .pips{display:none}
 #play.fit .board.l8 .side-head .team{display:none}
 #play.fit .board.l8 .side-tools button{padding:6px 2px}
-#play.fit .board.l8 .grp-btn{padding:3px 10px;font-size:12px}
+#play.fit .board.l8 .grp-btn{font-size:12px}
 #play.fit .board.lanein .side{padding:8px;gap:6px}
 #play.fit .board.lanein .score-btn{min-height:0}
 #play.fit .board.lanein .score-btn .num{font-size:clamp(64px,21vw,140px)}
@@ -736,6 +736,18 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .hc-use b{font-size:13px}
 .hc-use span{font-size:10px;line-height:1.35;opacity:.95}
 .grp-q{font-size:11px;font-weight:800;color:var(--muted)}
+.g8top,.g8grp{display:contents}
+.board.l8 .grp-row{display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:6px;height:54px;min-height:0;overflow:hidden;flex:none}
+.board.l8 .grp-row.hasHc{height:106px}
+.board.l8 .g8top,.board.l8 .g8grp{display:flex;gap:4px;height:24px;flex:none;min-width:0}
+.board.l8 .g8grp .grp-btn{flex:1;min-width:0;justify-content:center;padding:0 4px}
+.board.l8 .grp-q{display:none}
+.board.l8 .grp-row .chip{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.board.l8 .grp-row .chip,.board.l8 .grp-btn{height:24px;box-sizing:border-box;display:inline-flex;align-items:center}
+.board.l8 .hc-note,.board.l8 .hc-use{font-size:10px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;padding:2px 6px;max-height:46px;box-sizing:border-box;flex:none;animation:none}
+.board.l8 .hc-use{animation:goPulse 1.2s ease-in-out infinite}
+.board.l8 .hc-use b{font-size:10px;display:inline}.board.l8 .hc-use span{display:none}
+.board.l8 .score-btn{flex:1}
 .grp-btn{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:13px;font-weight:800}
 .grp-btn.low{border-color:#e2b53b}
 .grp-btn.high{border-color:#2457a6}
@@ -3398,12 +3410,12 @@ function render(){
     const nw=document.createElement("div");nw.className="pname-wrap";
     if(M.teams&&M.teams[p]){const tm=document.createElement("span");tm.className="team";tm.textContent=M.teams[p];nw.appendChild(tm)}
     const nm=document.createElement("div");nm.className="pname";nm.textContent=M.names[p];nw.appendChild(nm);head.appendChild(nw);
-    if(isBreak){const c=document.createElement("span");c.className="chip break";c.textContent="ブレイク";head.appendChild(c)}
+    if(isBreak&&!lane8){const c=document.createElement("span");c.className="chip break";c.textContent="ブレイク";head.appendChild(c)}
     if(M.mode==="race"&&M.game!=="8"&&M.hcBalls&&M.hcBalls[p]<8){const c=document.createElement("span");c.className="chip balls";c.textContent=`ハンデ：残り${M.hcBalls[p]}球から球抜き`;
       c.title=`8番を含めて残り${M.hcBalls[p]}球になったら、残りの自分の球を取り除けます`;head.appendChild(c)}
     if(isTurn){const c=document.createElement("span");c.className="chip turn";c.textContent="手番";head.appendChild(c)}
     side.appendChild(head);
-    if(M.mode==="race"&&M.game==="8")side.appendChild(groupRow(p));
+    if(lane8)side.appendChild(groupRow(p,isBreak));
 
     const btn=document.createElement("button");btn.type="button";btn.className="score-btn";
     const remain=Math.max(0,M.target[p]-M.score[p]);
@@ -3698,16 +3710,20 @@ function pocket8(n,p){
 function setGroup(p,g){if(M.done)return;snap();M.grp=g?[null,null]:[null,null];
   if(g){M.grp[p]=g;M.grp[1-p]=g==="low"?"high":"low";L(`${M.names[p]} は ${g==="low"?"ロー（1〜7）":"ハイ（9〜15）"}`)}
   else L("グループを決め直し");render()}
-function groupRow(p){
+function groupRow(p,isBreak){
   const r=document.createElement("div");r.className="grp-row";
+  /* fixed-height box (same on both sides) so the score panels never change size */
+  if(M.hcBalls&&M.hcBalls.some(n=>n&&n<8))r.classList.add("hasHc");
+  {const t=document.createElement("div");t.className="g8top";const c=document.createElement("span");c.className="chip break";c.textContent="ブレイク";if(!isBreak)c.style.visibility="hidden";t.appendChild(c);r.appendChild(t)}
+  const gr=document.createElement("div");gr.className="g8grp";r.appendChild(gr);
   const g=M.grp&&M.grp[p];
   if(!g){
-    const lab=document.createElement("span");lab.className="grp-q";lab.textContent="グループ";r.appendChild(lab);
+    const lab=document.createElement("span");lab.className="grp-q";lab.textContent="グループ";gr.appendChild(lab);
     [["low","ロー"],["high","ハイ"]].forEach(([k,t])=>{const b=document.createElement("button");b.type="button";b.className="grp-btn "+k;b.textContent=t;
-      b.setAttribute("aria-label",`${M.names[p]} を${t}にする`);b.onclick=e=>{e.stopPropagation();setGroup(p,k)};r.appendChild(b)});
+      b.setAttribute("aria-label",`${M.names[p]} を${t}にする`);b.onclick=e=>{e.stopPropagation();setGroup(p,k)};gr.appendChild(b)});
   }else{
     const b=document.createElement("button");b.type="button";b.className="chip grp "+g;b.textContent=g==="low"?"ロー 1〜7":"ハイ 9〜15";
-    b.title="タップでグループを決め直す";b.onclick=e=>{e.stopPropagation();setGroup(p,null)};r.appendChild(b);
+    b.title="タップでグループを決め直す";b.onclick=e=>{e.stopPropagation();setGroup(p,null)};gr.appendChild(b);
   }
   const N=M.hcBalls&&M.hcBalls[p];
   if(N&&N<8){
@@ -3716,14 +3732,14 @@ function groupRow(p){
     const need=Math.max(0,own-keep);              /* own balls still to pocket before the handicap applies */
     if(g&&own>0&&need===0){
       const b=document.createElement("button");b.type="button";b.className="hc-use";
-      b.innerHTML=`<b>ハンデ：自分の球 残り${own}個を台から取り除いて、ここをタップしてください</b><span>タップすると8番を狙って試合を続けます</span>`;
+      b.innerHTML=`<b>ハンデ：残り${own}個を台から取り除いてタップ</b><span>タップすると8番を狙って試合を続けます</span>`;
       b.onclick=e=>{e.stopPropagation();removeOwn(p)};r.appendChild(b);
     }else if(g&&own===0){
-      const c=document.createElement("p");c.className="hc-note";c.innerHTML=`<b>ハンデ</b>自分の球はもうありません。8番を狙います`;r.appendChild(c);
+      const c=document.createElement("p");c.className="hc-note";c.innerHTML=`<b>ハンデ</b>自分の球なし。8番を狙います`;r.appendChild(c);
     }else{
       const c=document.createElement("p");c.className="hc-note";
-      c.innerHTML=g?`<b>ハンデ</b>自分の球をあと${need}個落としたら、残り${keep}個を取り除いてください`
-                   :`<b>ハンデ</b>グループが決まったら、自分の球を${7-keep}個落としたあと、残り${keep}個を取り除いてください`;
+      c.innerHTML=g?`<b>ハンデ</b>あと${need}個落としたら残り${keep}個を抜く`
+                   :`<b>ハンデ</b>自分の球を${7-keep}個落としたら残り${keep}個を抜く`;
       r.appendChild(c);
     }}
   return r;
