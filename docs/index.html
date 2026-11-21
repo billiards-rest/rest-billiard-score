@@ -2519,7 +2519,8 @@ function buildBracket(T){
       LB[r]=cur;
     }
     const wq=WB[W],lq=LB[L],h=wq.length;
-    for(let j=0;j<h;j++)first.push([{win:wq[j]},{win:lq[h-1-j]}]);
+    /* the loser-side qualifier must come from the OTHER half, or the semifinal is a straight rematch of the last winner-side match */
+    for(let j=0;j<h;j++)first.push([{win:wq[j]},{win:lq[h>1?j:0]}]);
   }
   let round=first,r=1;
   while(round.length){
