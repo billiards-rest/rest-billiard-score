@@ -1735,7 +1735,7 @@ function renderHistory(){
   if(!h.length){el.innerHTML='<p class="hint">まだ試合はありません。終了した試合がここに並びます。</p>';$("clearHist").hidden=true;$("playersSheet").hidden=true;$("rankSheet").hidden=true;return}
   $("clearHist").hidden=!real.length||(shared&&!isOwner);
   h.slice(0,30).forEach(m=>{
-    const d=new Date(m.end);const w=m.score[0]>m.score[1]?0:m.score[1]>m.score[0]?1:-1;
+    const d=new Date(m.end);const w=winnerOf(m);
     const pend=m.status==="pending";
     const row=document.createElement("div");row.className="hist-item"+(pend?" pending":"");
     row.innerHTML=`<span class="type"></span><div class="names"><span class="${w===0?"win":""}"></span> 対 <span class="${w===1?"win":""}"></span><div class="date"></div></div><div class="score">${m.score[0]}–${m.score[1]}</div>`;
@@ -1766,9 +1766,18 @@ function renderHistory(){
   });
   renderPlayers(ok);lastHist=ok;renderRanking();
 }
+/* who won a recorded match: the saved winner; otherwise whoever reached their own target (handicaps differ),
+   then whoever got closer to it. Only an exact tie in an old record is a draw (-1). */
+function winnerOf(m){
+  if(m.winner===0||m.winner===1)return m.winner;
+  const s=m.score||[0,0],t=m.target;
+  if(t&&t[0]>0&&t[1]>0){const r0=s[0]>=t[0],r1=s[1]>=t[1];if(r0!==r1)return r0?0:1;
+    const p0=s[0]/t[0],p1=s[1]/t[1];if(p0!==p1)return p0>p1?0:1}
+  return s[0]>s[1]?0:s[1]>s[0]?1:-1;
+}
 function agg(h){
   const P={};
-  h.forEach(m=>{const w=m.score[0]>m.score[1]?0:m.score[1]>m.score[0]?1:-1;
+  h.forEach(m=>{const w=winnerOf(m);
     [0,1].forEach(i=>{const n=m.names[i];const r=P[n]||(P[n]={n,t:"",g:0,w:0,l:0,a:0,ro:0,z:0,racks:0});if(!r.t&&m.teams&&m.teams[i])r.t=m.teams[i];
       r.g++;if(w===i)r.w++;else if(w===1-i)r.l++;
       r.a+=(m.aces||[0,0])[i];r.ro+=(m.runouts||[0,0])[i];r.z+=(m.zips||[0,0])[i];r.racks+=m.racks||0;})});
@@ -2011,7 +2020,7 @@ function playerBadgeStats(name,h){
   const st={runout:0,ace:0,zip:0,win:0,games:0,streak:0};let cur=0;
   [...h].sort((a,b)=>(a.end||0)-(b.end||0)).forEach(m=>{const i=m.names.indexOf(name);if(i<0)return;
     st.games++;st.runout+=(m.runouts||[0,0])[i];st.ace+=(m.aces||[0,0])[i];st.zip+=(m.zips||[0,0])[i];
-    const won=m.score[i]>m.score[1-i];if(won){st.win++;cur++;st.streak=Math.max(st.streak,cur)}else cur=0;});
+    const won=winnerOf(m)===i;if(won){st.win++;cur++;st.streak=Math.max(st.streak,cur)}else cur=0;});
   return st;
 }
 var awardsCfg=store.get("cb_awards",{list:[]}),awardsDb=null;
@@ -3653,7 +3662,7 @@ function markStat(p,k,label){
   if(M.done)return;snap();M[k]=M[k]||[0,0];M[k][p]++;
   L(`ラック${M.rack}: ${M.names[p]} ${label}`);render();toast(`${M.names[p]} ${label}`);
 }
-function histRec(){return{id:String(M.id),game:M.game,fmt:M.fmt||null,hcBalls:M.hcBalls||null,league:M.league||null,names:M.names,teams:M.teams||["",""],score:M.score,target:M.target,start:M.start,end:M.end,
+function histRec(){return{id:String(M.id),game:M.game,fmt:M.fmt||null,hcBalls:M.hcBalls||null,league:M.league||null,names:M.names,teams:M.teams||["",""],score:M.score,target:M.target,winner:M.winner===0||M.winner===1?M.winner:null,start:M.start,end:M.end,
   aces:M.aces||[0,0],zips:M.zips||[0,0],runouts:M.runouts||[0,0],fouls:M.fouls||[0,0],racks:M.rack-1,rackWins:M.rackWins||[0,0],
   status:"pending",recordedBy:myName||null}}
 /* anyone except the person who recorded may approve: the opponent, or any third party (when a scorer recorded, either player too) */
@@ -3733,7 +3742,7 @@ $("swapTurn").onclick=()=>{snap();M.turn=1-M.turn;render()};
 $("undoBtn").onclick=()=>{if(!undoStack.length)return;M=JSON.parse(undoStack.pop());M.done=false;$("overlay").hidden=true;render();toast("1つ前に戻しました")};
 
 function finish(p){
-  M.done=true;M.end=Date.now();
+  M.done=true;M.end=Date.now();M.winner=p;
   L(`試合終了: ${M.names[p]} の勝ち`,"");
   saveHist(histRec());store.set("cb_cur",null);
   tourAutoResult(p);
@@ -3753,8 +3762,11 @@ function showResult(p){
   const bt=$("ovBtns");bt.innerHTML="";
   const mk=(t,cls,fn)=>{const b=document.createElement("button");b.type="button";b.className=cls;b.textContent=t;b.onclick=fn;bt.appendChild(b)};
   if(p==null){
-    mk("記録して終了","primary",()=>{const w=M.score[0]===M.score[1]?null:(M.score[0]>M.score[1]?0:1);M.done=true;M.end=Date.now();
-      saveHist(histRec());store.set("cb_cur",null);closePlay();toast(`記録しました。${defaultApprover(M)} の承認待ちです`)});
+    /* ending early: every match is a win or a loss — pick the winner (the one closer to their target comes first) */
+    $("ovSub").textContent="途中で終わる場合も、どちらかの勝ちとして記録します。勝った人を選んでください。";
+    const lead=winnerOf({score:M.score,target:M.target});
+    (lead===1?[1,0]:[0,1]).forEach((w,k)=>mk(`${M.names[w]} の勝ちで記録`,k===0?"primary":"ghost",()=>{M.done=true;M.end=Date.now();M.winner=w;
+      saveHist(histRec());store.set("cb_cur",null);tourAutoResult(w);closePlay();toast(`記録しました。${defaultApprover(M)} の承認待ちです`)}));
     mk("記録せず終了","ghost",()=>{store.set("cb_cur",null);M.done=true;closePlay()});
     mk("続ける","ghost",()=>{$("overlay").hidden=true});
   }else{
