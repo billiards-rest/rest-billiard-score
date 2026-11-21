@@ -281,6 +281,19 @@ button{cursor:pointer}
 .t-rh{font:800 14px/1 var(--f-display);letter-spacing:.06em;color:var(--felt);padding-bottom:6px;border-bottom:2px solid var(--line)}
 .t-match{border:1px solid var(--line);border-radius:12px;background:var(--bg);overflow:hidden;display:flex;flex-direction:column}
 .t-match.ready{border-color:var(--cue);box-shadow:0 0 0 1px var(--cue)}
+.t-id{display:flex;align-items:center;gap:8px}
+.t-tbl{font:800 12px/1 var(--f-display);letter-spacing:.02em;color:#fff;background:var(--felt);border-radius:999px;padding:3px 8px}
+.t-tbl.wait{background:var(--line);color:var(--muted)}.t-tbl.done{background:transparent;color:var(--muted);padding:0}
+.t-now{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+.t-now-h{font:800 13px/1.2 var(--f-display);color:var(--felt);margin-bottom:6px}
+.t-now ul{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.t-now li{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;align-items:center;background:var(--bg);border-radius:10px;padding:7px 10px}
+.t-now .t-tb{grid-row:1/3;font:900 18px/1 var(--f-display);color:#fff;background:var(--felt);border-radius:8px;padding:8px 9px;min-width:64px;text-align:center}
+.t-now li.wait .t-tb{background:var(--line);color:var(--muted);font-size:13px}
+.t-now .t-vs{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.t-now small{font-size:11px;color:var(--muted)}
+.t-tbset{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px}
+.t-tbset label{font-weight:700;color:var(--muted);margin:0}.t-tbset input{width:90px}
 .t-id{font:700 10px/1 var(--f-display);letter-spacing:.1em;color:var(--muted);padding:5px 10px 3px}
 .t-p{display:block;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:var(--surface);padding:9px 10px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
 button.t-p:hover{background:color-mix(in srgb,var(--felt) 8%,var(--surface))}
@@ -1221,6 +1234,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <div class="grid2">
       <div class="field"><label for="tFormat">形式</label><select id="tFormat"><option value="de">ダブル → シングル</option><option value="se">シングルのみ</option></select></div>
       <div class="field" id="tQField"><label for="tQ" id="tQLab">シングルに進む人数</label><select id="tQ"></select></div>
+      <div class="field"><label for="tTables">使う台</label><input id="tTables" inputmode="numeric" autocomplete="off" value="3-8" placeholder="例：3-8"></div>
       <div class="field"><label for="tSeed">組み合わせ</label><select id="tSeed"><option value="rate" id="tSeedRate">レート順（強い人どうしが序盤で当たらない）</option><option value="random">ランダム</option><option value="order">入力した順</option></select></div>
     </div>
     <div class="plan" id="tPlan" aria-live="polite"></div>
@@ -2551,9 +2565,31 @@ function resolveBracket(T,B,res){
   B.M.forEach(m=>state(m.id));
   return memo;
 }
-let tour=store.get("cb_tour",null),tourRes=store.get("cb_tourRes",{}),tourDb=null,tourResCol=null,tourArmed=null;
+let tourTB=null,tour=store.get("cb_tour",null),tourRes=store.get("cb_tourRes",{}),tourDb=null,tourResCol=null,tourArmed=null;
 const isName=p=>typeof p==="string";
 function tourResults(){const out={};if(!tour)return out;Object.values(tourRes).forEach(r=>{if(r&&r.tid===tour.id&&r.mid)out[r.mid]=r});return out}
+/* tables: "3-8" or "3,5,7" -> [3,4,...]; the shop uses tables 3–8 for tournaments */
+const TOUR_TABLES_DEFAULT=[3,4,5,6,7,8];
+function parseTables(v){const out=[];String(v||"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[〜～ー−–]/g,"-").split(/[,、\s]+/).forEach(p=>{
+  const m=p.match(/^(\d+)-(\d+)$/);if(m){let a=+m[1],b=+m[2];if(a>b)[a,b]=[b,a];for(let i=a;i<=b&&out.length<40;i++)out.push(i)}else if(/^\d+$/.test(p))out.push(+p)});
+  return [...new Set(out)].filter(n=>n>0&&n<100)}
+function tablesText(t){if(!t.length)return "";const sorted=[...t].sort((a,b)=>a-b);const cont=sorted.every((n,i)=>!i||n===sorted[i-1]+1);return cont&&sorted.length>2?`${sorted[0]}〜${sorted[sorted.length-1]}`:sorted.join("・")}
+function tourTables(){return tour&&Array.isArray(tour.tables)&&tour.tables.length?tour.tables:TOUR_TABLES_DEFAULT}
+/* replay the results in the order they were entered: a match that becomes playable takes the lowest free table;
+   when a match ends its table goes to the match that has waited longest. Same input on every phone -> same tables. */
+function assignTables(B,res){
+  const tables=[...tourTables()],free=[...tables].sort((a,b)=>a-b),at={},queue=[],seen=new Set(),partial={};
+  const fill=()=>{const st=resolveBracket(tour,B,partial);
+    B.M.forEach(m=>{const s=st[m.id];if(s.ready&&!s.done&&!seen.has(m.id)){seen.add(m.id);queue.push(m.id)}});
+    while(free.length&&queue.length){at[queue.shift()]=free.shift()}};
+  fill();
+  Object.entries(res).sort((a,b)=>(a[1].at||0)-(b[1].at||0)).forEach(([mid,r])=>{
+    partial[mid]=r;const qi=queue.indexOf(mid);if(qi>=0)queue.splice(qi,1);
+    if(at[mid]!=null&&!free.includes(at[mid])){free.push(at[mid]);free.sort((a,b)=>a-b)}
+    fill()});
+  const wait={};queue.forEach((id,i)=>wait[id]=i+1);
+  return {at,wait};
+}
 function roundName(side,r,B){
   if(side==="W")return `勝者側 ${r}回戦`;
   if(side==="L")return `敗者側 ${r}回戦`;
@@ -2577,12 +2613,34 @@ function renderTour(){
   const B=buildBracket(tour),res=tourResults(),st=resolveBracket(tour,B,res);
   const fin=B.M[B.M.length-1],champ=st[fin.id].done?st[fin.id].winner:null;
   const real=B.M.filter(m=>!st[m.id].auto),doneN=real.filter(m=>st[m.id].done).length;
+  const TB=assignTables(B,res);tourTB=TB;
   head.innerHTML=`<div class="t-top"><h2 class="t-name"></h2><span class="t-fmt"></span></div>
     <div class="sum-bar"><i style="width:${real.length?Math.round(doneN/real.length*100):0}%"></i></div>
     <div class="sum-nums"><span><b>${doneN}</b> / ${real.length} 試合終了</span><span class="t-champ"></span></div>`;
   head.querySelector(".t-name").textContent=tour.name||"トーナメント";
   head.querySelector(".t-fmt").textContent=`${tour.players.length}${tour.kind==="team"?"チーム":"人"} ・ ${B.de?`ダブル → ベスト${Math.min(tour.q,B.S/2)}からシングル`:"シングル"}`;
   head.querySelector(".t-champ").textContent=isName(champ)?`優勝 ${champ}`:"";
+  /* who is on which table right now */
+  if(!champ){
+    const now=B.M.filter(m=>st[m.id].ready&&!st[m.id].done);
+    const box=document.createElement("div");box.className="t-now";
+    const h=document.createElement("div");h.className="t-now-h";h.textContent=`台の割り振り（${tablesText(tourTables())}番台）`;box.appendChild(h);
+    const ul=document.createElement("ul");
+    now.filter(m=>TB.at[m.id]!=null).sort((a,b)=>TB.at[a.id]-TB.at[b.id]).forEach(m=>{const s=st[m.id],li=document.createElement("li");
+      li.innerHTML=`<b class="t-tb"></b><span class="t-vs"></span><small></small>`;li.querySelector("b").textContent=`${TB.at[m.id]}番台`;
+      li.querySelector(".t-vs").textContent=`${s.pa} vs ${s.pb}`;li.querySelector("small").textContent=roundName(m.side,m.round,B);ul.appendChild(li)});
+    now.filter(m=>TB.at[m.id]==null).sort((a,b)=>TB.wait[a.id]-TB.wait[b.id]).forEach(m=>{const s=st[m.id],li=document.createElement("li");li.className="wait";
+      li.innerHTML=`<b class="t-tb"></b><span class="t-vs"></span><small></small>`;li.querySelector("b").textContent=`台待ち${TB.wait[m.id]}`;
+      li.querySelector(".t-vs").textContent=`${s.pa} vs ${s.pb}`;li.querySelector("small").textContent=roundName(m.side,m.round,B);ul.appendChild(li)});
+    if(!ul.children.length){const p=document.createElement("p");p.className="hint";p.textContent="前の試合の結果待ちです";box.appendChild(p)}else box.appendChild(ul);
+    if(admin){const f=document.createElement("form");f.className="t-tbset";
+      f.innerHTML=`<label>使う台</label><input inputmode="numeric" autocomplete="off" aria-label="使う台"><button type="submit" class="ghost">変更</button>`;
+      const inp=f.querySelector("input");inp.value=tablesText(tourTables()).replace("〜","-");
+      f.onsubmit=e=>{e.preventDefault();const t=parseTables(inp.value);if(!t.length){toast("台番号を入れてください（例：3-8）");return}
+        tour={...tour,tables:t};if(tourDb)tourDb.set({...tour,players:[...tour.players]}).then(()=>toast(`${tablesText(t)}番台で割り振ります`)).catch(()=>toast("保存できませんでした"));else{store.set("cb_tour",tour);renderTour()}};
+      box.appendChild(f)}
+    head.appendChild(box);
+  }
   if(admin&&isName(champ)&&tour.kind!=="team"){
     const runner=st[fin.id].loser,row=document.createElement("div");row.className="row t-award";
     const mk=(txt,name,kind)=>{const b=document.createElement("button");b.type="button";b.className=kind==="champ"?"primary":"ghost";b.textContent=txt;
@@ -2606,7 +2664,9 @@ function renderTour(){
     else if(outM){title="TOURNAMENT";big="敗退";sub=`${roundName(outM.side,outM.round,B)}で負けました`}
     else if(nextM){const s=st[nextM.id],opp=s.pa===myEntry?s.pb:s.pa;
       title=`NEXT ・ ${roundName(nextM.side,nextM.round,B)}`;big=isName(opp)?`vs ${opp}`:"相手待ち";
-      sub=isName(opp)?"相手が決まっています。台が空いたら始めてください":"前の試合の結果が出ると相手が決まります";
+      const tb=TB.at[nextM.id];
+      if(isName(opp)&&tb!=null){title+=` ・ ${tb}番台`;big=`${tb}番台 vs ${opp}`}
+      sub=isName(opp)?(tb!=null?`${tb}番台で始めてください`:`台が空くのを待っています（${TB.wait[nextM.id]||1}番目）`):"前の試合の結果が出ると相手が決まります";
       if(losses.length&&nextM.side==="L")sub="勝者側で1敗しました。敗者側で勝ち上がれば決勝トーナメントに進めます";}
     else{title="TOURNAMENT";big="待機中"}
     me.innerHTML=`<p class="me-tag"></p><div class="t-big"></div><div class="nx-note"></div>`;
@@ -2634,6 +2694,8 @@ function renderTour(){
 function matchCard(m,s,B,st){
   const card=document.createElement("div");card.className="t-match"+(s.done?" done":s.ready?" ready":"");
   const lab=document.createElement("div");lab.className="t-id";lab.textContent=m.id;card.appendChild(lab);
+  const tb=tourTB&&tourTB.at[m.id];
+  if(tb!=null||(s.ready&&!s.done)){const t=document.createElement("span");t.className="t-tbl"+(s.done?" done":tb==null?" wait":"");t.textContent=tb!=null?`${tb}番台`:"台待ち";lab.appendChild(t)}
   const canEnter=!!(s.ready&&!s.done);
   [["a",s.pa],["b",s.pb]].forEach(([k,p])=>{
     const row=document.createElement(canEnter?"button":"div");row.className="t-p";
@@ -2704,7 +2766,7 @@ $("tMake").onclick=()=>{
   if(seed==="random"){for(let i=ps.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[ps[i],ps[j]]=[ps[j],ps[i]]}}
   if(seed==="rate"){const rv=n=>{if(tKind==="team"){const t=teamRate(n);return t==null?-1e9:t}const r=rateOf(n);return r?r.r:-1e9};ps=ps.map((n,i)=>[n,i]).sort((a,b)=>rv(b[0])-rv(a[0])||a[1]-b[1]).map(x=>x[0])}
   const fromEntry=entryCfg&&!entryCfg.open&&entryList().length&&ps.length===entryList().length&&entryList().every(e=>ps.includes(e.name));
-  tour={id:newId(),name:$("tName").value.trim()||"トーナメント",format:$("tFormat").value,q:+$("tQ").value||2,players:ps,kind:tKind,created:Date.now(),...(fromEntry?{entryId:entryCfg.id}:{})};
+  tour={id:newId(),name:$("tName").value.trim()||"トーナメント",format:$("tFormat").value,q:+$("tQ").value||2,players:ps,kind:tKind,tables:parseTables($("tTables").value).length?parseTables($("tTables").value):TOUR_TABLES_DEFAULT,created:Date.now(),...(fromEntry?{entryId:entryCfg.id}:{})};
   if(tourDb){tourDb.set({...tour,players:[...ps]}).catch(()=>toast("トーナメントを保存できませんでした"))}else store.set("cb_tour",tour);
   renderTour();msg.textContent=`${ps.length}${tU()}の${tKind==="team"?"チーム":"個人"}トーナメントを作りました。日程タブの「トーナメント」で見られます。`;
 };
