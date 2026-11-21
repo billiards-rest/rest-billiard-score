@@ -296,6 +296,7 @@ button{cursor:pointer}
 .t-score-me{margin-top:10px;width:100%}
 .t-now li{grid-template-columns:auto 1fr auto}
 .t-now .t-go{grid-row:1/3;grid-column:3;border:0;border-radius:8px;background:var(--felt);color:#fff;font-weight:800;font-size:12px;padding:8px 10px;white-space:nowrap}
+.t-rate{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;display:grid;gap:6px}.t-rate .hint{margin:0}
 .t-tbset{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:13px}
 .t-tbset label{font-weight:700;color:var(--muted);margin:0}.t-tbset input{width:90px}
 .t-id{font:700 10px/1 var(--f-display);letter-spacing:.1em;color:var(--muted);padding:5px 10px 3px}
@@ -1730,7 +1731,7 @@ function renderHistory(){
   const bd=$("histBadge");bd.textContent=mine.length;bd.hidden=!mine.length;
   $("rankEmpty").hidden=!!ok.length;
   lastAll=real;okHist=ok.filter(isRated);renderRate(okHist);renderRatedSet();renderAwardAdmin();
-  lastHist=ok;renderSched();
+  lastHist=ok;renderSched();try{if(tour)renderTour()}catch(e){}
   const el=$("hist");el.innerHTML="";
   if(!h.length){el.innerHTML='<p class="hint">まだ試合はありません。終了した試合がここに並びます。</p>';$("clearHist").hidden=true;$("playersSheet").hidden=true;$("rankSheet").hidden=true;return}
   $("clearHist").hidden=!real.length||(shared&&!isOwner);
@@ -2637,6 +2638,13 @@ function resolveBracket(T,B,res){
 let tourTB=null,tour=store.get("cb_tour",null),tourRes=store.get("cb_tourRes",{}),tourDb=null,tourResCol=null,tourArmed=null;
 const isName=p=>typeof p==="string";
 function tourResults(){const out={};if(!tour)return out;Object.values(tourRes).forEach(r=>{if(r&&r.tid===tour.id&&r.mid)out[r.mid]=r});return out}
+/* recorded matches that belong to this tournament: tagged from the bracket, or the same pair on the tournament day */
+function tourHistMatches(B,st){
+  if(!tour)return [];
+  const pairs=new Set(B.M.map(m=>st[m.id]).filter(s=>s&&typeof s.pa==="string"&&typeof s.pb==="string").map(s=>pairKey(s.pa,s.pb)));
+  const d0=new Date(tour.created||0);d0.setHours(0,0,0,0);const d1=d0.getTime()+36*3600e3;
+  return (lastAll||[]).filter(m=>m&&m.id&&(m.tour&&m.tour.tid===tour.id||(!m.tour&&m.end>=d0.getTime()&&m.end<d1&&pairs.has(pairKey(m.names[0],m.names[1])))));
+}
 /* tables: "3-8" or "3,5,7" -> [3,4,...]; the shop uses tables 3–8 for tournaments */
 const TOUR_TABLES_DEFAULT=[3,4,5,6,7,8];
 function parseTables(v){const out=[];String(v||"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[〜～ー−–]/g,"-").split(/[,、\s]+/).forEach(p=>{
@@ -2689,6 +2697,20 @@ function renderTour(){
   head.querySelector(".t-name").textContent=tour.name||"トーナメント";
   head.querySelector(".t-fmt").textContent=`${tour.players.length}${tour.kind==="team"?"チーム":"人"} ・ ${B.de?`ダブル → ベスト${Math.min(tour.q,B.S/2)}からシングル`:"シングル"}`;
   head.querySelector(".t-champ").textContent=isName(champ)?`優勝 ${champ}`:"";
+  /* admin: put this tournament's recorded matches into the rating in one go */
+  if(admin){
+    const ms=tourHistMatches(B,st),todo=ms.filter(m=>!isRated(m)),pend=ms.filter(m=>m.status==="pending").length;
+    const box=document.createElement("div");box.className="t-rate";
+    const b=document.createElement("button");b.type="button";b.className=todo.length?"primary":"ghost";
+    b.textContent=!ms.length?"この大会の試合記録はまだありません":todo.length?`この大会の試合 ${todo.length}件をレートに反映する`:`この大会の試合 ${ms.length}件はレートに反映済み`;
+    b.disabled=!todo.length;
+    b.onclick=()=>{const on=new Set(ratedCfg.on),off=new Set(ratedCfg.off);todo.forEach(m=>{off.delete(m.id);if(!(ratedCfg.league&&m.league))on.add(m.id)});
+      ratedCfg={...ratedCfg,on:[...on],off:[...off]};saveRated();renderHistory();renderTour();toast(`${todo.length}件の試合をレートに反映しました`)};
+    box.appendChild(b);
+    const p=document.createElement("p");p.className="hint";
+    p.textContent=`スコアアプリで記録した、この大会の組み合わせどうしの試合（大会の日）が対象です。`+(pend?`うち${pend}件は承認待ちで、承認されるとレートに入ります。`:"");
+    box.appendChild(p);head.appendChild(box);
+  }
   /* who is on which table right now */
   if(!champ){
     const now=B.M.filter(m=>st[m.id].ready&&!st[m.id].done);
@@ -3662,7 +3684,7 @@ function markStat(p,k,label){
   if(M.done)return;snap();M[k]=M[k]||[0,0];M[k][p]++;
   L(`ラック${M.rack}: ${M.names[p]} ${label}`);render();toast(`${M.names[p]} ${label}`);
 }
-function histRec(){return{id:String(M.id),game:M.game,fmt:M.fmt||null,hcBalls:M.hcBalls||null,league:M.league||null,names:M.names,teams:M.teams||["",""],score:M.score,target:M.target,winner:M.winner===0||M.winner===1?M.winner:null,start:M.start,end:M.end,
+function histRec(){return{id:String(M.id),game:M.game,fmt:M.fmt||null,hcBalls:M.hcBalls||null,league:M.league||null,tour:M.tour?{tid:M.tour.tid,mid:M.tour.mid}:null,names:M.names,teams:M.teams||["",""],score:M.score,target:M.target,winner:M.winner===0||M.winner===1?M.winner:null,start:M.start,end:M.end,
   aces:M.aces||[0,0],zips:M.zips||[0,0],runouts:M.runouts||[0,0],fouls:M.fouls||[0,0],racks:M.rack-1,rackWins:M.rackWins||[0,0],
   status:"pending",recordedBy:myName||null}}
 /* anyone except the person who recorded may approve: the opponent, or any third party (when a scorer recorded, either player too) */
