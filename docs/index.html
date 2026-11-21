@@ -1717,6 +1717,7 @@ renderPickers();
 
 $("startBtn").onclick=()=>{
   const g=GAMES[cfg.game];
+  {const cur=store.get("cb_cur",null);if(cur&&!cur.done&&cur.tour&&!isAdminPhone()){toast("トーナメントの試合が途中です。「続きから再開」で戻ってください（やり直しは管理者だけ）");return}}
   if(leagueCtx&&!leagueCtxOk()){toast(`リーグ戦の組み合わせ（${leagueCtx.home} 対 ${leagueCtx.away}）と違います。選び直すか「リーグ戦をやめる」を押してください`);return}
   if(tourCtx&&!tourCtxOk()){toast(`トーナメントの組み合わせ（${tourCtx.pa} 対 ${tourCtx.pb}）と違います。選び直すか「トーナメントの試合をやめる」を押してください`);return}
   if(g.mode==="bowl"){startBowl();return}
@@ -2530,6 +2531,7 @@ function tourGameFmt(){const e=entryCfg&&(!tour.entryId||tour.entryId===entryCfg
 function startTourMatch(m,s,B,tb){
   if(!tour||!isName(s.pa)||!isName(s.pb))return;
   if(!tourMine(s)){toast("自分の試合だけ入力できます");return}
+  if(tourLive()[m.id]&&!playingHere(m.id)&&!isAdminPhone()){toast("この試合は別のスマホで試合中です");return}
   leagueCtx=null;
   const gf=tourGameFmt();
   tourCtx={tid:tour.id,mid:m.id,pa:s.pa,pb:s.pb,table:tb==null?null:tb,round:roundName(m.side,m.round,B),fmt:gf.game!=="bowl"?gf.fmt:null};
@@ -3390,7 +3392,10 @@ function closePlay(){
   $("play").hidden=true;$("setup").hidden=false;$("overlay").hidden=true;
   $("resumeBtn").hidden=!store.get("cb_cur",null);renderHistory();
 }
-$("exitBtn").onclick=closePlay;
+/* a tournament match that has started can only be left or thrown away by the admin */
+function isAdminPhone(){return !$("openSettings").hidden}
+function tourLocked(){try{return !!(M&&!M.done&&M.tour&&!isAdminPhone())}catch(e){return false}}
+$("exitBtn").onclick=()=>{if(tourLocked()){toast("トーナメントの試合中です。終わったら「試合終了」で記録してください（途中で抜けるのは管理者だけ）");return}closePlay()};
 
 /* ---------- ○モア effect ---------- */
 const MORE_AT=10;let moreSeen={};
@@ -3847,7 +3852,7 @@ function showResult(p){
     const lead=winnerOf({score:M.score,target:M.target});
     (lead===1?[1,0]:[0,1]).forEach((w,k)=>mk(`${M.names[w]} の勝ちで記録`,k===0?"primary":"ghost",()=>{M.done=true;M.end=Date.now();M.winner=w;
       saveHist(histRec());store.set("cb_cur",null);tourAutoResult(w);closePlay();toast(`記録しました。${defaultApprover(M)} の承認待ちです`)}));
-    mk("記録せず終了","ghost",()=>{store.set("cb_cur",null);M.done=true;if(M.tour)setTourLive(M.tour.tid,M.tour.mid,false);closePlay()});
+    if(!tourLocked())mk("記録せず終了","ghost",()=>{store.set("cb_cur",null);M.done=true;if(M.tour)setTourLive(M.tour.tid,M.tour.mid,false);closePlay()});
     mk("続ける","ghost",()=>{$("overlay").hidden=true});
   }else{
     const recId=String(M.id),ap=defaultApprover(M);
