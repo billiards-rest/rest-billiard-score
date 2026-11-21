@@ -294,6 +294,12 @@ button{cursor:pointer}
 .t-now .t-vs{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .t-now small{font-size:11px;color:var(--muted)}
 .t-score{border:0;border-top:1px solid var(--line);background:var(--felt);color:#fff;font-weight:800;font-size:13px;padding:9px 10px}
+.t-st{border:0;border-top:1px solid var(--line);font-weight:800;font-size:13px;padding:9px 10px;text-align:center}
+.t-st.done{background:var(--bg);color:var(--muted)}
+.t-st.live{background:#e8772e;color:#fff;animation:liveBlink 1.6s ease-in-out infinite}
+.t-match.live{border-color:#e8772e;box-shadow:0 0 0 1px #e8772e}
+.t-now .t-go.live{background:#e8772e;display:grid;place-items:center;animation:liveBlink 1.6s ease-in-out infinite}
+@keyframes liveBlink{50%{opacity:.7}}
 .t-score-me{margin-top:10px;width:100%}
 .t-now li{grid-template-columns:auto 1fr auto}
 .t-now .t-go{grid-row:1/3;grid-column:3;border:0;border-radius:8px;background:var(--felt);color:#fff;font-weight:800;font-size:12px;padding:8px 10px;white-space:nowrap}
@@ -1721,6 +1727,7 @@ $("startBtn").onclick=()=>{
     league:leagueCtx?{fixture:leagueCtx.id,round:leagueCtx.round,fmt:leagueCtx.fmt}:null,
     tour:tourCtx?{tid:tourCtx.tid,mid:tourCtx.mid,side0:(tour&&tour.kind==="team"?getTeam(1):getName(1))===tourCtx.pa?"a":"b",table:tourCtx.table}:null,
     hcBalls:(g.mode==="race"&&$("hcAuto").checked&&cfg.hcBalls)?cfg.hcBalls.slice():null};
+  if(M.tour)setTourLive(M.tour.tid,M.tour.mid,true,M.names);
   leagueCtx=null;tourCtx=null;renderLeagueBanner();
   undoStack=[];save();openPlay();
 };
@@ -2699,6 +2706,16 @@ function setTourResult(mid,w){
   if(tourResCol){tourResCol.doc(`${tour.id}_${mid}`).set(rec).catch(()=>toast("結果を保存できませんでした。通信を確認してください"));return}
   tourRes[`${tour.id}_${mid}`]=rec;store.set("cb_tourRes",tourRes);renderTour();
 }
+/* "playing now" marks, shared through tourResults as {tid,live:mid} (no mid field, so they never count as a result) */
+function tourLive(){const out={};if(!tour)return out;const now=Date.now();
+  Object.values(tourRes).forEach(r=>{if(r&&r.tid===tour.id&&r.live&&now-(r.at||0)<4*3600e3)out[r.live]=r});return out}
+function setTourLive(tid,mid,on,names){
+  const key=`${tid}_${mid}_live`,rec={tid,live:mid,by:myName||null,names:names||null,at:Date.now()};
+  if(tourResCol){(on?tourResCol.doc(key).set(rec):tourResCol.doc(key).delete()).catch(()=>{});return}
+  if(on)tourRes[key]=rec;else delete tourRes[key];store.set("cb_tourRes",tourRes);try{renderTour()}catch(e){}
+}
+/* this phone has that bracket match open in the scorer */
+function playingHere(mid){try{return !!(M&&!M.done&&M.tour&&tour&&M.tour.tid===tour.id&&M.tour.mid===mid)}catch(e){return false}}
 function clearTourResult(mid){
   const key=`${tour.id}_${mid}`;
   if(tourResCol){tourResCol.doc(key).delete().catch(()=>toast("取り消せませんでした"));return}
@@ -2742,7 +2759,10 @@ function renderTour(){
     now.filter(m=>TB.at[m.id]!=null).sort((a,b)=>TB.at[a.id]-TB.at[b.id]).forEach(m=>{const s=st[m.id],li=document.createElement("li");
       li.innerHTML=`<b class="t-tb"></b><span class="t-vs"></span><small></small>`;li.querySelector("b").textContent=`${TB.at[m.id]}番台`;
       li.querySelector(".t-vs").textContent=`${s.pa} vs ${s.pb}`;li.querySelector("small").textContent=roundName(m.side,m.round,B);
-      if(tourMine(s)){const go=document.createElement("button");go.type="button";go.className="t-go";go.textContent="スコア ▶";go.setAttribute("aria-label",`${s.pa} 対 ${s.pb} のスコアをつける`);go.onclick=()=>startTourMatch(m,s,B,TB.at[m.id]);li.appendChild(go)}
+      const lv=tourLive()[m.id],here=playingHere(m.id);
+      if(lv||here){const st2=document.createElement(here?"button":"span");st2.className="t-go live";st2.textContent=here?"試合中 ▶":"試合中";
+        if(here){st2.type="button";st2.onclick=()=>{showPage("match");openPlay()}}li.appendChild(st2);li.classList.add("live")}
+      else if(tourMine(s)){const go=document.createElement("button");go.type="button";go.className="t-go";go.textContent="スコア ▶";go.setAttribute("aria-label",`${s.pa} 対 ${s.pb} のスコアをつける`);go.onclick=()=>startTourMatch(m,s,B,TB.at[m.id]);li.appendChild(go)}
       ul.appendChild(li)});
     now.filter(m=>TB.at[m.id]==null).sort((a,b)=>TB.wait[a.id]-TB.wait[b.id]).forEach(m=>{const s=st[m.id],li=document.createElement("li");li.className="wait";
       li.innerHTML=`<b class="t-tb"></b><span class="t-vs"></span><small></small>`;li.querySelector("b").textContent=`台待ち${TB.wait[m.id]}`;
@@ -2837,7 +2857,14 @@ function matchCard(m,s,B,st){
     }
     card.appendChild(row);
   });
-  if(canEnter&&isName(s.pa)&&isName(s.pb)){
+  const live=!s.done&&tourLive()[m.id];
+  if(s.done){const d=document.createElement("div");d.className="t-st done";d.textContent="済";card.appendChild(d)}
+  else if(live||playingHere(m.id)){
+    const here=playingHere(m.id),sb=document.createElement(here?"button":"div");sb.className="t-st live";
+    sb.textContent=here?"● 試合中（スコアに戻る）":"● 試合中";if(here){sb.type="button";sb.onclick=()=>{showPage("match");openPlay()}}
+    card.appendChild(sb);card.classList.add("live");
+  }
+  else if(canEnter&&isName(s.pa)&&isName(s.pb)){
     const sb=document.createElement("button");sb.type="button";sb.className="t-score";sb.textContent="▶ スコアをつける";
     sb.onclick=()=>startTourMatch(m,s,B,tourTB&&tourTB.at[m.id]);card.appendChild(sb);
   }
@@ -3803,7 +3830,7 @@ function finish(p){
 }
 /* a match started from the tournament bracket: put the winner into the bracket */
 function tourAutoResult(p){try{
-  const t=M.tour;if(!t||!tour||tour.id!==t.tid||p==null)return;
+  const t=M.tour;if(t)setTourLive(t.tid,t.mid,false);if(!t||!tour||tour.id!==t.tid||p==null)return;
   const B=buildBracket(tour),st=resolveBracket(tour,B,tourResults())[t.mid];if(!st||st.done||!st.ready)return;
   const w=p===0?t.side0:(t.side0==="a"?"b":"a");
   setTourResult(t.mid,w);setTimeout(()=>toast(`トーナメント表に ${M.names[p]} さんの勝ちを入れました`),1600);
@@ -3820,7 +3847,7 @@ function showResult(p){
     const lead=winnerOf({score:M.score,target:M.target});
     (lead===1?[1,0]:[0,1]).forEach((w,k)=>mk(`${M.names[w]} の勝ちで記録`,k===0?"primary":"ghost",()=>{M.done=true;M.end=Date.now();M.winner=w;
       saveHist(histRec());store.set("cb_cur",null);tourAutoResult(w);closePlay();toast(`記録しました。${defaultApprover(M)} の承認待ちです`)}));
-    mk("記録せず終了","ghost",()=>{store.set("cb_cur",null);M.done=true;closePlay()});
+    mk("記録せず終了","ghost",()=>{store.set("cb_cur",null);M.done=true;if(M.tour)setTourLive(M.tour.tid,M.tour.mid,false);closePlay()});
     mk("続ける","ghost",()=>{$("overlay").hidden=true});
   }else{
     const recId=String(M.id),ap=defaultApprover(M);
