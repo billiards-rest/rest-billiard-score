@@ -696,6 +696,11 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit .board.l8 .side-head .team{display:none}
 #play.fit .board.l8 .side-tools button{padding:6px 2px}
 #play.fit .board.l8 .grp-btn{font-size:12px}
+#play.fit .board.l8.lanein{gap:6px}
+#play.fit .board.l8.lanein .side{padding:6px;gap:5px}
+#play.fit .board.l8 .side-head .pname{font-size:14px}
+#play.fit .board.l8 .score-btn .num{font-size:clamp(48px,15vw,110px)}
+#play.fit .board.l8 .score-btn .rc b{font-size:clamp(26px,8vw,44px)}
 #play.fit .board.lanein .side{padding:8px;gap:6px}
 #play.fit .board.lanein .score-btn{min-height:0}
 #play.fit .board.lanein .score-btn .num{font-size:clamp(64px,21vw,140px)}
@@ -732,6 +737,22 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 #play.fit .sc-btns button{font-size:11px;letter-spacing:-.02em;padding:6px 0}
 #play.fit .footer-tools button{padding:7px 6px}
 #play.fit .cc-ctl button{padding:4px 10px}
+/* phones: keep the clocks compact so the 8-ball rack gets the height */
+#play.fit .shotclock{padding:8px;gap:6px}
+#play.fit .sc-grid{gap:6px}
+#play.fit .sc-card{padding:6px;gap:4px}
+#play.fit .sc-name{font-size:12px}
+#play.fit .sc-card.locked .cc-side{min-height:0;flex-direction:row;align-items:baseline;justify-content:center;gap:6px;padding:6px 4px}
+#play.fit .sc-card.locked .cc-time{font-size:clamp(28px,8.5vw,40px)!important}
+#play.fit .sc-card.locked .cc-hint{font-size:10px}
+#play.fit .sc-card.locked .cc-lab{display:none}
+#play.fit .board.l8 .g8grp .grp-btn{padding:0 1px;white-space:nowrap;font-size:12px;letter-spacing:-.02em}
+#play.fit .board.l8 .grp-row .chip{padding:3px 6px}
+#play.fit .sc-time{font-size:clamp(30px,9vw,44px)}
+#play.fit .sc-btns button{padding:6px 2px;font-size:12px}
+#play.fit .sc-bar{height:4px}
+#play.fit .sc-used{font-size:10px;min-height:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#play.fit .cc-alert{padding:6px 10px}#play.fit .cc-alert b{font-size:12px}
 @media (max-height:700px){#play.fit .turnline{display:none}#play.fit .board.lanein .score-btn .num{font-size:clamp(48px,15vw,90px)}#play.fit .board.lanein .score-btn .rc b{font-size:32px}#play.fit .board.lanein .score-btn .rc small{font-size:12px}#play.fit .sc-time{font-size:34px}#play.fit .sc-card .cc-time{font-size:20px}}
 .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bar .meta{flex:1;min-width:0;font-size:13px;color:var(--muted)}
@@ -774,7 +795,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .chip.balls.go{border:0;cursor:pointer;animation:goPulse 1.2s ease-in-out infinite}
 @keyframes goPulse{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 35%,transparent)}}
 /* 8-ball lane */
-.balls8{display:grid;grid-template-columns:repeat(2,var(--ball,40px));column-gap:var(--bgap,6px);row-gap:var(--bgap,6px);justify-content:center;align-content:center;height:100%}
+.balls8{display:grid;grid-template-columns:var(--ball,40px) calc(var(--ball,40px)*1.2) var(--ball,40px);column-gap:var(--bgap,6px);row-gap:var(--bgap,6px);justify-content:center;align-content:center;height:100%}
 .b8col{display:grid;grid-auto-rows:var(--ball,40px);row-gap:var(--bgap,6px);justify-items:center}
 .b8lab{font-size:10px;font-weight:800;color:var(--muted);text-align:center;line-height:1;align-self:end;height:12px}
 .b8col .b8lab{max-width:calc(var(--ball,40px) + var(--bgap,6px));overflow:hidden;text-overflow:ellipsis;white-space:nowrap;justify-self:center}
@@ -782,8 +803,8 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .b8col.own0,.b8col.own1{border-radius:999px;box-shadow:0 0 0 2px color-mix(in srgb,var(--c8own) 35%,transparent)}
 .b8col.own0{--c8own:var(--p1)}.b8col.own1{--c8own:var(--p2)}
 .b8col .tb,.b8col .slot{width:var(--ball,40px);height:var(--ball,40px)}
-.b8eight{grid-column:1/-1;display:grid;place-items:center;padding-top:calc(var(--bgap,6px) + 2px)}
-.tb.eight,.slot.eight{width:calc(var(--ball,40px)*1.45);height:calc(var(--ball,40px)*1.45)}
+.b8eight{display:grid;place-items:center;align-self:center;padding-top:12px}   /* 8 sits between the two groups */
+.tb.eight,.slot.eight{width:calc(var(--ball,40px)*1.2);height:calc(var(--ball,40px)*1.2)}
 .tb.eight{background:radial-gradient(circle at 35% 30%,#4a4a4a,#0b0b0b 60%);box-shadow:0 0 0 2px #e2b53b,0 0 14px 3px rgba(226,181,59,.75),0 4px 8px rgba(0,0,0,.4);animation:eightGlow 1.8s ease-in-out infinite}
 .tb.eight span{background:#fff;color:#111;font-size:1.25em;font-weight:900;width:56%}
 .tb.eight::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px dashed rgba(226,181,59,.8);animation:eightSpin 8s linear infinite;pointer-events:none}
@@ -836,6 +857,9 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .tb::before{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.55),transparent 38%);pointer-events:none}
 .tb span{background:#fff;border-radius:50%;width:54%;aspect-ratio:1;display:grid;place-items:center;line-height:1}
 .tb.drag{cursor:grabbing;z-index:5;scale:1.2;box-shadow:0 10px 16px rgba(0,0,0,.35)}
+.b8col .tb::after{content:"";position:absolute;inset:calc(var(--bgap,6px) / -2 - 1px);border-radius:50%}   /* bigger grab area */
+.b8col .tb.drag,.b8eight .tb.drag{scale:1.55;box-shadow:0 14px 24px rgba(0,0,0,.45),0 0 0 4px rgba(255,255,255,.85)}
+.board.l8 .side.hot{box-shadow:0 0 0 4px var(--cue),0 0 24px color-mix(in srgb,var(--cue) 60%,transparent);scale:1.02}
 .tb.sel{box-shadow:0 0 0 3px var(--cue),0 2px 4px rgba(0,0,0,.3)}
 .tb.back{transition:translate .2s ease-out}
 .tb.sink{transition:translate .22s ease-in,scale .22s ease-in,opacity .22s ease-in;scale:.3;opacity:0}
@@ -879,6 +903,8 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .footer-tools{display:flex;gap:10px;flex-wrap:wrap}
 .footer-tools button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 14px;font-weight:500}
 .footer-tools .undo{color:var(--red);border-color:color-mix(in srgb,var(--red) 40%,var(--line))}
+.footer-tools .foul-lose{color:var(--red);font-weight:700}
+#ovBtns .foul-pick.p0{background:var(--p1);border-color:var(--p1)}#ovBtns .foul-pick.p1{background:var(--p2);border-color:var(--p2)}
 .log{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px;max-height:180px;overflow:auto}
 .log ol{margin:0;padding-left:1.6em;display:flex;flex-direction:column-reverse}
 .log li{padding:2px 0;font-variant-numeric:tabular-nums}
@@ -1274,6 +1300,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <button class="undo" id="undoBtn" type="button">↶ ひとつ戻る</button>
     <button id="swapTurn" type="button" hidden>手番交代</button>
     <button id="newRack" type="button" hidden>次のラック</button>
+    <button id="foulLose" type="button" class="foul-lose" hidden>ファウル負け</button>
     <button id="endBtn" type="button">試合終了</button>
   </div>
   <section class="shotclock" id="shotclock" aria-label="ショットクロック">
@@ -3368,6 +3395,7 @@ function scLoop(){if(SC.timer)return;SC.timer=setInterval(()=>{let any=false;
   scDraw();if(!any){clearInterval(SC.timer);SC.timer=null}},100)}
 /* while the chess clock is on, a player's shot clock is used only after their chess time has run out */
 function ccLocked(i){try{return !!(CC.on&&!CC.over[i])}catch(e){return false}}
+function ccOut(i){try{return !!(CC.on&&CC.over[i])}catch(e){return false}}
 function scDraw(){
   SC.c.forEach((c,i)=>{const t=scNow(c),sec=Math.ceil(t/1000);
     const card=document.querySelector(`.sc-card[data-p="${i}"]`);if(!card)return;
@@ -3378,11 +3406,14 @@ function scDraw(){
     card.classList.toggle("run",c.run);card.classList.toggle("warn",t<=10000&&t>0);card.classList.toggle("over",c.over);
     card.querySelector(".sc-go").textContent=c.run?"一時停止":(t<=0?"時間切れ":"スタート");
     card.querySelector(".sc-go").disabled=lock||(t<=0&&!c.run);
-    $("scUsed"+i).textContent=lock?"持ち時間が切れたら使えます":c.ex?`EX 使用 ${c.ex}回`:"";
+    $("scUsed"+i).textContent=lock?"持ち時間が切れたら使えます":(ccOut(i)&&c.run)?"打ち終わったら数字をタップ → 相手へ":c.ex?`EX 使用 ${c.ex}回`:"";
   });
 }
 document.querySelectorAll(".sc-card").forEach(card=>{const i=+card.dataset.p;
   card.addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.classList.contains("cc-side")||ccLocked(i))return;
+    /* chess time used up: tapping the running shot clock ends the shot and hands the turn over */
+    if(b.classList.contains("sc-time")&&ccOut(i)){const c=SC.c[i];
+      if(c.run||scNow(c)<=0){handTo(1-i)}else{ccPause();scStart(i);ccDraw()}scDraw();return}
     if(b.classList.contains("sc-time")||b.dataset.act==="toggle"){SC.c[i].run?scPause(i):scStart(i);scDraw();return}
     if(b.dataset.act==="reset"){scReset(i);return}
     if(b.dataset.act==="ex"){scEx(i)}})});
@@ -3419,7 +3450,7 @@ function ccNudge(scroll){
   [0,1].forEach(i=>{const c=document.querySelector(`.sc-card[data-p="${i}"]`);if(c)c.classList.toggle("need",CC.over[i]&&CC.on)});
   if(!out.length)return;
   const names=out.map(i=>M?M.names[i]:"プレイヤー"+(i+1)).join("・");
-  $("ccAlertText").textContent=`${names} さんの持ち時間切れ。ここからは1ショットごとにショットクロックで打ってください。`;
+  $("ccAlertText").textContent=`${names} 持ち時間切れ → 1ショットごとにショットクロック`;
   if(scroll){try{$("shotclock").scrollIntoView({behavior:"auto",block:"nearest"})}catch(e){}}
 }
 /* phones: size the score board so the whole play screen (score, balls, buttons, clocks) fits without scrolling */
@@ -3437,9 +3468,11 @@ function fitPlay(){
   const h=Math.max(190,Math.min(700,Math.floor(vh-used)));
   board.style.height=h+"px";
   const lane=$("cloth"),lp=lane?parseFloat(getComputedStyle(lane).paddingTop)*2+2:14;
-  const g=Math.max(2,Math.min(6,Math.round(h/90)));
   const l8=M.mode==="race"&&M.game==="8";
-  const ball=l8?Math.max(16,Math.min(48,Math.floor((h-lp-12-9*g)/(7+1.45+.3)))):Math.max(17,Math.min(56,Math.floor((h-lp-8*g)/9)));
+  const g=l8?Math.max(2,Math.min(4,Math.round(h/120))):Math.max(2,Math.min(6,Math.round(h/90)));
+  /* 8-ball: balls as big as the height allows, while each player panel keeps at least ~92px */
+  const wMax=l8?Math.floor((board.clientWidth-2*86-2*6-12-2*g)/3.2):99;
+  const ball=l8?Math.max(16,Math.min(66,wMax,Math.floor((h-lp-14-6*g)/7.3))):Math.max(17,Math.min(56,Math.floor((h-lp-8*g)/9)));
   play.style.setProperty("--ball",ball+"px");play.style.setProperty("--bgap",g+"px");
 }
 window.addEventListener("resize",()=>{clearTimeout(fitPlay.t);fitPlay.t=setTimeout(fitPlay,120)});
@@ -3458,8 +3491,14 @@ function ccDraw(){
   $("ccToggle").textContent=CC.run>=0?"一時停止":started?"再開":"スタート";
   ccNudge(false);
 }
+/* the turn passes to player j: their chess clock runs, or — when their chess time is gone — a fresh shot clock */
+function handTo(j){
+  ccPause();[0,1].forEach(k=>{scPause(k);if(CC.over[k])scReset(k)});
+  if(CC.on&&CC.over[j]){scReset(j);scStart(j);CC.last=j}else ccStart(j);
+  ccDraw();scDraw();
+}
 [0,1].forEach(i=>$("cc"+i).addEventListener("click",()=>{
-  if(CC.run===i){ccStart(1-i);ccDraw();return}   /* my turn ends → opponent's clock runs */
+  if(CC.run===i){handTo(1-i);return}   /* my turn ends → opponent's clock runs (their shot clock if their chess time is gone) */
   if(CC.run<0&&CC.over[i]&&!CC.over[1-i]){ccStart(1-i);ccDraw();return} /* out of time: my turn ends → opponent's clock */
   if(CC.run<0&&(CC.last>=0)){ccStart(i);ccDraw()} /* paused: tap the side whose turn it is */
 }));
@@ -3571,6 +3610,7 @@ function render(){
   requestAnimationFrame(fitPlay);
   $("swapTurn").hidden=M.mode!=="pts";
   $("newRack").hidden=M.mode!=="balls";
+  $("foulLose").hidden=!(M.mode==="race"&&M.game==="8");
   $("undoBtn").disabled=!undoStack.length;
 
   const log=$("log");log.innerHTML="";
@@ -3793,9 +3833,9 @@ function renderTable8(){
   const g=M.grp||[null,null],hiFirst=g[0]==="high"||(g[0]==null&&g[1]==="low");
   const lo=col(1,"ロー","lo"),hi=col(9,"ハイ","hi");
   [[lo,"low"],[hi,"high"]].forEach(([c,k])=>{const o=g.indexOf(k);if(o>=0){c.classList.add("own"+o);c.querySelector(".b8lab").textContent=(k==="low"?"ロー":"ハイ")+"・"+(M.names[o]||("P"+(o+1)))}});
-  if(hiFirst){box.appendChild(hi);box.appendChild(lo)}else{box.appendChild(lo);box.appendChild(hi)}
   const e8=document.createElement("div");e8.className="b8eight";e8.appendChild(gone8(8)?slot8(8):ball8El(8));
-  box.appendChild(e8);cl.appendChild(box);
+  if(hiFirst){box.append(hi,e8,lo)}else{box.append(lo,e8,hi)}
+  cl.appendChild(box);
 }
 function pocket8(n,p){
   if(M.done)return;snap();
@@ -3855,6 +3895,22 @@ function groupRow(p,isBreak){
     }}
   return r;
 }
+/* 8-ball: a foul that loses the rack (8 pocketed early / with a scratch / off the table) — the other player takes the rack */
+function askFoulLose(){
+  if(!M||M.done)return;
+  $("ovTitle").textContent="ファウル負け";
+  $("ovScore").textContent=`${M.score[0]} – ${M.score[1]}`;
+  $("ovSub").textContent="ファウルで負けになったのはどちらですか？相手がこのラックを取ります。";
+  const bt=$("ovBtns");bt.innerHTML="";
+  [0,1].forEach(f=>{const b=document.createElement("button");b.type="button";b.className="primary foul-pick p"+f;
+    b.innerHTML=`${M.names[f]} がファウル<small style="display:block;font-size:11px;font-weight:500;opacity:.85">${M.names[1-f]} がラック獲得</small>`;
+    b.onclick=()=>{$("overlay").hidden=true;const pre=JSON.stringify(M),k=undoStack.length;
+      M.fouls[f]++;L(`ラック${M.rack}: ${M.names[f]} ファウル負け`,"foul");winRack(1-f,false);
+      if(undoStack.length>k)undoStack[k]=pre};bt.appendChild(b)});
+  const c=document.createElement("button");c.type="button";c.className="ghost";c.textContent="やめる";c.onclick=()=>{$("overlay").hidden=true};bt.appendChild(c);
+  $("overlay").hidden=false;
+}
+$("foulLose").onclick=askFoulLose;
 function ask8(p){
   $("ovTitle").textContent=`ラック${M.rack}：${M.names[p]}`;
   $("ovScore").textContent=`${M.score[0]} – ${M.score[1]}`;
