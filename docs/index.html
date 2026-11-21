@@ -118,6 +118,7 @@ button{cursor:pointer}
   box-shadow:inset 0 0 0 2px rgba(0,0,0,.25),0 12px 26px -18px rgba(0,0,0,.6)}
 .me-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .me-tag{margin:0;font:700 12px/1 var(--f-display);letter-spacing:.24em;opacity:.75}
+.me-lock{font-size:11px;opacity:.75;white-space:nowrap}
 .me-link{border:1px solid color-mix(in srgb,var(--chalk-white) 35%,transparent);background:transparent;color:inherit;border-radius:999px;padding:4px 12px;font-size:12px}
 .me-q{margin:0;font-size:20px;text-wrap:balance}
 .me-sub{margin:0;font-size:13px;opacity:.8}
@@ -1146,6 +1147,12 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <button class="primary" type="submit">チームを追加</button>
     </form>
   </section>
+  <section class="sheet" aria-labelledby="h-unlock">
+    <h2 id="h-unlock">スマホの名前の固定を解除</h2>
+    <p class="hint">各スマホで一度「自分の名前」を選ぶと、そのスマホでは名前を変えられなくなります（自分の試合だけ入力できるようにするため）。選び間違えた人がいたら、その名前を選んで解除してください。そのスマホで1回だけ名前を選び直せます。</p>
+    <div class="row"><select id="unName" aria-label="解除する名前"></select><button class="primary" type="button" id="unGo">固定を解除する</button></div>
+    <p class="hint" id="unMsg"></p>
+  </section>
   <section class="sheet" aria-labelledby="h-award">
     <h2 id="h-award">勲章を贈る</h2>
     <p class="hint">ブレイクランアウト・ブレイクエース・ウィンジップ・勝利数・試合数・連勝の勲章は、お店が採用とした試合（レート対象の試合）の記録から自動でもらえます。年度MVPや大会優勝などは、ここから管理者が贈ります。</p>
@@ -1730,7 +1737,7 @@ function renderHistory(){
   const mine=real.filter(m=>m.status==="pending"&&canApprove(m));
   const bd=$("histBadge");bd.textContent=mine.length;bd.hidden=!mine.length;
   $("rankEmpty").hidden=!!ok.length;
-  lastAll=real;okHist=ok.filter(isRated);renderRate(okHist);renderRatedSet();renderAwardAdmin();
+  lastAll=real;okHist=ok.filter(isRated);renderRate(okHist);renderRatedSet();renderAwardAdmin();renderUnlock();
   lastHist=ok;renderSched();try{if(tour)renderTour()}catch(e){}
   const el=$("hist");el.innerHTML="";
   if(!h.length){el.innerHTML='<p class="hint">まだ試合はありません。終了した試合がここに並びます。</p>';$("clearHist").hidden=true;$("playersSheet").hidden=true;$("rankSheet").hidden=true;return}
@@ -2049,6 +2056,13 @@ function renderBadgesInto(el,name){
     ${earned.length?`<ul class="bdg-grid">${earned.map(badgeHTML).join("")}</ul>`:`<p class="bdg-empty">お店が採用とした試合で、ブレイクランアウトや連勝などの勲章がもらえます。</p>`}
     ${next.length?`<p class="bdg-next-h">これから狙える勲章</p><ul class="bdg-grid">${next.map(badgeHTML).join("")}</ul>`:""}`;
 }
+var unlockDb=null;
+function renderUnlock(){const sel=$("unName");if(!sel)return;const cur=sel.value;sel.innerHTML="";
+  knownNames().forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;sel.appendChild(o)});if(cur)sel.value=cur}
+$("unGo").onclick=()=>{const n=$("unName").value;if(!n)return;
+  nameUnlock={names:{...(nameUnlock.names||{}),[n]:Date.now()}};store.set("cb_unlock",nameUnlock);
+  if(unlockDb)unlockDb.set(nameUnlock).then(()=>{$("unMsg").textContent=`${n} さんのスマホで、名前を1回選び直せるようにしました`}).catch(()=>{$("unMsg").textContent="保存できませんでした。管理者でログインしているか確認してください"});
+  else $("unMsg").textContent=`${n} の固定を解除しました（この端末のみ）`};
 /* admin: award badges (年度MVP・月間MVP・大会優勝・準優勝・特別賞), kept in config/awards */
 function saveAwards(){store.set("cb_awards",awardsCfg);if(awardsDb)awardsDb.set(awardsCfg).catch(()=>toast("保存できませんでした。管理者でログインしているか確認してください"));renderMe();renderAwardAdmin()}
 function giveAward(name,kind,detail,title){
@@ -2164,13 +2178,20 @@ $("fmtSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!
 }));
 /* ---------- my rating (per viewer / per phone) ---------- */
 let myName=store.get("cb_me",null),myId=null,meDoc=null,meEditing=false;
+/* once a phone picks its name it stays — until the admin unlocks that name (config/nameUnlock) */
+var nameUnlock=store.get("cb_unlock",{names:{}}),meAt=+store.get("cb_me_at",0)||0;
+function canChangeName(){if(!myName)return true;if(!$("openSettings").hidden)return true;
+  const t=nameUnlock&&nameUnlock.names&&nameUnlock.names[myName];return !!t&&t>meAt}
 function setMe(name){
-  myName=name||null;meEditing=false;store.set("cb_me",myName);
-  if(meDoc){(myName?meDoc.set({name:myName}):meDoc.delete()).catch(()=>{})}
+  if(myName&&name!==myName&&!canChangeName()){toast("名前は変えられません。管理者に解除してもらってください");meEditing=false;renderMe();return}
+  myName=name||null;meEditing=false;store.set("cb_me",myName);meAt=Date.now();store.set("cb_me_at",meAt);
+  if(meDoc){(myName?meDoc.set({name:myName,at:meAt}):meDoc.delete()).catch(()=>{})}
   renderMe();
 }
 function knownNames(){
   const s=new Set();allMembers().forEach(m=>s.add(m));rateRows.forEach(r=>s.add(r.n));
+  try{if(tour&&tour.kind!=="team")tour.players.forEach(p=>s.add(p))}catch(e){}
+  try{(entries||[]).forEach(e=>e&&e.name&&s.add(e.name))}catch(e){}
   return [...s].sort((a,b)=>a.localeCompare(b,"ja"));
 }
 function renderMe(){
@@ -2189,12 +2210,12 @@ function renderMe(){
     return;
   }
   const i=rateRows.findIndex(r=>r.n===myName),r=rateRows[i];
-  el.innerHTML=`<div class="me-head"><p class="me-tag">MY RATE</p><button type="button" class="me-link" id="meChange">選手を変える</button></div>
+  el.innerHTML=`<div class="me-head"><p class="me-tag">MY RATE</p>${canChangeName()?'<button type="button" class="me-link" id="meChange">選手を変える</button>':'<span class="me-lock" title="名前を変えるには管理者に解除してもらってください">🔒 このスマホの名前</span>'}</div>
     <div class="me-name"></div>
     <div class="me-main"><span class="me-rate"></span><span class="me-side"></span></div>
     <div class="me-stats"></div><div class="me-badges"></div><div class="me-vs"></div>`;
   el.querySelector(".me-name").textContent=myName;
-  $("meChange").onclick=()=>{meEditing=true;renderMe()};
+  if($("meChange"))$("meChange").onclick=()=>{meEditing=true;renderMe()};
   renderBadgesInto(el.querySelector(".me-badges"),myName);
   if(!r){
     el.querySelector(".me-rate").textContent="–";
@@ -2501,6 +2522,7 @@ function tourGameFmt(){const e=entryCfg&&(!tour.entryId||tour.entryId===entryCfg
   return {game:tour.game||(e&&e.game)||null,fmt:tour.fmt||(e&&e.fmt)||null}}
 function startTourMatch(m,s,B,tb){
   if(!tour||!isName(s.pa)||!isName(s.pb))return;
+  if(!tourMine(s)){toast("自分の試合だけ入力できます");return}
   leagueCtx=null;
   const gf=tourGameFmt();
   tourCtx={tid:tour.id,mid:m.id,pa:s.pa,pb:s.pb,table:tb==null?null:tb,round:roundName(m.side,m.round,B),fmt:gf.game!=="bowl"?gf.fmt:null};
@@ -2720,12 +2742,14 @@ function renderTour(){
     now.filter(m=>TB.at[m.id]!=null).sort((a,b)=>TB.at[a.id]-TB.at[b.id]).forEach(m=>{const s=st[m.id],li=document.createElement("li");
       li.innerHTML=`<b class="t-tb"></b><span class="t-vs"></span><small></small>`;li.querySelector("b").textContent=`${TB.at[m.id]}番台`;
       li.querySelector(".t-vs").textContent=`${s.pa} vs ${s.pb}`;li.querySelector("small").textContent=roundName(m.side,m.round,B);
-      const go=document.createElement("button");go.type="button";go.className="t-go";go.textContent="スコア ▶";go.setAttribute("aria-label",`${s.pa} 対 ${s.pb} のスコアをつける`);go.onclick=()=>startTourMatch(m,s,B,TB.at[m.id]);li.appendChild(go);
+      if(tourMine(s)){const go=document.createElement("button");go.type="button";go.className="t-go";go.textContent="スコア ▶";go.setAttribute("aria-label",`${s.pa} 対 ${s.pb} のスコアをつける`);go.onclick=()=>startTourMatch(m,s,B,TB.at[m.id]);li.appendChild(go)}
       ul.appendChild(li)});
     now.filter(m=>TB.at[m.id]==null).sort((a,b)=>TB.wait[a.id]-TB.wait[b.id]).forEach(m=>{const s=st[m.id],li=document.createElement("li");li.className="wait";
       li.innerHTML=`<b class="t-tb"></b><span class="t-vs"></span><small></small>`;li.querySelector("b").textContent=`台待ち${TB.wait[m.id]}`;
       li.querySelector(".t-vs").textContent=`${s.pa} vs ${s.pb}`;li.querySelector("small").textContent=roundName(m.side,m.round,B);ul.appendChild(li)});
     if(!ul.children.length){const p=document.createElement("p");p.className="hint";p.textContent="前の試合の結果待ちです";box.appendChild(p)}else box.appendChild(ul);
+    if(!admin){const p=document.createElement("p");p.className="hint";
+      p.textContent=myName?`このスマホは「${myName}」さん用です。自分の試合だけスコアと勝ち負けを入力できます。`:"スコアや勝ち負けを入力するには、レートタブの「MY RATE」で自分の名前を選んでください（自分の試合だけ入力できます）。";box.appendChild(p)}
     if(admin){const f=document.createElement("form");f.className="t-tbset";
       f.innerHTML=`<label>使う台</label><input inputmode="numeric" autocomplete="off" aria-label="使う台"><button type="submit" class="ghost">変更</button>`;
       const inp=f.querySelector("input");inp.value=tablesText(tourTables()).replace("〜","-");
@@ -2785,12 +2809,19 @@ function renderTour(){
   });
   renderTourAdmin();
 }
+/* only the players in a match (or the admin) may score it or enter its result — judged by this phone's own name */
+function tourMine(s){
+  if(!$("openSettings").hidden)return true;
+  if(!myName||!s)return false;
+  const me=tour&&tour.kind==="team"?teamOf(myName):myName;
+  return !!me&&(s.pa===me||s.pb===me);
+}
 function matchCard(m,s,B,st){
   const card=document.createElement("div");card.className="t-match"+(s.done?" done":s.ready?" ready":"");
   const lab=document.createElement("div");lab.className="t-id";lab.textContent=m.id;card.appendChild(lab);
   const tb=tourTB&&tourTB.at[m.id];
   if(tb!=null||(s.ready&&!s.done)){const t=document.createElement("span");t.className="t-tbl"+(s.done?" done":tb==null?" wait":"");t.textContent=tb!=null?`${tb}番台`:"台待ち";lab.appendChild(t)}
-  const canEnter=!!(s.ready&&!s.done);
+  const canEnter=!!(s.ready&&!s.done)&&tourMine(s);
   [["a",s.pa],["b",s.pb]].forEach(([k,p])=>{
     const row=document.createElement(canEnter?"button":"div");row.className="t-p";
     if(canEnter)row.type="button";
@@ -2813,7 +2844,7 @@ function matchCard(m,s,B,st){
   if(s.done&&s.r){
     const blocked=B.M.some(x=>{const xs=st[x.id];return (x.a.win===m.id||x.a.lose===m.id||x.b.win===m.id||x.b.lose===m.id)&&xs.done&&!xs.auto});
     const admin=!$("openSettings").hidden;
-    if(admin||(myName&&s.r.by===myName)){
+    if(admin||(myName&&s.r.by===myName)||tourMine(s)){
       const u=document.createElement("button");u.type="button";u.className="t-undo";u.textContent="結果を取り消す";
       u.onclick=()=>{if(blocked){toast("先の試合の結果が入っています。そちらを先に取り消してください");return}clearTourResult(m.id)};
       card.appendChild(u);
@@ -4080,8 +4111,8 @@ $("adminBtn").onclick=async()=>{
   if(myId){try{
     meDoc=db.doc("data/users/"+myId+"/profile");
     meDoc.onSnapshot(sn=>{
-      if(sn.exists){const n=(sn.data()||{}).name;if(n&&n!==myName){myName=n;store.set("cb_me",n);renderMe()}}
-      else if(myName&&!sn.metadata.fromCache){meDoc.set({name:myName}).catch(()=>{})}
+      if(sn.exists){const d=sn.data()||{},n=d.name;if(+d.at>meAt){meAt=+d.at;store.set("cb_me_at",meAt)}if(n&&n!==myName){myName=n;store.set("cb_me",n);renderMe()}}
+      else if(myName&&!sn.metadata.fromCache){if(!meAt){meAt=Date.now();store.set("cb_me_at",meAt)}meDoc.set({name:myName,at:meAt}).catch(()=>{})}
     },()=>{});
   }catch(e){meDoc=null}}
   $("openSettings").hidden=!isOwner;renderAdmin();
@@ -4101,6 +4132,8 @@ $("adminBtn").onclick=async()=>{
   entryDb.onSnapshot(sn=>{entryCfg=sn.exists?sn.data()||null:null;if(entryCfg&&!entryCfg.id)entryCfg=null;store.set("cb_entrycfg",entryCfg);renderEntry()},()=>{});
   entryCol=db.collection("entries");
   entryCol.onSnapshot(sn=>{entries=sn.docs.map(d=>d.data());renderEntry()},()=>{});
+  unlockDb=db.doc("config/nameUnlock");
+  unlockDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};nameUnlock={names:d.names&&typeof d.names==="object"?d.names:{}};store.set("cb_unlock",nameUnlock);renderMe();renderUnlock()},()=>{});
   awardsDb=db.doc("config/awards");
   awardsDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};awardsCfg={list:Array.isArray(d.list)?d.list:[]};store.set("cb_awards",awardsCfg);renderMe();renderAwardAdmin()},()=>{});
   ratedDb=db.doc("config/rated");
