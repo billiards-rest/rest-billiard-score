@@ -631,6 +631,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .primary{background:var(--felt);color:#fff;border:0;border-radius:12px;padding:14px 20px;font-weight:700;font-size:17px}
 .admin-box{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
 .admin-box .ghost{font-size:13px}
+.admin-pw{display:flex;gap:8px;flex-wrap:wrap;width:100%}.admin-pw input{flex:1 1 160px;min-width:0}.linkish{background:none;border:0;padding:2px 0;color:var(--muted);font-size:12px;text-decoration:underline;cursor:pointer}
 .home-admin{margin:28px 4px 8px;align-items:center;text-align:center}.home-admin .hint{margin:0;font-size:12px}
 .ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
@@ -1058,6 +1059,12 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   <div class="admin-box home-admin" id="adminBox2" hidden>
    <p class="hint" id="adminState2"></p>
    <button class="ghost" type="button" id="adminBtn2">管理者ログイン</button>
+   <form class="admin-pw" id="adminPw2" hidden autocomplete="on">
+    <input type="email" name="username" autocomplete="username" value="billiards.rest@gmail.com" hidden>
+    <input type="password" name="password" autocomplete="current-password" placeholder="管理者パスワード" aria-label="管理者パスワード">
+    <button class="primary" type="submit">ログイン</button>
+   </form>
+   <button class="linkish" type="button" id="adminPwT2">パスワードでログイン</button>
   </div>
  </div>
 
@@ -1181,6 +1188,12 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   <div class="admin-box" id="adminBox" hidden>
    <p class="hint" id="adminState">設定の変更と履歴の消去は、管理者だけができます。</p>
    <button class="ghost" type="button" id="adminBtn">管理者ログイン</button>
+   <form class="admin-pw" id="adminPw" hidden autocomplete="on">
+    <input type="email" name="username" autocomplete="username" value="billiards.rest@gmail.com" hidden>
+    <input type="password" name="password" autocomplete="current-password" placeholder="管理者パスワード" aria-label="管理者パスワード">
+    <button class="primary" type="submit">ログイン</button>
+   </form>
+   <button class="linkish" type="button" id="adminPwT">パスワードでログイン</button>
   </div>
  </div>
 
@@ -1219,6 +1232,16 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <input id="newTeam" maxlength="20" autocomplete="off" placeholder="新しいチーム名">
       <button class="primary" type="submit">チームを追加</button>
     </form>
+  </section>
+  <section class="sheet" aria-labelledby="h-pwset">
+    <h2 id="h-pwset">管理者パスワード</h2>
+    <p class="hint">Googleのログイン画面が開けないスマホ（ホーム画面のアイコンから開いたアプリなど）でも、パスワードで管理者ログインできるようにします。8文字以上で決めてください。</p>
+    <form class="row" id="pwSetForm" autocomplete="on">
+      <input type="email" name="username" autocomplete="username" value="billiards.rest@gmail.com" hidden>
+      <input type="password" id="pwSetIn" autocomplete="new-password" minlength="8" placeholder="新しいパスワード" aria-label="新しい管理者パスワード">
+      <button class="primary" type="submit">パスワードを設定</button>
+    </form>
+    <p class="hint" id="pwSetMsg"></p>
   </section>
   <section class="sheet" aria-labelledby="h-unlock">
     <h2 id="h-unlock">スマホの名前の固定を解除</h2>
@@ -1512,15 +1535,24 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       if (!auth) throw new Error("unavailable");
       const prov = new firebase.auth.GoogleAuthProvider();
       prov.setCustomParameters({ login_hint: OWNER_EMAIL });
-      try { await auth.signInWithPopup(prov); }
-      catch (e) {
-        /* home-screen (standalone) apps often cannot open the Google popup: fall back to a full-page redirect */
-        const c = (e && e.code) || "";
-        if (/popup-blocked|operation-not-supported|web-storage-unsupported|popup-closed-by-user|cancelled-popup-request/.test(c) && !/closed-by-user/.test(c)) { await auth.signInWithRedirect(prov); return; }
-        throw e;
-      }
+      /* the page-redirect fallback was removed: with the sign-in helper on another domain (firebaseapp.com),
+         Safari/Chrome drop the result on the way back, so it never logged in. Password sign-in covers those phones. */
+      await auth.signInWithPopup(prov);
       if (!ownerNow()) { await auth.signOut(); throw new Error("not_owner"); }
       location.reload();
+    },
+    async signInPw(pw) {
+      if (!auth) throw new Error("unavailable");
+      await auth.signInWithEmailAndPassword(OWNER_EMAIL, pw);
+      if (!ownerNow()) { await auth.signOut(); throw new Error("not_owner"); }
+      location.reload();
+    },
+    /* the owner (signed in with Google) adds a password to the same account, so the account and its rights stay the same */
+    async setPw(pw) {
+      const u = auth && auth.currentUser;
+      if (!u || !ownerNow()) throw new Error("not_owner");
+      if (u.providerData.some((p) => p && p.providerId === "password")) await u.updatePassword(pw);
+      else await u.linkWithCredential(firebase.auth.EmailAuthProvider.credential(OWNER_EMAIL, pw));
     },
     async signOut() { if (auth) await auth.signOut(); location.reload(); },
   };
@@ -4565,17 +4597,42 @@ function renderAdmin(){
   $("adminBtn2").textContent=isOwner?"管理者ログアウト":"管理者ログイン";
   $("adminState").textContent=isOwner?`管理者としてログイン中（${A.email()}）。設定の変更と履歴の消去ができます。`:"設定の変更と履歴の消去は、管理者だけができます。";
   $("adminBtn").textContent=isOwner?"管理者ログアウト":"管理者ログイン";
+  ["","2"].forEach(n=>{$("adminPwT"+n).hidden=isOwner;if(isOwner)$("adminPw"+n).hidden=true});
 }
 $("awKind").addEventListener("change",()=>{$("awTitleRow").hidden=$("awKind").value!=="special"});
 $("awGive").onclick=()=>{const k=$("awKind").value;if(k==="special"&&!$("awTitle").value.trim()){toast("賞の名前を入れてください");return}
   if(giveAward($("awName").value,k,$("awDetail").value.trim(),k==="special"?$("awTitle").value.trim():"")){$("awDetail").value="";$("awTitle").value=""}};
 $("ratedLeagueIn").addEventListener("change",e=>{ratedCfg={...ratedCfg,league:e.target.checked,off:[]};saveRated();renderHistory();
   toast(e.target.checked?"リーグ戦の試合をレートに反映します":"リーグ戦の試合の自動反映をやめました")});
+function authMsg(e){
+  const c=(e&&e.code)||"",m=e&&e.message;
+  if(m==="not_owner")return "このアカウントは管理者ではありません";
+  if(/popup-blocked|popup-closed-by-user|cancelled-popup|operation-not-supported|web-storage/.test(c))return "Googleのログイン画面が開けませんでした。「パスワードでログイン」を使ってください";
+  if(/wrong-password|invalid-credential|invalid-login|user-not-found|invalid-password/.test(c))return "パスワードが違います（まだ設定していない場合は、パソコン等でGoogleログインして設定してください）";
+  if(/operation-not-allowed/.test(c))return "パスワードでのログインが、まだFirebaseで有効になっていません";
+  if(/too-many-requests/.test(c))return "回数が多すぎます。しばらく待ってからもう一度";
+  if(/weak-password/.test(c))return "パスワードが短すぎます（8文字以上）";
+  if(/requires-recent-login/.test(c))return "安全のため、一度ログアウトしてGoogleでログインし直してから設定してください";
+  if(/network/.test(c))return "通信できませんでした。電波を確認してください";
+  if(/unauthorized-domain/.test(c))return "このアドレスからのログインが許可されていません";
+  return "ログインできませんでした"+(c?`（${c.replace("auth/","")}）`:"");
+}
 $("adminBtn").onclick=$("adminBtn2").onclick=async()=>{
   const A=window.restAdmin;if(!A)return;
   try{if(isOwner)await A.signOut();else await A.signIn()}
-  catch(e){toast(e&&e.message==="not_owner"?"このアカウントは管理者ではありません":"ログインできませんでした")}
+  catch(e){toast(authMsg(e));["","2"].forEach(n=>{$("adminPw"+n).hidden=false})}
 };
+["","2"].forEach(n=>{
+  $("adminPwT"+n).onclick=()=>{const f=$("adminPw"+n);f.hidden=!f.hidden;if(!f.hidden)f.querySelector('[type=password]').focus()};
+  $("adminPw"+n).onsubmit=async ev=>{ev.preventDefault();const A=window.restAdmin;if(!A)return;
+    const i=$("adminPw"+n).querySelector('[type=password]'),pw=i.value;if(!pw){toast("パスワードを入れてください");return}
+    const b=$("adminPw"+n).querySelector("button");b.disabled=true;
+    try{await A.signInPw(pw)}catch(e){toast(authMsg(e));b.disabled=false}};
+});
+$("pwSetForm").onsubmit=async ev=>{ev.preventDefault();const A=window.restAdmin;if(!A||!A.setPw)return;
+  const pw=$("pwSetIn").value;if(pw.length<8){$("pwSetMsg").textContent="8文字以上にしてください。";return}
+  try{await A.setPw(pw);$("pwSetIn").value="";$("pwSetMsg").textContent="設定しました。ほかのスマホでは「管理者ログイン」の下の「パスワードでログイン」から入れます。";toast("パスワードを設定しました")}
+  catch(e){$("pwSetMsg").textContent=authMsg(e)}};
 (async()=>{
   if(!window.claude||!window.claude.use){$("openSettings").hidden=false;return}
   dbState="loading";renderHistory();
