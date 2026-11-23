@@ -692,6 +692,15 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .ltab tr.me td{background:color-mix(in srgb,var(--cue) 14%,transparent)}
 .ltab td.w{font-weight:800;color:var(--felt)}
 .lt-sub{margin:6px 0 0;font-size:13px;color:var(--muted);font-weight:700}
+.ln-save{flex-wrap:wrap}.ln-save input{flex:1 1 200px;min-width:0}
+.ln-log{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ln-log li{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
+.ln-log .ln-h{display:flex;gap:8px;align-items:baseline;width:100%;background:none;border:0;padding:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.ln-log .ln-at{font-size:12px;color:var(--muted);white-space:nowrap}
+.ln-log .ln-ti{font-weight:700;font-size:13px}
+.ln-log .ln-sum{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.ln-log pre{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:13px;line-height:1.55;margin:8px 0 6px;max-height:320px;overflow:auto}
+.ln-log .row{margin-top:4px}
 .xtab th,.xtab td{border:1px solid var(--line);padding:6px 8px;text-align:center;min-width:44px}
 .xtab th{font-size:11px;color:var(--muted);font-weight:700;max-width:7em;overflow:hidden;text-overflow:ellipsis}
 .xtab th.rowh{text-align:left;color:var(--ink);font-size:13px}
@@ -1179,6 +1188,29 @@ img,svg{-webkit-user-drag:none;user-drag:none}
  <div class="page" data-page="settings" id="settings" hidden>
   <h1 class="page-title">設定</h1>
   <button class="ghost" id="closeSettings" type="button" hidden>戻る</button>
+  <section class="sheet" id="lineAdmin" aria-labelledby="h-line">
+    <h2 id="h-line">グループLINE</h2>
+    <p class="hint">お店のグループLINEに流す文面を作って送ります。フォーマットを選ぶと文面が入るので、必要なところを直してから送ってください。</p>
+    <div class="field"><label for="lnTpl">フォーマット</label><select id="lnTpl"></select></div>
+    <div class="field" id="lnTourBox" hidden><label>大会の内容（変えると文面が作り直されます）</label>
+      <div class="grid2">
+        <div class="field"><label for="lnTName">大会名</label><input id="lnTName" maxlength="40" autocomplete="off"></div>
+        <div class="field"><label for="lnTGame">種目</label><input id="lnTGame" maxlength="30" autocomplete="off"></div>
+        <div class="field"><label for="lnTWhen">日時</label><input id="lnTWhen" maxlength="40" autocomplete="off"></div>
+        <div class="field"><label for="lnTFee">参加費</label><input id="lnTFee" maxlength="20" autocomplete="off"></div>
+        <div class="field"><label for="lnTNote">ひとこと</label><input id="lnTNote" maxlength="60" autocomplete="off"></div>
+        <div class="field"><label for="lnTDead">締め切り（任意）</label><input id="lnTDead" maxlength="30" autocomplete="off" placeholder="例：前日まで"></div>
+      </div>
+    </div>
+    <textarea id="lnText" rows="12" aria-label="グループLINEに送る文面" style="width:100%;box-sizing:border-box;margin-top:8px;font-size:14px;line-height:1.6"></textarea>
+    <div class="row"><button class="primary" type="button" id="lnSend">LINEで送る</button><button class="ghost" type="button" id="lnCopy">文面をコピー</button></div>
+    <p class="hint">「LINEで送る」を押すとLINEが開くので、お店のグループを選んでください。送った文面は下の送信履歴に残ります。</p>
+    <div class="row ln-save"><input id="lnSaveName" maxlength="30" autocomplete="off" placeholder="フォーマットの名前（例：臨時休業のお知らせ）" aria-label="フォーマットの名前"><button class="ghost" type="button" id="lnSave">この文面をフォーマットに保存</button></div>
+    <button class="ghost danger" type="button" id="lnDelTpl" hidden>このフォーマットを消す</button>
+    <h3 class="lt-sub">送信履歴</h3>
+    <ul class="ln-log" id="lnLog"></ul>
+    <p class="hint" id="lnLogEmpty">まだ送った文面はありません。</p>
+  </section>
   <section class="sheet" aria-labelledby="h-roster">
     <h2 id="h-roster">チームとメンバー</h2>
     <p class="hint" id="rosterNote">ここに登録したチームとメンバーが、試合を始めるときの選択肢になります。</p>
@@ -1254,11 +1286,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <div class="row"><button class="primary" type="button" id="leSave">保存する</button><button class="ghost" type="button" id="leNew">新しいシーズンとして受付を始める</button></div>
     <div class="row"><button class="primary" type="button" id="leToLeague" hidden>エントリーしたチームでリーグを組む</button></div>
     <p class="hint" id="leMsg"></p>
-    <h3 class="lt-sub">告知をLINEで送る（リーグ／ホーム画面登録）</h3>
-    <div class="seg small" id="leAnnSeg" role="group" aria-label="告知文の種類"><button type="button" data-v="long" aria-pressed="true">ド派手に</button><button type="button" data-v="short" aria-pressed="false">短めに</button><button type="button" data-v="home" aria-pressed="false">ホーム登録</button><button type="button" data-v="homeShort" aria-pressed="false">ホーム登録(短)</button></div>
-    <textarea id="leAnn" rows="10" aria-label="LINEに送る告知文" style="width:100%;box-sizing:border-box;margin-top:8px;font-size:14px;line-height:1.6"></textarea>
-    <div class="row"><button class="primary" type="button" id="leAnnLine">LINEで送る</button><button class="ghost" type="button" id="leAnnCopy">文面をコピー</button></div>
-    <p class="hint">「LINEで送る」を押すとLINEが開くので、送り先のグループを選んでください。文面はここで直せます。</p>
+    <p class="hint">チームリーグの告知文は、設定の一番上「グループLINE」から送れます。</p>
   </section>
   <section class="sheet" aria-labelledby="h-sa">
     <h2 id="h-sa">リーグ戦を組む</h2>
@@ -3006,8 +3034,8 @@ function renderTour(){
     ng.value=nv!=null?nv:(tourGameFmt().game==="9"?"8ボール":"9ボール");
     ta.value=tourResultText(B,st,ng.value);
     ng.onchange=()=>{try{sessionStorage.setItem("cb_nextgame",ng.value)}catch(e){}ta.value=tourResultText(B,st,ng.value)};
-    box.querySelector(".t-line-go").onclick=()=>{location.href="https://line.me/R/share?text="+encodeURIComponent(ta.value)};
-    box.querySelector(".t-line-copy").onclick=()=>{try{navigator.clipboard.writeText(ta.value).then(()=>toast("コピーしました"),()=>{ta.select();toast("文面を選択しました。コピーしてください")})}catch(e){ta.select()}};
+    box.querySelector(".t-line-go").onclick=()=>{try{logLine("大会の結果",ta.value,"LINE")}catch(e){}location.href="https://line.me/R/share?text="+encodeURIComponent(ta.value)};
+    box.querySelector(".t-line-copy").onclick=()=>{try{logLine("大会の結果",ta.value,"コピー")}catch(e){}try{navigator.clipboard.writeText(ta.value).then(()=>toast("コピーしました"),()=>{ta.select();toast("文面を選択しました。コピーしてください")})}catch(e){ta.select()}};
     head.appendChild(box);
   }
   if(admin&&isName(champ)&&tour.kind!=="team"){
@@ -3307,10 +3335,100 @@ $("leSave").onclick=()=>saveLeCfg(false);
 /* ready-made announcement for the shop's LINE group */
 const LE_ANN={long:"🔥🔥🔥 お待たせしました 🔥🔥🔥\n\nビリヤードREST\n遂に『TEAM LEAGUE』始動‼️\n\n3人で、頂点へ。🎱\n\nRESTオリジナルのレートとハンデで、\nだれと組んでも、どのチームとも互角に戦える\n3人1組のチーム対抗・総当たりリーグが\n2027年、いよいよ開幕します‼️\n\n━━━━━━━━━━━━\n🏆 豪華賞品をかけた熱い戦い！\n優勝・準優勝・3位・MVP賞・レディース賞 など\n✨参加チームが多いほど景品が豪華に✨\n🎁 入賞できなかったチーム限定の抽選会も予定！\n\n📱 アプリ内レーティングにも反映！勲章ももらえる！\n━━━━━━━━━━━━\n\n⚔️ 戦い方\n・3対3で1試合ずつ、2勝以上でチームの勝ち\n・順位は「チームの勝ち数」→「Totalの勝ち星」→「得失点差」\n・毎週消化などの縛りなし！対戦チームと都合を合わせて好きな日にOK\n（極端に早い・遅い消化はご遠慮ください🙏）\n\n🌌 2027年は年3シーズン（シーズンごとに違う種目で！）\nSEASON1 ORION（1〜3月）\nSEASON2 SCORPIO（5〜7月）\nSEASON3 PEGASUS（9〜11月）\n\n💰 参加費\n1試合につき ゲーム代＋積み立て費￥500\n※途中棄権の場合、残り試合分の積み立て費をお支払いいただく場合があります\n\n📝 エントリー\nチーム名と3人の名前を、アプリ内・LINE・店頭で！\n⏰ 初回エントリーの締め切りは年内（12月31日）まで‼️\n\n仲間を誘って、今すぐチーム結成だ🔥\nたくさんのエントリーお待ちしています！\n\nビリヤードREST",short:"【遂に始動‼️ REST TEAM LEAGUE】🎱🔥\n\n3人1組のチーム対抗・総当たりリーグが、2027年1月から開幕！\nRESTオリジナルのレートとハンデで、だれと組んでも互角に戦えます💪\n\n🏆 優勝・準優勝・3位・MVP賞・レディース賞など豪華賞品！\n（参加チームが多いほど豪華に✨ 入賞できなかったチーム限定の抽選会も！）\n📱 アプリ内レーティングに反映・勲章ももらえる\n\n・3対3、2勝以上でチームの勝ち\n・日程は対戦チームと相談して自由に\n・年3シーズン（ORION／SCORPIO／PEGASUS）シーズンごとに違う種目で\n・1試合につき ゲーム代＋積み立て費￥500\n\n📝 チーム名と3人の名前を、アプリ内・LINE・店頭で\n⏰ 初回の締め切りは12月31日まで！\n\n仲間を誘ってエントリーお待ちしています🔥"};
 LE_ANN.home="📱【REST Billiard Score】アプリみたいにアイコンから開けます！\n\nいつも使っているスコアアプリ、スマホのホーム画面に登録すると、アプリのようにアイコンからワンタップで開けるようになりました🎱✨\n\n▼アプリのURL\nhttps://billiards-rest.github.io/rest-billiard-score/\n\n━━━━━━━━━━\n🍎 iPhoneの方\n━━━━━━━━━━\n① 上のURLを【Safari】で開く\n② 画面下の共有ボタン（□に↑のマーク）をタップ\n③「ホーム画面に追加」→ 右上の「追加」\n\n━━━━━━━━━━\n🤖 Androidの方\n━━━━━━━━━━\n① 上のURLを【Chrome】で開く\n② 右上の「︙」をタップ\n③「ホーム画面に追加」または「アプリをインストール」→「追加」\n\nホーム画面に「REST Score」のアイコンが出たら完了です👍\n\n━━━━━━━━━━\n⚠️ 注意事項\n━━━━━━━━━━\n・LINEの中でURLを開いた画面からは登録できません。右上（Androidは右下の場合あり）のメニューから「ブラウザで開く」を選んでから登録してください\n・アイコンから初めて開いたとき、もう一度名前の選択を求められることがあります。必ず【自分の名前】を選んでください\n・名前は一度選ぶとそのスマホに固定されます。間違えて選んだ場合はスタッフまで声をかけてください\n・スコアやレーティングはネット上に保存されているので、アイコンから開いてもデータはそのままです\n・インターネットにつながっている状態で使ってください\n・表示が古いままのときは、アプリを一度閉じて開き直してください\n\nわからないことがあれば、お店で気軽に聞いてください😊\nビリヤードREST";LE_ANN.homeShort="📱スコアアプリをホーム画面に登録できるようになりました！\nhttps://billiards-rest.github.io/rest-billiard-score/\n\n🍎iPhone：Safariで開く →共有ボタン（□↑）→「ホーム画面に追加」\n🤖Android：Chromeで開く →右上「︙」→「ホーム画面に追加」\n\n⚠️LINEの中で開いた画面からは登録できないので「ブラウザで開く」を選んでから\n⚠️アイコンから初めて開いたときは、必ず自分の名前を選んでください（間違えたらスタッフへ）\n⚠️スコア・レートのデータはそのまま引き継がれます\n\nビリヤードREST";
-$("leAnn").value=LE_ANN.long;
-$("leAnnSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("leAnnSeg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("leAnn").value=LE_ANN[b.dataset.v]});
-$("leAnnLine").onclick=()=>{location.href="https://line.me/R/share?text="+encodeURIComponent($("leAnn").value)};
-$("leAnnCopy").onclick=()=>{const t=$("leAnn").value;try{navigator.clipboard.writeText(t).then(()=>toast("コピーしました"),()=>{$("leAnn").select();toast("文面を選択しました。コピーしてください")})}catch(e){$("leAnn").select()}};
+/* ---------- group LINE: formats, auto-filled house tournament notice, saved formats (config/lineTpl), send log (config/lineLog) ---------- */
+var lineLog=store.get("cb_linelog",[]),lineTpls=store.get("cb_linetpl",[]),lineLogDb=null,lineTplDb=null,lnOpen=null;
+const GAME_JA={"9":"9ボール","8":"8ボール","10":"10ボール","bowl":"ボーラード"};
+function lnTourDefaults(){
+  const c=entryCfg&&entryCfg.name?entryCfg:null;
+  return {name:c?c.name:`第${nextTourNo()}回ハウストーナメント`,game:c?(entryGameLabel()||""):(()=>{try{return tour&&tourGameFmt().game==="9"?"8ボール":"9ボール"}catch(e){return "9ボール"}})(),when:c?(c.when||""):nextThirdSat(),fee:c?(c.fee||""):"￥2,000",note:c?(c.note||""):"12:30より練習可",dead:""};
+}
+function lnTourVals(){return {name:$("lnTName").value.trim(),game:$("lnTGame").value.trim(),when:$("lnTWhen").value.trim(),fee:$("lnTFee").value.trim(),note:$("lnTNote").value.trim(),dead:$("lnTDead").value.trim()}}
+function lnTourText(v,short){
+  const L=entryList(),cnt=entryCfg&&entryCfg.name===v.name&&L.length?L.length:0;
+  if(short)return [`🎱【New Monthly ${v.name}】`,"",v.when?`📅 ${v.when}`:null,v.game?`🎱 種目：${v.game}`:null,v.fee?`💰 参加費：${v.fee}`:null,v.note?`📌 ${v.note}`:null,"","RESTオリジナルのレート＆ハンデで、だれでも楽しめます！",`📝 エントリーはアプリ内・LINE・店頭で${v.dead?`（締め切り：${v.dead}）`:""}`,cnt?`現在のエントリー ${cnt}人🔥`:null,"","ビリヤードREST"].filter(x=>x!==null).join("\n").replace(/\n{3,}/g,"\n\n");
+  return ["🎱🎱🎱 New Monthly 🎱🎱🎱",`【${v.name}】開催のお知らせ`,"",
+    "毎月恒例のハウストーナメント、今月も開催します‼️","",
+    "━━━━━━━━━━",
+    v.when?`📅 日時：${v.when}`:null,v.game?`🎱 種目：${v.game}`:null,v.fee?`💰 参加費：${v.fee}`:null,v.note?`📌 ${v.note}`:null,
+    "━━━━━━━━━━","",
+    "📊 RESTオリジナルのレート＆ハンデを採用！",
+    "レートに合わせたハンデで、初めての方もベテランも互角に戦えます💪",
+    "📱 試合はスコアアプリで記録、結果はレーティングにも反映されます","",
+    `📝 エントリー：アプリ内・LINE・店頭で${v.dead?`\n⏰ 締め切り：${v.dead}`:""}`,
+    cnt?`\n🔥 現在のエントリー ${cnt}人！`:null,"",
+    "たくさんのご参加お待ちしています😊","ビリヤードREST"].filter(x=>x!==null).join("\n").replace(/\n{3,}/g,"\n\n");
+}
+function lnEntryText(){
+  const c=entryCfg,L=entryList();
+  if(!c||!c.name)return "（いま受付中の大会はありません。設定の「大会のエントリー受付」で受付を始めると、ここにエントリー状況が入ります）";
+  return [`📣【${c.name}】エントリー状況`,"",[c.when,entryGameLabel()].filter(Boolean).join(" ／ "),"",
+    `現在 ${L.length}人${c.cap?` ／ 定員 ${c.cap}人`:""}`,L.length?L.map(e=>`・${e.name}`).join("\n"):"",
+    "",c.open?"まだまだエントリー受付中です🔥\nアプリ内・LINE・店頭で！":"エントリーは締め切りました。ありがとうございました！","","ビリヤードREST"].join("\n").replace(/\n{3,}/g,"\n\n");
+}
+const LN_BUILTIN=[
+  {k:"tour",n:"ハウストーナメント告知",tour:1,f:()=>lnTourText(lnTourVals(),false)},
+  {k:"tourShort",n:"ハウストーナメント告知（短め）",tour:1,f:()=>lnTourText(lnTourVals(),true)},
+  {k:"entry",n:"大会のエントリー状況",f:lnEntryText},
+  {k:"long",n:"チームリーグ告知（ド派手）",f:()=>LE_ANN.long},
+  {k:"short",n:"チームリーグ告知（短め）",f:()=>LE_ANN.short},
+  {k:"home",n:"ホーム画面への登録方法",f:()=>LE_ANN.home},
+  {k:"homeShort",n:"ホーム画面への登録方法（短め）",f:()=>LE_ANN.homeShort},
+  {k:"blank",n:"白紙から書く",f:()=>""}];
+function lnRenderTpl(){
+  const sel=$("lnTpl"),v=sel.value||"tour";sel.innerHTML="";
+  const g1=document.createElement("optgroup");g1.label="お店のフォーマット";
+  LN_BUILTIN.forEach(t=>{const o=document.createElement("option");o.value=t.k;o.textContent=t.n;g1.appendChild(o)});sel.appendChild(g1);
+  if(lineTpls.length){const g2=document.createElement("optgroup");g2.label="保存したフォーマット";
+    lineTpls.forEach(t=>{const o=document.createElement("option");o.value="u:"+t.id;o.textContent=t.name;g2.appendChild(o)});sel.appendChild(g2)}
+  sel.value=[...sel.options].some(o=>o.value===v)?v:"tour";
+}
+function lnApply(){
+  const k=$("lnTpl").value,b=LN_BUILTIN.find(t=>t.k===k);
+  $("lnTourBox").hidden=!(b&&b.tour);$("lnDelTpl").hidden=!k.startsWith("u:");
+  if(b&&b.tour&&!$("lnTName").value){const d=lnTourDefaults();$("lnTName").value=d.name;$("lnTGame").value=d.game;$("lnTWhen").value=d.when;$("lnTFee").value=d.fee;$("lnTNote").value=d.note;$("lnTDead").value=d.dead}
+  if(b){$("lnText").value=b.f();return}
+  const u=lineTpls.find(t=>"u:"+t.id===k);$("lnText").value=u?u.text:"";
+}
+function lnTitle(){const o=$("lnTpl").selectedOptions[0];return o?o.textContent:"文面"}
+function lnSaveLog(){if(lineLogDb)lineLogDb.set({list:lineLog}).catch(()=>{});store.set("cb_linelog",lineLog)}
+function lnSaveTpls(){if(lineTplDb)lineTplDb.set({list:lineTpls}).catch(()=>toast("保存できませんでした"));store.set("cb_linetpl",lineTpls)}
+function logLine(title,text,how){
+  text=(text||"").trim();if(!text)return;
+  const last=lineLog[0];if(last&&last.text===text&&Date.now()-last.at<10*60e3){last.at=Date.now();last.how=how}
+  else lineLog=[{id:newId(),at:Date.now(),title,text,how},...lineLog].slice(0,60);
+  lnSaveLog();renderLineLog();
+}
+function lnFmtAt(t){const d=new Date(t),p=n=>String(n).padStart(2,"0");return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${p(d.getHours())}:${p(d.getMinutes())}`}
+function renderLineLog(){
+  const ul=$("lnLog");if(!ul)return;ul.innerHTML="";$("lnLogEmpty").hidden=!!lineLog.length;
+  lineLog.forEach(e=>{
+    const li=document.createElement("li"),h=document.createElement("button");h.type="button";h.className="ln-h";h.setAttribute("aria-expanded",lnOpen===e.id);
+    h.innerHTML=`<span class="ln-at">${lnFmtAt(e.at)}</span><span class="ln-ti">${escHTML(e.title||"")}</span><span class="ln-sum">${escHTML((e.text||"").split("\n").find(x=>x.trim())||"")}</span>`;
+    h.onclick=()=>{lnOpen=lnOpen===e.id?null:e.id;renderLineLog()};li.appendChild(h);
+    if(lnOpen===e.id){
+      const pre=document.createElement("pre");pre.textContent=e.text;li.appendChild(pre);
+      const r=document.createElement("div");r.className="row";
+      const use=document.createElement("button");use.type="button";use.className="ghost";use.textContent="この文面を使う";
+      use.onclick=()=>{$("lnTpl").value="blank";$("lnTourBox").hidden=true;$("lnDelTpl").hidden=true;$("lnText").value=e.text;$("lnText").scrollIntoView({behavior:"smooth",block:"center"});toast("文面を入れました")};
+      const del=document.createElement("button");del.type="button";del.className="ghost danger";del.textContent="履歴から消す";
+      del.onclick=()=>{if(!del.dataset.armed){del.dataset.armed="1";del.textContent="本当に消す？";return}lineLog=lineLog.filter(x=>x.id!==e.id);lnSaveLog();renderLineLog()};
+      r.append(use,del);li.appendChild(r);
+    }
+    ul.appendChild(li)});
+}
+function lnCopyText(t,ta){try{navigator.clipboard.writeText(t).then(()=>toast("コピーしました"),()=>{ta&&ta.select();toast("文面を選択しました。コピーしてください")})}catch(e){ta&&ta.select()}}
+function lnShare(t){location.href="https://line.me/R/share?text="+encodeURIComponent(t)}
+$("lnTpl").onchange=lnApply;
+["lnTName","lnTGame","lnTWhen","lnTFee","lnTNote","lnTDead"].forEach(id=>$(id).addEventListener("input",()=>{const b=LN_BUILTIN.find(t=>t.k===$("lnTpl").value);if(b&&b.tour)$("lnText").value=b.f()}));
+$("lnSend").onclick=()=>{const t=$("lnText").value;if(!t.trim()){toast("文面を入れてください");return}logLine(lnTitle(),t,"LINE");lnShare(t)};
+$("lnCopy").onclick=()=>{const t=$("lnText").value;if(!t.trim()){toast("文面を入れてください");return}logLine(lnTitle(),t,"コピー");lnCopyText(t,$("lnText"))};
+$("lnSave").onclick=()=>{const name=$("lnSaveName").value.trim(),text=$("lnText").value;
+  if(!name){toast("フォーマットの名前を入れてください");$("lnSaveName").focus();return}if(!text.trim()){toast("文面を入れてください");return}
+  const ex=lineTpls.find(t=>t.name===name);if(ex)ex.text=text;else lineTpls=[...lineTpls,{id:newId(),name,text}];
+  lnSaveTpls();lnRenderTpl();$("lnTpl").value="u:"+(ex||lineTpls[lineTpls.length-1]).id;lnApply();$("lnSaveName").value="";toast(`「${name}」を保存しました`)};
+$("lnDelTpl").onclick=()=>{const b=$("lnDelTpl");if(!b.dataset.armed){b.dataset.armed="1";b.textContent="本当に消す？";setTimeout(()=>{delete b.dataset.armed;b.textContent="このフォーマットを消す"},3000);return}
+  const id=$("lnTpl").value.slice(2);lineTpls=lineTpls.filter(t=>t.id!==id);lnSaveTpls();delete b.dataset.armed;b.textContent="このフォーマットを消す";lnRenderTpl();$("lnTpl").value="tour";lnApply()};
+lnRenderTpl();lnApply();renderLineLog();
 $("leNew").onclick=()=>{$("leOpen").checked=true;saveLeCfg(true)};
 /* entered teams -> roster teams/members + the league form */
 $("leToLeague").onclick=()=>{
@@ -4496,6 +4614,10 @@ $("adminBtn").onclick=$("adminBtn2").onclick=async()=>{
   awardsDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};awardsCfg={list:Array.isArray(d.list)?d.list:[]};store.set("cb_awards",awardsCfg);renderMe();renderAwardAdmin()},()=>{});
   ratedDb=db.doc("config/rated");
   ratedDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};ratedCfg={on:Array.isArray(d.on)?d.on:[],off:Array.isArray(d.off)?d.off:[],league:!!d.league};store.set("cb_rated",ratedCfg);renderHistory()},()=>{});
+  lineLogDb=db.doc("config/lineLog");
+  lineLogDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};lineLog=Array.isArray(d.list)?d.list:[];store.set("cb_linelog",lineLog);renderLineLog()},()=>{});
+  lineTplDb=db.doc("config/lineTpl");
+  lineTplDb.onSnapshot(sn=>{const d=sn.exists?sn.data()||{}:{};lineTpls=Array.isArray(d.list)?d.list:[];store.set("cb_linetpl",lineTpls);const k=$("lnTpl").value;lnRenderTpl();if(k.startsWith("u:")&&$("lnTpl").value!==k)lnApply()},()=>{});
   rosterDb=db.doc("config/roster");
   rosterDb.onSnapshot(sn=>{
     if(sn.exists){const d=sn.data();roster={teams:(d.teams||[]).map(t=>({name:t.name,members:[...(t.members||[])]})),solo:[...(d.solo||[])],init:{...(d.init||{})}}}
