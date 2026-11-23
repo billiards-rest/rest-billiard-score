@@ -708,6 +708,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .xtab td.self{background:repeating-linear-gradient(135deg,var(--bg) 0 6px,var(--line) 6px 7px)}
 .xtab td.win{color:var(--felt);font-weight:800}
 .xtab td.lose{color:var(--red);font-weight:800}
+.xtab .mk-w{color:#6cc23a;font-weight:900;-webkit-text-stroke:1.2px #6cc23a}.xtab .mk-l{color:var(--red)}
 .xtab td small{display:block;font-size:10px;color:var(--muted);font-weight:500}
 .ptab{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ptab th{font-size:12px;color:var(--muted);font-weight:700;text-align:right;padding:6px 10px;border-bottom:1px solid var(--line)}
@@ -2660,7 +2661,7 @@ function renderLeagueTable(){
       else{const gs=by[a].vs[b]||[];
         if(!gs.length){td.textContent="−";td.style.color="var(--muted)"}
         else{const last=gs[gs.length-1];td.className=last.r==="w"?"win":last.r==="l"?"lose":"";
-          td.innerHTML=gs.map(g=>g.r==="w"?"○":g.r==="l"?"✖":"△").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}}
+          td.innerHTML=gs.map(g=>g.r==="w"?'<span class="mk-w">○</span>':g.r==="l"?'<span class="mk-l">✖</span>':"△").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}}
       tr.appendChild(td)});body.appendChild(tr)});
   xt.appendChild(body);
   const done=res.rows.reduce((n,r)=>n+r.g,0)/2;
@@ -2684,7 +2685,7 @@ function renderLeagueTable3(res,me){
       if(a===b){td.className="self";td.setAttribute("aria-label","同じチーム")}
       else{const gs=by[a].vs[b]||[];
         if(gs.length){const last=gs[gs.length-1];td.className=last.r==="w"?"win":last.r==="l"?"lose":"";
-          td.innerHTML=gs.map(g=>g.r==="w"?"○":g.r==="l"?"✖":"…").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}
+          td.innerHTML=gs.map(g=>g.r==="w"?'<span class="mk-w">○</span>':g.r==="l"?'<span class="mk-l">✖</span>':"…").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}
         else{td.innerHTML=`<span class="xt-go">▶</span>`}
         td.classList.add("tap");td.tabIndex=0;td.setAttribute("role","button");td.setAttribute("aria-label",`${a} 対 ${b} のチーム戦を開く`);
         td.onclick=()=>openTeamMatch(a,b);td.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openTeamMatch(a,b)}}}
