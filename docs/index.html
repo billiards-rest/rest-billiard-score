@@ -652,6 +652,26 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .rk-val b{font:800 24px/1.1 var(--f-display);font-variant-numeric:tabular-nums}
 .rk.top .rk-name b{font-size:17px}
 .tscroll{overflow-x:auto}
+.xtab td.tap{cursor:pointer}.xtab td.tap:hover{outline:2px solid var(--cue);outline-offset:-2px}
+.xtab .xt-go{color:var(--cue);font-weight:800}
+.tm-sheet{position:fixed;inset:0;z-index:60;background:rgba(10,20,40,.45);display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.tm-sheet[hidden]{display:none}
+.tm-card{background:var(--card,#fff);color:var(--ink);border-radius:18px;padding:16px;width:min(560px,100%);max-height:88vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.tm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.tm-head h3{margin:2px 0 0;font-size:18px}
+.tm-x{font-size:20px;line-height:1;padding:6px 12px}
+.tm-score{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin:12px 0 4px;text-align:center}
+.tm-score b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tm-score span{font:900 30px/1 var(--f-display)}.tm-score i{font-style:normal}
+.tm-res{margin:0 0 10px;text-align:center;font-size:13px;color:var(--muted)}.tm-res.done{color:var(--felt);font-weight:800}
+.tm-boards{display:grid;gap:8px}
+.tm-row{display:grid;grid-template-columns:26px minmax(0,1fr) auto minmax(0,1fr) auto;gap:6px;align-items:center;background:var(--bg);border-radius:12px;padding:8px}
+.tm-row.played{grid-template-columns:26px minmax(0,1fr) auto minmax(0,1fr)}
+.tm-n{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--felt);color:#fff;font-weight:800;font-size:12px}
+.tm-row i{font-style:normal;font-size:12px;color:var(--muted)}
+.tm-sel{min-width:0;width:100%;font-size:14px;padding:6px}
+.tm-go{padding:8px 10px;font-size:13px;white-space:nowrap}
+.tm-p{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tm-p.r{text-align:right}.tm-p.win{color:var(--felt)}.tm-p.win::after{content:" ○";}
+.tm-sc{font-variant-numeric:tabular-nums;font-weight:800;font-size:13px;text-align:center}
 .ltab,.xtab{border-collapse:collapse;font-variant-numeric:tabular-nums;white-space:nowrap;font-size:14px}
 .ltab{width:100%}
 .ltab th{font-size:11px;color:var(--muted);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line);text-align:right}
@@ -1030,6 +1050,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   <div class="seg small" id="schedFilter" role="group" aria-label="チームで絞り込む"></div>
   <section class="next-card" id="schedNext" aria-label="次の対戦" hidden></section>
   <section class="sheet league-sum" id="schedSum" aria-label="リーグの進み具合" hidden></section>
+  <div class="tm-sheet" id="tmSheet" hidden></div>
   <section class="sheet" id="leagueTable" aria-labelledby="h-lt" hidden>
     <h2 id="h-lt">リーグ表</h2>
     <div class="tscroll"><table class="ltab" id="ltStand"></table></div>
@@ -1225,6 +1246,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <div class="field"><label for="gStart" id="gStartLab">開始日</label><input id="gStart" type="date"></div>
       <div class="field"><label for="gMonths">期間</label><select id="gMonths"><option value="0">1日だけ（突発の1回）</option><option value="1">1か月</option><option value="2">2か月</option><option value="3" selected>3か月</option><option value="4">4か月</option><option value="6">6か月</option></select></div>
       <div class="field"><label for="gFmt">試合形式</label><select id="gFmt"><option value="long">ロング（通常）</option><option value="middle">ミドル</option><option value="short">ショート（気軽に）</option></select></div>
+      <div class="field" id="gBoardsRow"><label for="gBoards">1節の試合数（チーム戦）</label><select id="gBoards"><option value="3" selected>3対3（3試合・2勝したチームの勝ち）</option><option value="1">1試合だけ</option></select></div>
       <div class="field"><label for="gRounds">回数</label><select id="gRounds"><option value="1">1回総当たり</option><option value="2">2回総当たり</option></select></div>
     </div>
     <div class="plan" id="gPlan" aria-live="polite"></div>
@@ -1726,7 +1748,7 @@ $("startBtn").onclick=()=>{
   M={id:Date.now(),game:cfg.game,mode:g.mode,fmt:(g.mode==="balls"||g.mode==="race")?((cfg&&cfg.fmt)||"long"):undefined,names:[getName(1)||"プレイヤー1",getName(2)||"プレイヤー2"],teams:[getTeam(1),getTeam(2)],
     target:t,score:[0,0],runouts:[0,0],aces:[0,0],zips:[0,0],fouls:[0,0],consec:[0,0],breakRule:cfg.breakRule,breaker:cfg.first,turn:cfg.first,
     rack:1,pocketed:[],dead:[],rackPts:[0,0],rackWins:[0,0],log:[],start:Date.now(),done:false,
-    league:leagueCtx?{fixture:leagueCtx.id,round:leagueCtx.round,fmt:leagueCtx.fmt}:null,
+    league:leagueCtx?{fixture:leagueCtx.id,round:leagueCtx.round,fmt:leagueCtx.fmt,board:leagueCtx.board||null}:null,
     tour:tourCtx?{tid:tourCtx.tid,mid:tourCtx.mid,side0:(tour&&tour.kind==="team"?getTeam(1):getName(1))===tourCtx.pa?"a":"b",table:tourCtx.table}:null,
     hcBalls:(g.mode==="race"&&$("hcAuto").checked&&cfg.hcBalls)?cfg.hcBalls.slice():null};
   if(M.tour)setTourLive(M.tour.tid,M.tour.mid,true,M.names);
@@ -2353,7 +2375,7 @@ $("gMake").onclick=()=>{
   genArmed=false;$("gMake").textContent="この内容でリーグを作る";
   const win=windows(start,p.end,p.rr.length),items=[];
   p.rr.forEach((games,r)=>games.forEach(([home,away])=>items.push({id:newId(),round:r+1,start:win[r][0],end:win[r][1],home,away,done:false})));
-  sched={league:{start,end:p.end,months,rounds,teams,kind:gKind,fmt:$("gFmt").value},items};saveSched();
+  sched={league:{start,end:p.end,months,rounds,teams,kind:gKind,fmt:$("gFmt").value,boards:gKind==="team"?(+$("gBoards").value||1):1},items};saveSched();
   msg.textContent=months===0?`${fmtDay(start)} 1日だけの突発${gKind==="solo"?"個人":"チーム"}リーグ（${teams.length}${gU()}・${items.length}試合）を作りました。日程タブで確認できます。`:`${teams.length}${gU()}・${p.rr.length}節・${items.length}試合の${gKind==="solo"?"個人":"チーム"}リーグを作りました。日程タブで確認できます。`;
 };
 let clrArmed=false;
@@ -2370,9 +2392,41 @@ function leagueFmtFor(L,m){
   return L.fmt||null;
 }
 function leagueNowFmt(L){return (L.fmtFrom&&L.fmtFrom.fmt)||L.fmt||"long"}
+/* team league "3 vs 3": a fixture is up to `boards` single matches; the team with the majority of wins takes the fixture */
+function leagueBoards(L){return L&&L.kind!=="solo"?Math.max(1,+L.boards||1):1}
+/* put recorded matches into fixtures: a match started from a fixture carries its id; others fill the pair's fixtures in order */
+function groupFixtures(L,hist){
+  const out={};if(!L)return out;const nb=leagueBoards(L),side=L.kind==="solo"?"names":"teams";
+  const from=parseYmd(L.start).getTime(),to=parseYmd(L.end).getTime()+864e5,set=new Set(L.teams);
+  const fx=[...sched.items].filter(x=>x.home&&x.away).sort((a,b)=>a.round-b.round);
+  const byId={};fx.forEach(x=>{byId[x.id]=x;out[x.id]=[]});
+  const rest=[];
+  [...(hist||[])].sort((a,b)=>(a.end||0)-(b.end||0)).forEach(m=>{
+    const t=m[side];if(!t||!set.has(t[0])||!set.has(t[1])||t[0]===t[1])return;
+    if((m.end||0)<from||(m.end||0)>=to)return;
+    {const need=leagueFmtFor(L,m);if(need&&(m.fmt||"long")!==need)return}
+    const id=m.league&&m.league.fixture;
+    if(id&&byId[id]&&pairKey(byId[id].home,byId[id].away)===pairKey(t[0],t[1])&&out[id].length<nb){out[id].push(m);return}
+    rest.push(m)});
+  rest.forEach(m=>{const t=m[side],k=pairKey(t[0],t[1]);const x=fx.find(x=>pairKey(x.home,x.away)===k&&out[x.id].length<nb);if(x)out[x.id].push(m)});
+  return out;
+}
+/* one fixture's tally from the home team's side */
+function fixtureTally(L,x,ms){
+  const side=L.kind==="solo"?"names":"teams",nb=leagueBoards(L),need=Math.floor(nb/2)+1;
+  const r={home:x.home,away:x.away,hw:0,aw:0,hp:0,ap:0,n:ms.length,winner:null,complete:ms.length>=nb};
+  ms.forEach(m=>{const t=m[side],hi=t[0]===x.home?0:1,w=winnerOf(m),sc=m.score||[0,0];
+    r.hp+=+sc[hi]||0;r.ap+=+sc[1-hi]||0;if(w===hi)r.hw++;else if(w===1-hi)r.aw++});
+  if(r.hw>=need)r.winner=x.home;else if(r.aw>=need)r.winner=x.away;
+  else if(r.complete&&r.hw!==r.aw)r.winner=r.hw>r.aw?x.home:x.away;
+  return r;
+}
 function fixtureState(){
   const L=sched.league,items=[...sched.items].filter(x=>x.start&&x.home&&x.away).sort((a,b)=>a.round-b.round||a.home.localeCompare(b.home));
   const played={};
+  if(L&&leagueBoards(L)>1){const G=groupFixtures(L,lastHist),nb=leagueBoards(L),today=ymd(new Date());
+    return items.map(x=>{const n=(G[x.id]||[]).length,done=!!x.done||n>=nb;
+      return {...x,consumed:done,auto:!x.done&&n>=nb,played:n,st:done?"done":today<x.start?"soon":today<=x.end?"now":"late"}})}
   if(L){const from=parseYmd(L.start).getTime();
     const side=L.kind==="solo"?"names":"teams";
     (lastHist||[]).forEach(m=>{const t=m[side];if(!t||!t[0]||!t[1]||t[0]===t[1]||(m.end||0)<from)return;
@@ -2458,6 +2512,16 @@ function renderSched(){
 /* league table: wins / losses / points from approved matches between the league's entries during the league */
 function leagueResults(){
   const L=sched.league;if(!L||!Array.isArray(L.teams))return null;
+  if(leagueBoards(L)>1){
+    const G=groupFixtures(L,lastHist),R={};L.teams.forEach(e=>R[e]={n:e,g:0,w:0,l:0,d:0,st:0,sl:0,pf:0,pa:0,vs:{}});
+    sched.items.forEach(x=>{const ms=G[x.id]||[];if(!ms.length||!R[x.home]||!R[x.away])return;const t=fixtureTally(L,x,ms);
+      const H=R[x.home],A=R[x.away];H.st+=t.hw;H.sl+=t.aw;A.st+=t.aw;A.sl+=t.hw;H.pf+=t.hp;H.pa+=t.ap;A.pf+=t.ap;A.pa+=t.hp;
+      const res=t.winner===x.home?"w":t.winner===x.away?"l":null;
+      if(res){H.g++;A.g++;if(res==="w"){H.w++;A.l++}else{A.w++;H.l++}}
+      (H.vs[x.away]=H.vs[x.away]||[]).push({r:res||"p",a:t.hw,b:t.aw,fx:x});(A.vs[x.home]=A.vs[x.home]||[]).push({r:res==="w"?"l":res==="l"?"w":"p",a:t.aw,b:t.hw,fx:x})});
+    const rows=Object.values(R).sort((a,b)=>b.w-a.w||b.st-a.st||(b.pf-b.pa)-(a.pf-a.pa)||a.l-b.l||a.n.localeCompare(b.n));
+    return {L,ents:L.teams,rows,team3:true};
+  }
   const side=L.kind==="solo"?"names":"teams",ents=L.teams,set=new Set(ents);
   const from=parseYmd(L.start).getTime(),to=parseYmd(L.end).getTime()+864e5;
   const cap={};sched.items.forEach(x=>{const k=pairKey(x.home,x.away);cap[k]=(cap[k]||0)+1});
@@ -2467,7 +2531,7 @@ function leagueResults(){
     if((m.end||0)<from||(m.end||0)>=to)return;
     {const need=leagueFmtFor(L,m);if(need&&(m.fmt||"long")!==need)return}
     const k=pairKey(t[0],t[1]);if((used[k]||0)>=(cap[k]||0))return;used[k]=(used[k]||0)+1;
-    const sc=m.score||[0,0],res=sc[0]>sc[1]?0:sc[1]>sc[0]?1:-1;
+    const sc=m.score||[0,0],res=winnerOf(m);
     [0,1].forEach(i=>{const me=R[t[i]],op=t[1-i];me.g++;me.pf+=+sc[i]||0;me.pa+=+sc[1-i]||0;
       if(res===i)me.w++;else if(res===1-i)me.l++;else me.d++;
       (me.vs[op]=me.vs[op]||[]).push({r:res===-1?"d":res===i?"w":"l",a:+sc[i]||0,b:+sc[1-i]||0})})});
@@ -2478,6 +2542,7 @@ function renderLeagueTable(){
   const box=$("leagueTable"),res=leagueResults();
   if(!res||!res.ents.length){box.hidden=true;return}
   box.hidden=false;const solo=res.L.kind==="solo",me=solo?myName:myTeam();
+  if(res.team3){renderLeagueTable3(res,me);return}
   const st=$("ltStand");st.innerHTML=`<thead><tr><th>順位</th><th>${solo?"名前":"チーム"}</th><th>試合</th><th>勝</th><th>敗</th><th>得点</th><th>失点</th><th>差</th></tr></thead><tbody></tbody>`;
   const tb=st.querySelector("tbody");let prev=null,rank=0;
   res.rows.forEach((r,i)=>{const key=`${r.w}|${r.l}|${r.pf-r.pa}|${r.pf}`;if(key!==prev){rank=i+1;prev=key}
@@ -2502,6 +2567,88 @@ function renderLeagueTable(){
   const done=res.rows.reduce((n,r)=>n+r.g,0)/2;
   $("ltNote").textContent=`承認済みの ${done} 試合から作っています。○ 勝ち ● 負け（行の${solo?"人":"チーム"}から見た結果）。順位は勝ち数、負けの少なさ、得失点差の順です。`;
 }
+/* 3-vs-3 team league: standings by team wins, then total stars; tap a cross-table cell to score that team match */
+function renderLeagueTable3(res,me){
+  const st=$("ltStand");st.innerHTML=`<thead><tr><th>順位</th><th>チーム</th><th>節</th><th>勝</th><th>敗</th><th>勝ち星</th><th>得失点</th></tr></thead><tbody></tbody>`;
+  const tb=st.querySelector("tbody");let prev=null,rank=0;
+  res.rows.forEach((r,i)=>{const key=`${r.w}|${r.st}|${r.pf-r.pa}|${r.l}`;if(key!==prev){rank=i+1;prev=key}
+    const tr=document.createElement("tr");tr.className=(rank<=3&&r.g?"top"+rank:"")+(me&&r.n===me?" me":"");const df=r.pf-r.pa;
+    tr.innerHTML=`<td><span class="rk-n">${rank}</span></td><td></td><td>${r.g}</td><td class="w">${r.w}</td><td>${r.l}</td><td class="w">${r.st}</td><td>${df>0?"+"+df:df}</td>`;
+    tr.children[1].textContent=r.n;tb.appendChild(tr)});
+  const ord=res.rows.map(r=>r.n),by={};res.rows.forEach(r=>by[r.n]=r);
+  const xt=$("ltCross");xt.innerHTML="";
+  const hr=document.createElement("tr");hr.appendChild(document.createElement("th"));
+  ord.forEach(n=>{const th=document.createElement("th");th.textContent=n;hr.appendChild(th)});
+  const th=document.createElement("thead");th.appendChild(hr);xt.appendChild(th);const body=document.createElement("tbody");
+  ord.forEach(a=>{const tr=document.createElement("tr");const h=document.createElement("th");h.className="rowh";h.textContent=a;tr.appendChild(h);
+    ord.forEach(b=>{const td=document.createElement("td");
+      if(a===b){td.className="self";td.setAttribute("aria-label","同じチーム")}
+      else{const gs=by[a].vs[b]||[];
+        if(gs.length){const last=gs[gs.length-1];td.className=last.r==="w"?"win":last.r==="l"?"lose":"";
+          td.innerHTML=gs.map(g=>g.r==="w"?"○":g.r==="l"?"●":"…").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}
+        else{td.innerHTML=`<span class="xt-go">▶</span>`}
+        td.classList.add("tap");td.tabIndex=0;td.setAttribute("role","button");td.setAttribute("aria-label",`${a} 対 ${b} のチーム戦を開く`);
+        td.onclick=()=>openTeamMatch(a,b);td.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openTeamMatch(a,b)}}}
+      tr.appendChild(td)});body.appendChild(tr)});
+  xt.appendChild(body);
+  $("ltNote").textContent=`承認済みの試合から作っています。1節＝${leagueBoards(res.L)}試合で、${Math.floor(leagueBoards(res.L)/2)+1}勝したチームの勝ち（○ 勝ち ● 負け … 途中、数字は勝ち星）。順位はチームの勝ち数、Totalの勝ち星、得失点差の順です。マスをタップするとその対戦のスコアをつけられます。`;
+}
+function teamMembersOf(name){const t=roster.teams.find(x=>x.name===name);return t?t.members:[]}
+/* the 3-vs-3 sheet for a pair: the next unfinished fixture (or the last one) with each board's result or pickers */
+var tmOpen=null;
+function openTeamMatch(a,b){
+  const L=sched.league;if(!L)return;
+  const fx=[...sched.items].filter(x=>pairKey(x.home,x.away)===pairKey(a,b)).sort((p,q)=>p.round-q.round);
+  if(!fx.length){toast("この2チームの対戦は日程にありません");return}
+  const G=groupFixtures(L,lastAll),nb=leagueBoards(L);
+  const x=fx.find(x=>(G[x.id]||[]).length<nb&&!x.done)||fx[fx.length-1];
+  tmOpen={a,b,id:x.id};renderTeamMatch();
+}
+function renderTeamMatch(){
+  const box=$("tmSheet");if(!tmOpen){box.hidden=true;return}
+  const L=sched.league,x=L&&sched.items.find(i=>i.id===tmOpen.id);if(!x){tmOpen=null;box.hidden=true;return}
+  const nb=leagueBoards(L),ms=(groupFixtures(L,lastAll)[x.id]||[]),t=fixtureTally(L,x,ms);
+  const L0=tmOpen.a===x.away?x.away:x.home,R0=L0===x.home?x.away:x.home;   /* show the tapped row's team on the left */
+  const lw=L0===x.home?t.hw:t.aw,rw=L0===x.home?t.aw:t.hw;
+  box.hidden=false;
+  box.innerHTML=`<div class="tm-card" role="dialog" aria-modal="true" aria-labelledby="tmTitle">
+    <div class="tm-head"><div><p class="me-tag">第${x.round}節 ・ チーム戦 ${nb}対${nb}</p><h3 id="tmTitle"></h3></div><button type="button" class="ghost tm-x" aria-label="閉じる">×</button></div>
+    <div class="tm-score"><b class="l"></b><span><i>${lw}</i> − <i>${rw}</i></span><b class="r"></b></div>
+    <p class="tm-res"></p><div class="tm-boards"></div><p class="hint">勝ち星は承認待ちの試合も含めて表示しています。リーグ表には承認された試合だけが入ります。</p></div>`;
+  box.querySelector("#tmTitle").textContent=`${L0} 対 ${R0}`;
+  box.querySelector(".tm-score .l").textContent=L0;box.querySelector(".tm-score .r").textContent=R0;
+  box.querySelector(".tm-res").textContent=t.winner?`${t.winner} の勝ち（${Math.floor(nb/2)+1}勝）`+(t.complete?"":"・残りの試合もTotalの勝ち星に入ります"):t.n?`${t.n}試合終了・あと${nb-t.n}試合`:`まだ試合がありません。下から1試合ずつスコアをつけてください`;
+  if(t.winner)box.querySelector(".tm-res").classList.add("done");
+  box.querySelector(".tm-x").onclick=()=>{tmOpen=null;renderTeamMatch()};
+  box.onclick=e=>{if(e.target===box){tmOpen=null;renderTeamMatch()}};
+  const side=L.kind==="solo"?"names":"teams",bd=box.querySelector(".tm-boards");
+  const used=new Set(ms.flatMap(m=>m.names));
+  for(let k=0;k<nb;k++){
+    const row=document.createElement("div");row.className="tm-row";
+    const lab=document.createElement("span");lab.className="tm-n";lab.textContent=`${k+1}`;row.appendChild(lab);
+    const m=ms[k];
+    if(m){const li=m[side][0]===L0?0:1,w=winnerOf(m),sc=m.score||[0,0];
+      row.classList.add("played");
+      row.insertAdjacentHTML("beforeend",`<span class="tm-p l"></span><span class="tm-sc"></span><span class="tm-p r"></span>`);
+      const pl=row.querySelector(".tm-p.l"),pr=row.querySelector(".tm-p.r");pl.textContent=m.names[li];pr.textContent=m.names[1-li];
+      if(w===li)pl.classList.add("win");else if(w===1-li)pr.classList.add("win");
+      row.querySelector(".tm-sc").textContent=`${sc[li]}-${sc[1-li]}`+(m.status==="pending"?" 承認待ち":"");}
+    else{
+      const mk=(team,cls)=>{const s=document.createElement("select");s.className="tm-sel "+cls;s.setAttribute("aria-label",`${team} の${k+1}人目`);
+        const o0=document.createElement("option");o0.value="";o0.textContent="選ぶ";s.appendChild(o0);
+        teamMembersOf(team).filter(n=>!used.has(n)).forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent=n;s.appendChild(o)});
+        const o1=document.createElement("option");o1.value=OTHER;o1.textContent="その他";s.appendChild(o1);return s};
+      const sl=mk(L0,"l"),sr=mk(R0,"r");row.appendChild(sl);const vs=document.createElement("i");vs.textContent="vs";row.appendChild(vs);row.appendChild(sr);
+      const go=document.createElement("button");go.type="button";go.className="primary tm-go";go.textContent="スコア ▶";
+      go.onclick=()=>{const pick=s=>s.value===OTHER?(prompt("名前を入れてください")||"").trim():s.value;
+        const nl=pick(sl),nr=pick(sr);if(!nl||!nr){toast("両チームの出場する人を選んでください");return}
+        tmOpen=null;renderTeamMatch();
+        startFixture(x,{[L0]:nl,[R0]:nr},k+1)};
+      row.appendChild(go);
+    }
+    bd.appendChild(row);
+  }
+}
 /* ---- start a league fixture: game, format, teams/names filled in; format locked to the league's ---- */
 var leagueCtx=null;
 const FMT_LABEL={long:"ロング",middle:"ミドル",short:"ショート"};
@@ -2513,16 +2660,18 @@ function setPick(i,team,name){
     $("n"+i+"x").hidden=ns.value!==OTHER;syncNames()}
 }
 function teamOf(n){const t=roster.teams.find(t=>t.members.includes(n));return t?t.name:""}
-function startFixture(x){
+function startFixture(x,names,board){
   const L=sched.league;if(!L)return;
-  tourCtx=null;leagueCtx={id:x.id,round:x.round,home:x.home,away:x.away,fmt:leagueNowFmt(L),kind:L.kind||"team"};
+  if(!names&&leagueBoards(L)>1){openTeamMatch(x.home,x.away);return}
+  tourCtx=null;leagueCtx={id:x.id,round:x.round,home:x.home,away:x.away,fmt:leagueNowFmt(L),kind:L.kind||"team",board:board||null};
   showPage("match");
   const g9=$("gameSeg").querySelector('[data-v="9"]');if(cfg.game!=="9"&&g9)g9.click();
   cfg.fmt=leagueCtx.fmt;
   if(leagueCtx.kind==="solo"){setPick(1,teamOf(x.home),x.home);setPick(2,teamOf(x.away),x.away)}
-  else{setPick(1,x.home,null);setPick(2,x.away,null)}
+  else{setPick(1,x.home,names?names[x.home]:null);setPick(2,x.away,names?names[x.away]:null)}
   $("hcAuto").checked=true;updateHandicap();renderLeagueBanner();
   window.scrollTo(0,0);
+  if(names){toast(`${board?board+"試合目：":""}組み合わせを入れました。「試合開始」を押してください`);return}
   toast(leagueCtx.kind==="solo"?"組み合わせを入れました。「試合開始」を押してください":"出場する人をそれぞれ選んで「試合開始」を押してください");
 }
 /* ---- start a tournament match from the bracket: names, game and length filled in; the result goes back to the bracket ---- */
@@ -2563,7 +2712,7 @@ function renderLeagueBanner(){
   $("lgCancel").textContent="リーグ戦をやめる";
   if(!leagueCtx){b.hidden=true;$("fmtSeg").querySelectorAll("button").forEach(x=>x.disabled=false);return}
   b.hidden=false;
-  $("lgBannerTitle").textContent=`リーグ戦 第${leagueCtx.round}節：${leagueCtx.home} 対 ${leagueCtx.away}`;
+  $("lgBannerTitle").textContent=`リーグ戦 第${leagueCtx.round}節${leagueCtx.board?`・${leagueCtx.board}試合目`:""}：${leagueCtx.home} 対 ${leagueCtx.away}`;
   $("lgBannerSub").textContent=`試合形式は ${FMT_LABEL[leagueCtx.fmt]} に決まっています。`+(leagueCtx.kind==="solo"?"":"出場する人を選んでください。");
   $("fmtSeg").querySelectorAll("button").forEach(x=>x.disabled=true);
 }
