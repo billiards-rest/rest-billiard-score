@@ -2660,11 +2660,11 @@ function renderLeagueTable(){
       else{const gs=by[a].vs[b]||[];
         if(!gs.length){td.textContent="−";td.style.color="var(--muted)"}
         else{const last=gs[gs.length-1];td.className=last.r==="w"?"win":last.r==="l"?"lose":"";
-          td.innerHTML=gs.map(g=>g.r==="w"?"○":g.r==="l"?"●":"△").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}}
+          td.innerHTML=gs.map(g=>g.r==="w"?"○":g.r==="l"?"✖":"△").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}}
       tr.appendChild(td)});body.appendChild(tr)});
   xt.appendChild(body);
   const done=res.rows.reduce((n,r)=>n+r.g,0)/2;
-  $("ltNote").textContent=`承認済みの ${done} 試合から作っています。○ 勝ち ● 負け（行の${solo?"人":"チーム"}から見た結果）。順位は勝ち数、負けの少なさ、得失点差の順です。`;
+  $("ltNote").textContent=`承認済みの ${done} 試合から作っています。○ 勝ち ✖ 負け（行の${solo?"人":"チーム"}から見た結果）。順位は勝ち数、負けの少なさ、得失点差の順です。`;
 }
 /* 3-vs-3 team league: standings by team wins, then total stars; tap a cross-table cell to score that team match */
 function renderLeagueTable3(res,me){
@@ -2684,13 +2684,13 @@ function renderLeagueTable3(res,me){
       if(a===b){td.className="self";td.setAttribute("aria-label","同じチーム")}
       else{const gs=by[a].vs[b]||[];
         if(gs.length){const last=gs[gs.length-1];td.className=last.r==="w"?"win":last.r==="l"?"lose":"";
-          td.innerHTML=gs.map(g=>g.r==="w"?"○":g.r==="l"?"●":"…").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}
+          td.innerHTML=gs.map(g=>g.r==="w"?"○":g.r==="l"?"✖":"…").join("")+`<small>${gs.map(g=>`${g.a}-${g.b}`).join(" / ")}</small>`}
         else{td.innerHTML=`<span class="xt-go">▶</span>`}
         td.classList.add("tap");td.tabIndex=0;td.setAttribute("role","button");td.setAttribute("aria-label",`${a} 対 ${b} のチーム戦を開く`);
         td.onclick=()=>openTeamMatch(a,b);td.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openTeamMatch(a,b)}}}
       tr.appendChild(td)});body.appendChild(tr)});
   xt.appendChild(body);
-  $("ltNote").textContent=`承認済みの試合から作っています。1節＝${leagueBoards(res.L)}試合で、${Math.floor(leagueBoards(res.L)/2)+1}勝したチームの勝ち（○ 勝ち ● 負け … 途中、数字は勝ち星）。順位はチームの勝ち数、Totalの勝ち星、得失点差の順です。マスをタップするとその対戦のスコアをつけられます。`;
+  $("ltNote").textContent=`承認済みの試合から作っています。1節＝${leagueBoards(res.L)}試合で、${Math.floor(leagueBoards(res.L)/2)+1}勝したチームの勝ち（○ 勝ち ✖ 負け … 途中、数字は勝ち星）。順位はチームの勝ち数、Totalの勝ち星、得失点差の順です。マスをタップするとその対戦のスコアをつけられます。`;
 }
 function teamMembersOf(name){const t=roster.teams.find(x=>x.name===name);return t?t.members:[]}
 /* the 3-vs-3 sheet for a pair: the next unfinished fixture (or the last one) with each board's result or pickers */
