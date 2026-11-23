@@ -1249,6 +1249,11 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <div class="row"><button class="primary" type="button" id="leSave">保存する</button><button class="ghost" type="button" id="leNew">新しいシーズンとして受付を始める</button></div>
     <div class="row"><button class="primary" type="button" id="leToLeague" hidden>エントリーしたチームでリーグを組む</button></div>
     <p class="hint" id="leMsg"></p>
+    <h3 class="lt-sub">告知をLINEで送る</h3>
+    <div class="seg small" id="leAnnSeg" role="group" aria-label="告知文の長さ"><button type="button" data-v="long" aria-pressed="true">ド派手に</button><button type="button" data-v="short" aria-pressed="false">短めに</button></div>
+    <textarea id="leAnn" rows="10" aria-label="LINEに送る告知文" style="width:100%;box-sizing:border-box;margin-top:8px;font-size:14px;line-height:1.6"></textarea>
+    <div class="row"><button class="primary" type="button" id="leAnnLine">LINEで送る</button><button class="ghost" type="button" id="leAnnCopy">文面をコピー</button></div>
+    <p class="hint">「LINEで送る」を押すとLINEが開くので、送り先のグループを選んでください。文面はここで直せます。</p>
   </section>
   <section class="sheet" aria-labelledby="h-sa">
     <h2 id="h-sa">リーグ戦を組む</h2>
@@ -3294,6 +3299,12 @@ function saveLeCfg(fresh){
   renderLeagueEntry();
 }
 $("leSave").onclick=()=>saveLeCfg(false);
+/* ready-made announcement for the shop's LINE group */
+const LE_ANN={long:"🔥🔥🔥 お待たせしました 🔥🔥🔥\n\nビリヤードREST\n遂に『TEAM LEAGUE』始動‼️\n\n3人で、頂点へ。🎱\n\nRESTオリジナルのレートとハンデで、\nだれと組んでも、どのチームとも互角に戦える\n3人1組のチーム対抗・総当たりリーグが\n2027年、いよいよ開幕します‼️\n\n━━━━━━━━━━━━\n🏆 豪華賞品をかけた熱い戦い！\n優勝・準優勝・3位・MVP賞・レディース賞 など\n✨参加チームが多いほど景品が豪華に✨\n🎁 入賞できなかったチーム限定の抽選会も予定！\n\n📱 アプリ内レーティングにも反映！勲章ももらえる！\n━━━━━━━━━━━━\n\n⚔️ 戦い方\n・3対3で1試合ずつ、2勝以上でチームの勝ち\n・順位は「チームの勝ち数」→「Totalの勝ち星」→「得失点差」\n・毎週消化などの縛りなし！対戦チームと都合を合わせて好きな日にOK\n（極端に早い・遅い消化はご遠慮ください🙏）\n\n🌌 2027年は年3シーズン（シーズンごとに違う種目で！）\nSEASON1 ORION（1〜3月）\nSEASON2 SCORPIO（5〜7月）\nSEASON3 PEGASUS（9〜11月）\n\n💰 参加費\n1試合につき ゲーム代＋積み立て費￥500\n※途中棄権の場合、残り試合分の積み立て費をお支払いいただく場合があります\n\n📝 エントリー\nチーム名と3人の名前を、アプリ内・LINE・店頭で！\n⏰ 初回エントリーの締め切りは年内（12月31日）まで‼️\n\n仲間を誘って、今すぐチーム結成だ🔥\nたくさんのエントリーお待ちしています！\n\nビリヤードREST",short:"【遂に始動‼️ REST TEAM LEAGUE】🎱🔥\n\n3人1組のチーム対抗・総当たりリーグが、2027年1月から開幕！\nRESTオリジナルのレートとハンデで、だれと組んでも互角に戦えます💪\n\n🏆 優勝・準優勝・3位・MVP賞・レディース賞など豪華賞品！\n（参加チームが多いほど豪華に✨ 入賞できなかったチーム限定の抽選会も！）\n📱 アプリ内レーティングに反映・勲章ももらえる\n\n・3対3、2勝以上でチームの勝ち\n・日程は対戦チームと相談して自由に\n・年3シーズン（ORION／SCORPIO／PEGASUS）シーズンごとに違う種目で\n・1試合につき ゲーム代＋積み立て費￥500\n\n📝 チーム名と3人の名前を、アプリ内・LINE・店頭で\n⏰ 初回の締め切りは12月31日まで！\n\n仲間を誘ってエントリーお待ちしています🔥"};
+$("leAnn").value=LE_ANN.long;
+$("leAnnSeg").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("leAnnSeg").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("leAnn").value=LE_ANN[b.dataset.v]});
+$("leAnnLine").onclick=()=>{location.href="https://line.me/R/share?text="+encodeURIComponent($("leAnn").value)};
+$("leAnnCopy").onclick=()=>{const t=$("leAnn").value;try{navigator.clipboard.writeText(t).then(()=>toast("コピーしました"),()=>{$("leAnn").select();toast("文面を選択しました。コピーしてください")})}catch(e){$("leAnn").select()}};
 $("leNew").onclick=()=>{$("leOpen").checked=true;saveLeCfg(true)};
 /* entered teams -> roster teams/members + the league form */
 $("leToLeague").onclick=()=>{
