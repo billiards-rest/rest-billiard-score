@@ -631,6 +631,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
 .primary{background:var(--felt);color:#fff;border:0;border-radius:12px;padding:14px 20px;font-weight:700;font-size:17px}
 .admin-box{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
 .admin-box .ghost{font-size:13px}
+.home-admin{margin:28px 4px 8px;align-items:center;text-align:center}.home-admin .hint{margin:0;font-size:12px}
 .ghost{background:transparent;border:1px solid var(--line);border-radius:10px;padding:8px 14px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
@@ -1045,6 +1046,10 @@ img,svg{-webkit-user-drag:none;user-drag:none}
       <button class="ghost" id="resumeBtn" type="button" hidden>続きから再開</button>
     </div>
   </section>
+  <div class="admin-box home-admin" id="adminBox2" hidden>
+   <p class="hint" id="adminState2"></p>
+   <button class="ghost" type="button" id="adminBtn2">管理者ログイン</button>
+  </div>
  </div>
 
  <div class="page" data-page="sched" id="pageSched" hidden>
@@ -4435,8 +4440,10 @@ $("pushLocal").onclick=async()=>{
   $("pushLocal").disabled=false;renderHistory();
 };
 function renderAdmin(){
-  const A=window.restAdmin;if(!A||!db){$("adminBox").hidden=true;return}
-  $("adminBox").hidden=false;
+  const A=window.restAdmin;if(!A||!db){$("adminBox").hidden=true;$("adminBox2").hidden=true;return}
+  $("adminBox").hidden=false;$("adminBox2").hidden=false;
+  $("adminState2").textContent=isOwner?`管理者としてログイン中（${A.email()}）`:"お店の管理者はここからログインします。";
+  $("adminBtn2").textContent=isOwner?"管理者ログアウト":"管理者ログイン";
   $("adminState").textContent=isOwner?`管理者としてログイン中（${A.email()}）。設定の変更と履歴の消去ができます。`:"設定の変更と履歴の消去は、管理者だけができます。";
   $("adminBtn").textContent=isOwner?"管理者ログアウト":"管理者ログイン";
 }
@@ -4445,7 +4452,7 @@ $("awGive").onclick=()=>{const k=$("awKind").value;if(k==="special"&&!$("awTitle
   if(giveAward($("awName").value,k,$("awDetail").value.trim(),k==="special"?$("awTitle").value.trim():"")){$("awDetail").value="";$("awTitle").value=""}};
 $("ratedLeagueIn").addEventListener("change",e=>{ratedCfg={...ratedCfg,league:e.target.checked,off:[]};saveRated();renderHistory();
   toast(e.target.checked?"リーグ戦の試合をレートに反映します":"リーグ戦の試合の自動反映をやめました")});
-$("adminBtn").onclick=async()=>{
+$("adminBtn").onclick=$("adminBtn2").onclick=async()=>{
   const A=window.restAdmin;if(!A)return;
   try{if(isOwner)await A.signOut();else await A.signIn()}
   catch(e){toast(e&&e.message==="not_owner"?"このアカウントは管理者ではありません":"ログインできませんでした")}
