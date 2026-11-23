@@ -225,6 +225,12 @@ button{cursor:pointer}
 .en-chip{display:inline-flex;flex-direction:row;align-items:center;height:38px;box-sizing:border-box;white-space:nowrap;color:var(--ink,inherit);gap:4px;padding:4px 6px 4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-weight:700;font-size:14px;max-width:100%}
 .en-chip.mine{border-color:var(--cue);background:color-mix(in srgb,var(--cue) 10%,transparent)}
 .en-chip .cls .medal{width:16px;height:22px}.en-chip .cls b{font-size:11px}
+.le-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.le-team{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
+.le-team.mine{border-color:var(--cue);background:color-mix(in srgb,var(--cue) 10%,transparent)}
+.le-team b{flex:none;font-size:15px}.le-team span{flex:1;min-width:0;font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.le-form{display:grid;gap:8px}.le-mem{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.le-form input{min-width:0;width:100%;box-sizing:border-box}
 .en-x{border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;width:28px;height:28px;border-radius:50%;cursor:pointer}
 .en-x:hover{background:color-mix(in srgb,var(--red) 12%,transparent);color:var(--red)}
 .en-form{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -975,6 +981,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </header>
 
   <section class="sheet entry-card" id="entryCard" aria-label="大会エントリー" hidden></section>
+  <section class="sheet entry-card" id="leCard" aria-label="チームリーグのエントリー" hidden></section>
 
   <section class="sheet" aria-labelledby="h-new">
     <h2 id="h-new">新しい試合</h2>
@@ -1047,6 +1054,7 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     <button type="button" data-v="tour" aria-pressed="false">トーナメント</button>
   </div>
   <div id="leagueView" class="page">
+  <section class="sheet entry-card" id="leCard2" aria-label="チームリーグのエントリー" hidden></section>
   <div class="seg small" id="schedFilter" role="group" aria-label="チームで絞り込む"></div>
   <section class="next-card" id="schedNext" aria-label="次の対戦" hidden></section>
   <section class="sheet league-sum" id="schedSum" aria-label="リーグの進み具合" hidden></section>
@@ -1230,6 +1238,19 @@ img,svg{-webkit-user-drag:none;user-drag:none}
   </section>
 
   <section class="sheet" id="schedAdmin" aria-labelledby="h-sa">
+    <h2 id="h-le">チームリーグのエントリー受付</h2>
+    <p class="hint">受付を始めると、みんなのアプリの「試合」タブと「日程」にチームでエントリーするボタンが出ます（チーム名＋3人）。締め切り日を過ぎると自動で受付終了になります。</p>
+    <div class="grid2">
+      <div class="field"><label for="leName">シーズン名</label><input id="leName" maxlength="40" autocomplete="off" value="2027 SEASON 1 ORION"></div>
+      <div class="field"><label for="leDead">締め切り</label><input id="leDead" type="date" value="2026-12-31"></div>
+    </div>
+    <div class="field"><label for="leNote">ひとこと（任意）</label><input id="leNote" maxlength="60" autocomplete="off" value="1〜3月 ・ 3人1組 ・ 1試合につきゲーム代＋積み立て費￥500"></div>
+    <label class="hc-toggle" for="leOpen"><input type="checkbox" id="leOpen" checked><span>エントリーを受け付ける</span></label>
+    <div class="row"><button class="primary" type="button" id="leSave">保存する</button><button class="ghost" type="button" id="leNew">新しいシーズンとして受付を始める</button></div>
+    <div class="row"><button class="primary" type="button" id="leToLeague" hidden>エントリーしたチームでリーグを組む</button></div>
+    <p class="hint" id="leMsg"></p>
+  </section>
+  <section class="sheet" aria-labelledby="h-sa">
     <h2 id="h-sa">リーグ戦を組む</h2>
     <div class="field"><label>参加の単位</label>
       <div class="seg" id="gKind" role="group" aria-label="リーグの参加の単位">
@@ -3149,6 +3170,7 @@ function cancelEntry(e){
   else{entries=entries.filter(x=>x.id!==e.id);store.set("cb_entries",entries);renderEntry()}
 }
 function renderEntry(){
+  try{renderLeagueEntry()}catch(e){}
   const L=entryList(),members=entryMembers();
   ["entryCard","entryCard2"].forEach(cid=>{
     const el=$(cid);if(!el)return;el.innerHTML="";
@@ -3193,6 +3215,90 @@ function renderEntry(){
   });
   renderEntryAdmin();
 }
+/* ---- team league entry: a team name + 3 players, stored in the same entries collection (kind:"team") ---- */
+var leCfg=store.get("cb_lecfg",null),leDb=null;
+function leList(){return leCfg?entries.filter(e=>e&&e.kind==="team"&&e.eid===leCfg.id&&e.team).sort((a,b)=>(a.at||0)-(b.at||0)):[]}
+function leOpen(){if(!leCfg||!leCfg.open)return false;if(leCfg.dead&&ymd(new Date())>leCfg.dead)return false;return true}
+function addTeamEntry(team,mem){
+  team=(team||"").trim();mem=mem.map(x=>(x||"").trim());
+  if(!leOpen()){toast("今はエントリーを受け付けていません");return false}
+  if(!team){toast("チーム名を入れてください");return false}
+  if(mem.some(x=>!x)){toast("3人の名前を入れてください");return false}
+  if(new Set(mem).size<3){toast("同じ名前が入っています");return false}
+  const L=leList();
+  if(L.some(e=>e.team===team)){toast(`「${team}」はすでにエントリーされています`);return false}
+  const dup=mem.find(n=>L.some(e=>(e.members||[]).includes(n)));if(dup){toast(`${dup} さんは別のチームでエントリー済みです`);return false}
+  const rec={id:newId(),kind:"team",eid:leCfg.id,team,members:mem,at:Date.now(),uid:myId||null,by:myName||null};
+  if(entryCol){entryCol.doc(rec.id).set(rec).then(()=>toast(`「${team}」のエントリーを受け付けました`)).catch(()=>toast("エントリーできませんでした。通信を確認するか、お店に伝えてください"))}
+  else{entries=[...entries,rec];store.set("cb_entries",entries);toast(`「${team}」のエントリーを受け付けました`)}
+  renderLeagueEntry();return true;
+}
+function cancelTeamEntry(e){
+  if(entryCol){entryCol.doc(e.id).delete().then(()=>toast(`「${e.team}」のエントリーを取り消しました`)).catch(()=>toast("取り消せませんでした"))}
+  else{entries=entries.filter(x=>x.id!==e.id);store.set("cb_entries",entries);renderLeagueEntry()}
+}
+function renderLeagueEntry(){
+  const L=leList(),open=leOpen(),admin=!$("openSettings").hidden;
+  ["leCard","leCard2"].forEach(cid=>{
+    const el=$(cid);if(!el)return;el.innerHTML="";
+    if(!leCfg||!leCfg.name){el.hidden=true;return}
+    el.hidden=false;
+    const top=document.createElement("div");top.className="en-top";
+    top.innerHTML=`<span class="en-tag${open?"":" closed"}"></span><span class="en-tag game">チームリーグ 3人1組</span>`;
+    top.querySelector(".en-tag").textContent=open?"エントリー受付中":"受付終了";el.appendChild(top);
+    const h=document.createElement("div");h.className="en-name";h.setAttribute("role","heading");h.setAttribute("aria-level","2");h.textContent=leCfg.name;el.appendChild(h);
+    const meta=document.createElement("div");meta.className="en-meta";
+    const dl=leCfg.dead?parseYmd(leCfg.dead):null;
+    meta.textContent=[dl&&`締め切り ${dl.getMonth()+1}月${dl.getDate()}日`,leCfg.note].filter(Boolean).join(" ・ ");if(meta.textContent)el.appendChild(meta);
+    const cnt=document.createElement("div");cnt.className="en-count";cnt.textContent=`エントリー ${L.length}チーム`;el.appendChild(cnt);
+    if(L.length){const ul=document.createElement("ul");ul.className="le-list";
+      L.forEach(e=>{const li=document.createElement("li");li.className="le-team"+((e.members||[]).includes(myName)?" mine":"");
+        li.innerHTML=`<b></b><span></span>`;li.querySelector("b").textContent=e.team;li.querySelector("span").textContent=(e.members||[]).join("・");
+        if(admin||canCancelEntry(e)){const x=document.createElement("button");x.type="button";x.className="en-x";x.textContent="×";x.setAttribute("aria-label",`「${e.team}」のエントリーを取り消す`);
+          x.onclick=()=>{if(x.dataset.armed){cancelTeamEntry(e)}else{x.dataset.armed="1";x.textContent="取消?";x.style.width="auto";setTimeout(()=>{if(x.isConnected){delete x.dataset.armed;x.textContent="×";x.style.width=""}},3000)}};li.appendChild(x)}
+        ul.appendChild(li)});el.appendChild(ul)}
+    if(!open)return;
+    const used=new Set(L.flatMap(e=>e.members||[]));
+    const dlId=cid+"Names";const datal=document.createElement("datalist");datal.id=dlId;
+    knownNames().filter(n=>!used.has(n)).forEach(n=>{const o=document.createElement("option");o.value=n;datal.appendChild(o)});
+    const f=document.createElement("form");f.className="le-form";
+    f.innerHTML=`<input class="le-team-in" maxlength="20" autocomplete="off" placeholder="チーム名" aria-label="チーム名">
+      <div class="le-mem">${[1,2,3].map(i=>`<input maxlength="16" autocomplete="off" list="${dlId}" placeholder="${i}人目" aria-label="${i}人目の名前">`).join("")}</div>
+      <button type="submit" class="primary">チームでエントリーする</button>`;
+    f.appendChild(datal);
+    const mi=f.querySelectorAll(".le-mem input");if(myName&&!used.has(myName))mi[0].value=myName;
+    f.onsubmit=ev=>{ev.preventDefault();if(addTeamEntry(f.querySelector(".le-team-in").value,[...mi].map(i=>i.value))){f.reset()}};
+    el.appendChild(f);
+    const hn=document.createElement("p");hn.className="hint";hn.textContent="3人のうちだれか1人がエントリーすればOK。レートがまだない人は、お店で最初のレートを決めます。";el.appendChild(hn);
+  });
+  renderLeagueEntryAdmin();
+}
+function renderLeagueEntryAdmin(){
+  if(!$("leSave"))return;
+  if(leCfg&&document.activeElement&&!document.activeElement.closest("#leSave,#leName,#leDead,#leNote,#leOpen")){$("leName").value=leCfg.name||"";$("leDead").value=leCfg.dead||"";$("leNote").value=leCfg.note||"";$("leOpen").checked=!!leCfg.open}
+  const L=leList();$("leToLeague").hidden=!L.length;$("leToLeague").textContent=`エントリーした ${L.length}チームでリーグを組む`;
+}
+function saveLeCfg(fresh){
+  const name=$("leName").value.trim();if(!name){$("leMsg").textContent="シーズン名を入れてください";return}
+  leCfg={id:fresh||!leCfg?newId():leCfg.id,name,dead:$("leDead").value||"",note:$("leNote").value.trim(),open:$("leOpen").checked,at:Date.now()};
+  store.set("cb_lecfg",leCfg);
+  if(leDb)leDb.set(leCfg).then(()=>toast(fresh?"新しいシーズンの受付を始めました":"保存しました")).catch(()=>toast("保存できませんでした"));
+  renderLeagueEntry();
+}
+$("leSave").onclick=()=>saveLeCfg(false);
+$("leNew").onclick=()=>{$("leOpen").checked=true;saveLeCfg(true)};
+/* entered teams -> roster teams/members + the league form */
+$("leToLeague").onclick=()=>{
+  const L=leList();if(!L.length)return;
+  L.forEach(e=>{let t=roster.teams.find(x=>x.name===e.team);if(!t){t={name:e.team,members:[]};roster.teams.push(t)}
+    (e.members||[]).forEach(m=>{roster.teams.forEach(o=>{if(o!==t)o.members=o.members.filter(x=>x!==m)});roster.solo=(roster.solo||[]).filter(x=>x!==m);if(!t.members.includes(m))t.members.push(m)})});
+  saveRoster();renderRoster();renderPickers();
+  const kb=$("gKind").querySelector('[data-v="team"]');kb&&kb.click();
+  $("gTeams").value=L.map(e=>e.team).join("\n");$("gBoards").value="3";
+  if(leCfg&&/^\d{4}/.test(leCfg.name)){}
+  renderPlan();$("gTeams").scrollIntoView({behavior:"smooth",block:"center"});
+  $("leMsg").textContent=`${L.length}チームと3人ずつのメンバーを登録して、「リーグ戦を組む」に入れました。開始日と期間を確かめて「この内容でリーグを作る」を押してください。`;
+};
 /* when the entry is closed, the entrants go straight into "トーナメントを作る" (unless the admin typed their own list) */
 var tManual=false;
 function entryToTour(force){
@@ -4351,6 +4457,8 @@ $("adminBtn").onclick=async()=>{
   },()=>{});
   appCfgDb=db.doc("config/app");
   appCfgDb.onSnapshot(sn=>{if(sn.exists){const d=sn.data()||{};store.set("cb_appcfg",{shotBase:d.shotBase,shotEx:d.shotEx,chessMin:d.chessMin,chessOn:d.chessOn});scApplyCfg(d.shotBase,d.shotEx,false);ccApplyCfg(d.chessMin||30,d.chessOn!==false,false)}},()=>{});
+  leDb=db.doc("config/leagueEntry");
+  leDb.onSnapshot(sn=>{leCfg=sn.exists?sn.data()||null:null;if(leCfg&&!leCfg.id)leCfg=null;store.set("cb_lecfg",leCfg);renderLeagueEntry()},()=>{});
   entryDb=db.doc("config/entry");
   entryDb.onSnapshot(sn=>{entryCfg=sn.exists?sn.data()||null:null;if(entryCfg&&!entryCfg.id)entryCfg=null;store.set("cb_entrycfg",entryCfg);renderEntry()},()=>{});
   entryCol=db.collection("entries");
