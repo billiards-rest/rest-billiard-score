@@ -1472,7 +1472,15 @@ img,svg{-webkit-user-drag:none;user-drag:none}
     email: () => (authUser && authUser.email) || "",
     async signIn() {
       if (!auth) throw new Error("unavailable");
-      await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      const prov = new firebase.auth.GoogleAuthProvider();
+      prov.setCustomParameters({ login_hint: OWNER_EMAIL });
+      try { await auth.signInWithPopup(prov); }
+      catch (e) {
+        /* home-screen (standalone) apps often cannot open the Google popup: fall back to a full-page redirect */
+        const c = (e && e.code) || "";
+        if (/popup-blocked|operation-not-supported|web-storage-unsupported|popup-closed-by-user|cancelled-popup-request/.test(c) && !/closed-by-user/.test(c)) { await auth.signInWithRedirect(prov); return; }
+        throw e;
+      }
       if (!ownerNow()) { await auth.signOut(); throw new Error("not_owner"); }
       location.reload();
     },
