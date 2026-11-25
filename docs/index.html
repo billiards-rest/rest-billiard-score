@@ -1707,13 +1707,14 @@ function gameBtn(k,label,sub,ready){
     :`<span class="gsw-ball${ic[1]?" s":""}" style="--c:${ic[0]}">${ic[2]?`<i>${ic[2]}</i>`:""}</span>`;
   b.innerHTML=ball+`<span class="gsw-txt"><b></b><small></small></span>`;
   b.querySelector("b").textContent=label;b.querySelector("small").textContent=ready?sub:"準備中";
+  if(k==="3c"){b.querySelector("small").textContent="スコアボードを開く";b.dataset.open3c="1";b.setAttribute("aria-disabled","true");b.classList.remove("soon");b.title="スリークッションのスコアボードを開きます";return b}
   b.setAttribute("aria-pressed",k===cfg.game);
   if(!ready){b.setAttribute("aria-disabled","true");b.title=`${label}は準備中です`}
   return b;
 }
 Object.entries(GAMES).forEach(([k,g])=>gs.appendChild(gameBtn(k,g.label,GAME_SUB[k]||"",true)));
 SOON.filter(x=>!GAMES[x.k]).forEach(x=>gs.appendChild(gameBtn(x.k,x.label,x.sub,false)));
-gs.addEventListener("click",e=>{const b=e.target.closest("button.soon");if(b)toast(`${b.querySelector("b").textContent}は準備中です`)});
+gs.addEventListener("click",e=>{const o=e.target.closest("[data-open3c]");if(o){e.stopImmediatePropagation();location.href="3c.html";return}const b=e.target.closest("button.soon");if(b)toast(`${b.querySelector("b").textContent}は準備中です`)});
 seg(gs,"game",syncSetup);seg($("breakSeg"),"breakRule");seg($("firstSeg"),"first");
 function syncSetup(){
   const g=GAMES[cfg.game];
