@@ -373,7 +373,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
     </div>
     <div class="pp c1" id="pp1" role="button" aria-label="後攻に1点"></div>
     <div class="fxl" id="fx0"></div><div class="fxl" id="fx1"></div>
-    <div class="clk" id="clk" role="button" aria-label="ショットクロック（タップで一時停止）"><button class="mute" id="bMute" aria-label="音声のON/OFF"></button><button class="ss" id="bSS">STOP</button><span class="clab">SHOT<br>CLOCK</span><div class="segs" id="segs"></div><b class="num" id="clkN">40</b></div>
+    <div class="clk" id="clk" role="button" aria-label="ショットクロック（タップで一時停止）"><button class="mute" id="bMute" aria-label="ショットクロックの音声のON/OFF"></button><button class="ss" id="bSS">STOP</button><span class="clab">SHOT<br>CLOCK</span><div class="segs" id="segs"></div><b class="num" id="clkN">40</b></div>
     <div class="gs" id="gs"></div>
   </div>
 </section>
@@ -433,7 +433,8 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
         <p class="vnote">試合の記録はすべて自動で残ります。記録を消す・終わった試合を「Back」で戻す・台の固定や解除には、管理者の暗証番号が必要です。台の固定にも同じ暗証番号を使います。</p>
       </div></div>
       <div class="sgrp"><h3>読み上げ（英語）</h3><div class="sdark">
-        <label class="chk"><input type="checkbox" id="oVoice">読み上げる</label>
+        <label class="chk"><input type="checkbox" id="oVoice">得点を読み上げる</label>
+        <label class="chk"><input type="checkbox" id="oClkVoice">ショットクロックの音声（Ten seconds・Time）</label>
         <label>読み上げの声<select id="uVoiceSel"></select></label>
         <button type="button" class="lockbtn" id="bVoiceTest">声を試す</button>
         <p class="vnote" id="voiceNote" hidden>この端末（ブラウザ）には英語の読み上げ用の声が入っていません。このままだと日本語の声で読むか、音が出ない場合があります。<br>
@@ -687,7 +688,8 @@ let ctts=null,cdl=null;
 (async()=>{try{if(window.claude&&window.claude.use){cdl=await window.claude.use('downloads');const b=document.querySelectorAll('.csvb');b.forEach(x=>x.hidden=false)}}catch(e){}})();
 const CV={airy:'Claude（airy・やわらかい）',glassy:'Claude（glassy・すっきり）',buttery:'Claude（buttery・なめらか）',rounded:'Claude（rounded・まるい）'};
 const voiceChoice=()=>store.get('voiceName',ctts?'claude:airy':'');
-function say(t){t=String(t).replace(/\d+/g,m=>nw(+m));if(!voice)return;
+let clkVoice=store.get('clkVoice',true);
+function say(t,kind){t=String(t).replace(/\d+/g,m=>nw(+m));if(kind==='clock'?!clkVoice:!voice)return;
   const ch=voiceChoice();
   if(ctts&&ch.startsWith('claude:')){try{ctts.speak(t,{voice:ch.slice(7),language:'en',rate:1.05}).catch(e=>{if(e&&e.code==='not_granted'){ctts=null;fillVoices()}if(e&&(e.code==='not_granted'||e.code==='rate_limited'))sysSay(t)})}catch(e){sysSay(t)}return}
   sysSay(t)}
@@ -739,11 +741,11 @@ function tickClock(){const c=document.getElementById('clk');if(!c||!G)return;con
   
   const segs=document.getElementById('segs');if(segs.childElementCount!==L)segs.innerHTML='<i></i>'.repeat(L);
   const left=G.over?0:G.started===false?L:clockLeft();
-  if(left===10&&clkLast!==10&&G.started!==false&&!G.over&&!clkPaused&&L>10)say('Ten seconds');clkLast=left;
+  if(left===10&&clkLast!==10&&G.started!==false&&!G.over&&!clkPaused&&L>10)say('Ten seconds','clock');clkLast=left;
   if(left!==clkN){clkN=left;[...segs.children].forEach((e,k)=>e.classList.toggle('on',k>=L-left));document.getElementById('clkN').textContent=G.over?'–':left}
   const ss=document.getElementById('bSS');if(ss){const run=!clkPaused&&!G.over&&G.started!==false;ss.textContent=run?'STOP':'START';ss.classList.toggle('go',!run);ss.disabled=!!G.over}
   c.className='clk '+(G.over?'':left<=10?'r':left<=20?'y':'g')+(left===0&&!G.over?' zero':'')+(clkPaused?' paused':'');
-  if(left===0&&!G.over&&G.started!==false&&!clkTold&&!clkPaused){clkTold=true;say('Time')}
+  if(left===0&&!G.over&&G.started!==false&&!clkTold&&!clkPaused){clkTold=true;say('Time','clock')}
 }
 setInterval(tickClock,200);
 function acct(){const n=Date.now();G.p[G.turn].time=(G.p[G.turn].time||0)+(n-(G.turnStart||n));G.turnStart=n}
@@ -1031,11 +1033,12 @@ $('sClose').onclick=()=>$('mSheet').classList.remove('on');
 $('bMenu').onclick=()=>$('mMenu').classList.add('on');
 $('oVoice').checked=voice;
 const SPK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor"/>';
-function renderMute(){const b=$('bMute');b.classList.toggle('off',!voice);b.innerHTML=SPK+(voice?'<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>':'<path d="M16 9l5 6M21 9l-5 6"/></svg>');$('oVoice').checked=voice}
+function renderMute(){const b=$('bMute');b.classList.toggle('off',!clkVoice);b.title=clkVoice?'ショットクロックの音声 ON':'ショットクロックの音声 OFF';b.innerHTML=SPK+(clkVoice?'<path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>':'<path d="M16 9l5 6M21 9l-5 6"/></svg>');$('oVoice').checked=voice}
 renderMute();
-$('bMute').onclick=e=>{e.stopPropagation();voice=!voice;store.set('voice',voice);renderMute();if(voice)say('Voice on');else try{speechSynthesis.cancel()}catch(x){};toast(voice?'音声 ON':'音声 OFF')};
+$('bMute').onclick=e=>{e.stopPropagation();clkVoice=!clkVoice;store.set('clkVoice',clkVoice);renderMute();$('oClkVoice').checked=clkVoice;if(clkVoice)say('Ten seconds','clock');toast(clkVoice?'ショットクロックの音声 ON':'ショットクロックの音声 OFF（得点の読み上げはそのまま）')};
 $('uVoiceSel').onchange=e=>{store.set('voiceName',e.target.value);say('Nice run!')};
 $('bMenu').addEventListener('click',fillVoices);
+$('oClkVoice').checked=clkVoice;$('oClkVoice').onchange=e=>{clkVoice=e.target.checked;store.set('clkVoice',clkVoice);renderMute()};
 $('oVoice').onchange=e=>{voice=e.target.checked;store.set('voice',voice);renderMute();if(voice)say('Nice run!')};
 $('bVoiceTest').onclick=()=>{const was=voice;voice=true;say('Three points. Nice run!');voice=was};
 $('oClock').onchange=e=>{setup.clock=+e.target.value;store.set('setup2',setup);if(G&&!G.over){G.clock=setup.clock;save();resetClock()}};
