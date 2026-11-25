@@ -97,8 +97,8 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .gs td.off,.gs th.off{opacity:.3}
 .gs tr:last-child td{border-bottom:0}
 .wl{position:absolute;right:10px;top:6px;font-family:"Inter Tight";font-size:clamp(11px,min(2.2vh,1.3vw),18px);font-weight:800;letter-spacing:0;opacity:.75}
-.tap{position:absolute;left:0;right:0;bottom:calc(12% + 8px);text-align:center;font-size:12px;opacity:.55;font-weight:700}
-.mid{display:grid;grid-template-rows:minmax(0,1.15fr) minmax(0,.85fr) minmax(0,1.1fr);gap:8px;min-height:0}
+.tap{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-size:12px;opacity:.55;font-weight:700}
+.mid{display:grid;grid-template-rows:minmax(0,1.35fr) minmax(0,.8fr) minmax(0,1fr);gap:8px;min-height:0}
 .cell{border:2px solid var(--cy);border-radius:10px}
 .inn{background:var(--cream);color:var(--blk);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6px}
 .inn span{font-family:"Inter Tight";font-weight:800;font-size:clamp(15px,1.8vw,22px)}
@@ -119,6 +119,14 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .inn>b{font-size:clamp(44px,min(11vh,7.6vw),110px)!important;line-height:.9!important}
 .inn em{font-size:clamp(20px,min(5vh,3vw),44px)!important}
 .inn .tm{margin-top:auto!important}
+.inn{container-type:size}
+.inn .ibar span{font-size:clamp(10px,min(10cqh,7cqw),17px)!important;padding:1px 8px!important}
+.inn>span{font-size:clamp(10px,min(9cqh,11cqw),22px)!important;line-height:1.1}
+.inn>b{font-size:clamp(26px,min(40cqh,55cqw),120px)!important}
+.inn em{font-size:clamp(13px,min(14cqh,20cqw),48px)!important}
+.inn .tm{margin-top:auto!important;padding-top:2px!important}
+.inn .tm b{font-size:clamp(13px,min(12cqh,18cqw),40px)!important}
+.inn .tm small{font-size:clamp(9px,min(6cqh,8cqw),15px)!important}
 .dt2{position:absolute;top:0;right:0;background:var(--blk);color:#fff;border-radius:0 6px 0 8px;padding:2px 10px;font-family:"Inter Tight","Zen Kaku Gothic New";font-weight:800;font-size:clamp(12px,1.4vw,17px)!important}
 .swaps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;min-height:0}
 .sw{background:#000;color:#fff;border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:0}
