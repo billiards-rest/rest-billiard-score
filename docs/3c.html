@@ -113,6 +113,8 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .ink{display:inline-block;white-space:nowrap}
 .inn b .ink{font-size:inherit!important;font-family:inherit!important;font-weight:inherit!important}
 .swaps[hidden],.end[hidden]{display:none!important}
+.end.fin{background:var(--r);border-color:var(--r);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:"Zen Kaku Gothic New";font-weight:900;font-size:clamp(18px,2.2vw,28px);animation:clkPulse .8s ease-in-out infinite alternate}
+.end.fin small{font-size:.5em;font-weight:700;opacity:.85}
 .inn{padding:0 6px 6px!important;justify-content:flex-start!important;overflow:hidden}
 .ibar{display:flex;justify-content:space-between;width:calc(100% + 12px);margin:0 -6px 2px}
 .ibar .tno,.ibar .dt2{position:static!important;margin:0!important}
@@ -529,7 +531,7 @@ setInterval(()=>{const e=document.getElementById('iTime');if(e&&G){e.textContent
 
 function show(v){for(const s of document.querySelectorAll('.view'))s.classList.toggle('on',s.id===v);document.body.classList.toggle('playing',v==='vGame');for(const t of document.querySelectorAll('.tab'))t.classList.toggle('on',t.dataset.tab===v||(t.dataset.tab==='vSetup'&&(v==='vResult')));window.scrollTo(0,0)}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
-function ask(title,text,ok){$('mTitle').textContent=title;$('mText').textContent=text;$('modal').classList.add('on');$('mOk').onclick=()=>{$('modal').classList.remove('on');ok()};$('mNo').onclick=()=>$('modal').classList.remove('on')}
+function ask(title,text,ok,okL,noL,no){$('mTitle').textContent=title;$('mText').textContent=text;$('mOk').textContent=okL||'はい';$('mNo').textContent=noL||'いいえ';$('modal').classList.add('on');$('mOk').onclick=()=>{$('modal').classList.remove('on');ok()};$('mNo').onclick=()=>{$('modal').classList.remove('on');if(no)no()}}
 
 /* ---- players ---- */
 let players=store.get('players',null);
@@ -752,7 +754,7 @@ setInterval(tickClock,200);
 function acct(){const n=Date.now();G.p[G.turn].time=(G.p[G.turn].time||0)+(n-(G.turnStart||n));G.turnStart=n}
 const ptime=i=>(G.p[i].time||0)+(!G.over&&G.turn===i?Date.now()-(G.turnStart||Date.now()):0);
 function wl(name){let w=0,l=0;for(const x of store.get('hist',[])){if(x.abort||x.w<0)continue;const k=x.p.findIndex(p=>p.name===name);if(k<0)continue;x.w===k?w++:l++}return`${w}W ${l}L`}
-function miss(){if(!G)return;if(G.over){renderResult();show('vResult');return}if(!ensureStart())return;snap();resetClock();const r=G.run;say(r===0?'turn':r===1?'one point':`${r} points.${tier(r)?' '+tier(r):''}`);endTurn(false)}
+function miss(){if(!G)return;if(G.over){renderResult();show('vResult');return}if($('bMiss').classList.contains('fin')&&!miss.ok){ask('試合を終了しますか？',`${G.p[1].name} の${G.last?'裏撞き':G.limit+'イニング目'}を終わりにして、結果を出します。`,()=>{miss.ok=true;miss();miss.ok=false},'終了する','まだ');return}if(!ensureStart())return;snap();resetClock();const r=G.run;say(r===0?'turn':r===1?'one point':`${r} points.${tier(r)?' '+tier(r):''}`);endTurn(false)}
 function undo(){
   if(!undoStack.length){toast('これ以上戻せません');return}
   if(G&&G.over&&G.saved){needAdmin('終わった試合を戻すと、記録が取り消されます。',()=>{const h=store.get('hist',[]);const k=h.findIndex(x=>G.histId?x.id===G.histId:x.date===G.start);if(k>=0){cloudDelGame(h[k].id);h.splice(k,1);store.set('hist',h)}doUndo()});return}
@@ -815,7 +817,9 @@ function renderGame(){
   if(G.over){li.textContent='Game';li.className=''}
   else if(G.last||(G.limit&&G.p[0].inn>=G.limit)){li.textContent='Last';li.className='last'}
   else{li.textContent=G.limit?`/ ${G.limit}`:'';li.className=''}
-  $('bMiss').hidden=!G.over;$('swaps').hidden=G.over;$('bOrder').disabled=!canOrder();
+  const fin=!G.over&&G.started!==false&&G.turn===1&&(G.last||(G.limit&&G.p[1].inn>=G.limit));
+  $('bMiss').hidden=!G.over&&!fin;$('swaps').hidden=G.over||fin;$('bOrder').disabled=!canOrder();
+  $('bMiss').innerHTML=G.over?'Result':'試合終了<small>裏の撞き終わり</small>';$('bMiss').classList.toggle('fin',fin);$('bMiss').classList.toggle('res',!!G.over);
 }
 function renderSheet(){
   const n=Math.max(G.p[0].inn,1),cols=Array.from({length:n},(_,k)=>k);
