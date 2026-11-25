@@ -465,7 +465,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 <section class="view" id="vHist">
   <div class="card">
     <h2>試合履歴</h2>
-    <p style="margin:0">お店の試合記録です（共有につながっている端末どうしで1つにまとまります）。選手名をタップするとその選手の通算が見られます。試合の記録はすべて残り、消せるのは管理者だけです（設定タブで管理者モードにすると、各記録に「消す」ボタンが出ます）。</p>
+    <p style="margin:0">お店の試合記録です（共有につながっている端末どうしで1つにまとまります）。選手名をタップするとその選手の通算が見られます。試合の記録はすべて残り、消すときは各記録の「消す」を押して、管理者の暗証番号を入れてください。</p>
     <div id="hStats"></div>
     <div class="hist" id="hList"></div>
     <div class="tools">
@@ -1009,7 +1009,7 @@ function renderHist(sel){
     $('hAll').onclick=()=>renderHist();
   }else $('hStats').innerHTML='';
   $('hList').innerHTML=list.map(x=>{const d=new Date(x.date);const label=x.abort?'中止':x.w<0?'引き分け':'勝ち：'+esc(x.p[x.w].name);
-    return`<div class="hrow"><div>${x.p.map(p=>`<button class="sec" data-pl="${esc(p.name)}" style="min-height:40px;margin:0 6px 6px 0">${esc(p.name)} <span class="num">${p.score}/${p.target}</span> <small>HR ${p.hr}</small></button>`).join('')}<br><small>${label}・${esc(x.how)}${x.end?`・${durJ(x.end-x.date)}`:''}</small></div><div style="text-align:right"><b style="font-size:15px">${d.getFullYear()}/${md(x.date)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</b>${x.table?`<br><small>${TB(x.table)}</small>`:''}<br><small class="num">Avg ${x.p.map(p=>avg(p.score,p.inn)).join(' / ')}</small>${isAdmin()?`<br><button class="dng" data-hdel="${esc(x.id||x.date)}" style="min-height:36px;margin-top:6px;font-size:13px">この記録を消す</button>`:''}</div></div>`}).join('');
+    return`<div class="hrow"><div>${x.p.map(p=>`<button class="sec" data-pl="${esc(p.name)}" style="min-height:40px;margin:0 6px 6px 0">${esc(p.name)} <span class="num">${p.score}/${p.target}</span> <small>HR ${p.hr}</small></button>`).join('')}<br><small>${label}・${esc(x.how)}${x.end?`・${durJ(x.end-x.date)}`:''}</small></div><div style="text-align:right"><b style="font-size:15px">${d.getFullYear()}/${md(x.date)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</b>${x.table?`<br><small>${TB(x.table)}</small>`:''}<br><small class="num">Avg ${x.p.map(p=>avg(p.score,p.inn)).join(' / ')}</small><br><button class="dng" data-hdel="${esc(x.id||x.date)}" style="min-height:36px;margin-top:6px;font-size:13px">消す</button></div></div>`}).join('');
 }
 
 /* ---- wake lock & fullscreen ---- */
@@ -1066,7 +1066,8 @@ $('bAdm').onclick=()=>{if(isAdmin()){adminUntil=0;renderAdmin();toast('管理者
 $('bPinChg').onclick=()=>needAdmin('暗証番号を変更します。',()=>askPin('新しい暗証番号','新しい暗証番号（4〜8桁の数字）を入れてください。',v=>{if(!/^\d{4,8}$/.test(v)){toast('4〜8桁の数字にしてください');return}askPin('もう一度入力','確認のため、もう一度入れてください。',v2=>{if(v2!==v){toast('一致しません');return}store.set('adminPin',v);toast('暗証番号を変更しました')})}));
 $('bBackup').onclick=()=>needAdmin('',async()=>{const t=JSON.stringify({hist:store.get('hist',[]),players:store.get('players',[])});try{await navigator.clipboard.writeText(t);toast('記録をコピーしました。メモなどに貼り付けて保管してください')}catch(e){toast('コピーできませんでした')}});
 $('hList').addEventListener('click',e=>{const b=e.target.closest('[data-hdel]');if(!b)return;e.stopPropagation();const id=b.dataset.hdel;
-  needAdmin('',()=>ask('この試合の記録を消しますか？','消した記録は元に戻せません。',()=>{const all=store.get('hist',[]),hit=all.find(x=>String(x.id||x.date)===id);if(hit)cloudDelGame(hit.id);store.set('hist',all.filter(x=>x!==hit));renderHist();toast('記録を消しました')}))});
+  const del=()=>{const all=store.get('hist',[]),hit=all.find(x=>String(x.id||x.date)===id);if(hit)cloudDelGame(hit.id);store.set('hist',all.filter(x=>x!==hit));renderHist();toast('記録を消しました')};
+  if(isAdmin())ask('この試合の記録を消しますか？','消した記録は元に戻せません。',del);else needAdmin('この試合の記録を消します（消した記録は元に戻せません）。',del)});
 $('hList').addEventListener('click',e=>{const b=e.target.closest('[data-pl]');if(b)renderHist(b.dataset.pl)});
 $('bFull').onclick=full;
 document.addEventListener('keydown',e=>{if(!$('vGame').classList.contains('on')||e.target.tagName==='INPUT')return;if(e.key===' '||e.key==='ArrowUp'){e.preventDefault();point()}else if(e.key==='Enter'||e.key==='ArrowRight'){e.preventDefault();miss()}else if(e.key==='Backspace'){e.preventDefault();undo()}else if(e.key==='-'){minus()}});
