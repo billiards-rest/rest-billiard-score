@@ -942,10 +942,10 @@ function reportXlsx(d){
   put(1,0,`${d.Y}年${d.M}月　Average`,1);merges.push('A1:M1');hts[1]=30;
   ['NAME','持ち点',...TBL.flatMap(k=>[k,'ゲーム数']),'総ゲーム数'].forEach((h,i)=>put(3,i,h,2));
   d.list.forEach((r,k)=>{const R=4+k,z=k%2;put(R,0,r.name,z?4:3);put(R,1,regT(r.name),z?10:9);
-    r.t.forEach((c,i)=>{put(R,2+i*2,c.g?+(c.s/c.i).toFixed(2):'-',c.g?(z?8:7):(z?6:5));put(R,3+i*2,c.g?c.g:'-',z?6:5)});put(R,12,r.g,z?10:9);hts[R]=17});
+    r.t.forEach((c,i)=>{put(R,2+i*2,c.g?+(c.s/c.i).toFixed(2):'-',c.g?(z?8:7):(z?6:5));put(R,3+i*2,c.g?c.g:'-',z?6:5)});put(R,12,r.g,z?10:9);hts[R]=20});
   if(!d.list.length){put(4,0,'この月の試合はまだありません',3);merges.push('A4:M4')}
   const md2=x=>{const q=new Date(x);return`${q.getMonth()+1}/${q.getDate()}`};
-  const box=(r0,title,heads,vals)=>{put(r0,14,title,11);put(r0+1,14,'',11);merges.push(`O${r0}:O${r0+1}`);heads.forEach((h,i)=>put(r0,15+i,h,12));vals.forEach((v,i)=>put(r0+1,15+i,v,typeof v==='number'&&!Number.isInteger(v)?14:13));hts[r0+1]=24};
+  const box=(r0,title,heads,vals)=>{put(r0,14,title,11);put(r0+1,14,'',11);merges.push(`O${r0}:O${r0+1}`);heads.forEach((h,i)=>put(r0,15+i,h,12));vals.forEach((v,i)=>put(r0+1,15+i,v,typeof v==='number'&&!Number.isInteger(v)?14:13));hts[r0+1]=20};
   box(3,'BG賞',['日付','達成者','イニング','持ち点'],d.bg?[md2(d.bg.date),d.bg.name,d.bg.inn,d.bg.target]:['-','-','-','-']);
   box(6,'HR賞',['日付','達成者','HR/持ち点','%'],d.hr?[md2(d.hr.date),d.hr.name,`${d.hr.hr}/${d.hr.target}`,+d.hr.q.toFixed(3)]:['-','-','-','-']);
   put(5+Math.max(d.list.length,1),0,`REST 3C Score　${d.games}試合（中止は除く）　BG賞＝持ち点に最も少ないイニングで到達／HR賞＝持ち点に対するハイランの割合が最も高い`,15);
