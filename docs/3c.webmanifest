@@ -1,0 +1,17 @@
+{
+  "name": "REST 3C Score",
+  "short_name": "REST 3C",
+  "description": "ビリヤードRESTのスリークッション スコアボード",
+  "lang": "ja",
+  "start_url": "./3c.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0b3f8c",
+  "theme_color": "#050c1c",
+  "icons": [
+    {"src": "3c-icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "3c-icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "3c-icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

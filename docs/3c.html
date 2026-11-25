@@ -4,7 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>REST 3C Score</title>
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="3c-apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="3c-icon-192.png">
+<link rel="manifest" href="3c.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="REST 3C">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#050c1c">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;800;900&family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet">
@@ -1058,6 +1064,7 @@ $('bFull').onclick=full;
 document.addEventListener('keydown',e=>{if(!$('vGame').classList.contains('on')||e.target.tagName==='INPUT')return;if(e.key===' '||e.key==='ArrowUp'){e.preventDefault();point()}else if(e.key==='Enter'||e.key==='ArrowRight'){e.preventDefault();miss()}else if(e.key==='Backspace'){e.preventDefault();undo()}else if(e.key==='-'){minus()}});
 
 /* ---- start ---- */
+try{if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 renderCloud();startCloud();
 renderSetup();
 if(!G||G.abort)newBoard(false);else{show('vGame');renderGame()}
