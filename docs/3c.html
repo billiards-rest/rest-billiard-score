@@ -527,7 +527,7 @@ setInterval(()=>{const e=document.getElementById('iTime');if(e&&G){e.textContent
 
 function show(v){for(const s of document.querySelectorAll('.view'))s.classList.toggle('on',s.id===v);document.body.classList.toggle('playing',v==='vGame');for(const t of document.querySelectorAll('.tab'))t.classList.toggle('on',t.dataset.tab===v||(t.dataset.tab==='vSetup'&&(v==='vResult')));window.scrollTo(0,0)}
 function toast(t){const e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),1800)}
-function ask(title,text,ok,okL,noL,no){$('mTitle').textContent=title;$('mText').textContent=text;$('mOk').textContent=okL||'はい';$('mNo').textContent=noL||'いいえ';$('modal').classList.add('on');$('mOk').onclick=()=>{$('modal').classList.remove('on');ok()};$('mNo').onclick=()=>{$('modal').classList.remove('on');if(no)no()}}
+function ask(title,text,ok){$('mTitle').textContent=title;$('mText').textContent=text;$('modal').classList.add('on');$('mOk').onclick=()=>{$('modal').classList.remove('on');ok()};$('mNo').onclick=()=>$('modal').classList.remove('on')}
 
 /* ---- players ---- */
 let players=store.get('players',null);
@@ -643,8 +643,8 @@ function begin(names,targets,limit,eq){
 }
 const regT=n=>{const p=players.find(x=>x.name===n);return p?p.target:20};
 function newBoard(keep){const names=keep&&G?G.p.map(p=>p.name):['',''];const targets=keep&&G?G.p.map(p=>p.target):[20,20];begin(names,targets,setup.limit,setup.eq)}
-function ensureStart(retry){if(G.started)return true;
-  const miss=G.p.findIndex(p=>!p.name);if(miss>=0){ask('選手が選ばれていません','選手を選ぶと、Avgや月報に記録されます。\n選ばずに始めると「ゲスト」として記録され、成績には入りません。',()=>{G.p.forEach((p,i)=>{if(!p.name)p.name=ballOf(i)?'ゲスト（黄）':'ゲスト（白）'});save();renderGame();if(retry)retry()},'選ばずに始める','選手を選ぶ',()=>openPick(miss,true));return false}
+function ensureStart(){if(G.started)return true;
+  const miss=G.p.findIndex(p=>!p.name);if(miss>=0){toast('先に選手を選んでください');openPick(miss,true);return false}
   G.started=true;G.start=Date.now();G.turnStart=Date.now();G.table=(lockInfo()?lockInfo().table:setup.table)||1;resetClock();wake();
   if(!lockInfo())toast(`${TB(G.table)}で記録します（台は設定タブで固定できます）`);return true}
 function save(){store.set('game',G);store.set('undo',undoStack.slice(-200))}
@@ -652,7 +652,7 @@ function snap(){undoStack.push(JSON.stringify(G));if(undoStack.length>200)undoSt
 
 /* ---- game logic ---- */
 function point(){
-  if(!G||G.over)return;if(!ensureStart(point))return;snap();resetClock();
+  if(!G||G.over)return;if(!ensureStart())return;snap();resetClock();
   const p=G.p[G.turn];p.score++;G.run++;p.hr=Math.max(p.hr,G.run);callout(p);
   if(p.score>=p.target){endTurn(true);return}
   save();renderGame();
@@ -749,7 +749,7 @@ setInterval(tickClock,200);
 function acct(){const n=Date.now();G.p[G.turn].time=(G.p[G.turn].time||0)+(n-(G.turnStart||n));G.turnStart=n}
 const ptime=i=>(G.p[i].time||0)+(!G.over&&G.turn===i?Date.now()-(G.turnStart||Date.now()):0);
 function wl(name){let w=0,l=0;for(const x of store.get('hist',[])){if(x.abort||x.w<0)continue;const k=x.p.findIndex(p=>p.name===name);if(k<0)continue;x.w===k?w++:l++}return`${w}W ${l}L`}
-function miss(){if(!G)return;if(G.over){renderResult();show('vResult');return}if(!ensureStart(miss))return;snap();resetClock();const r=G.run;say(r===0?'turn':r===1?'one point':`${r} points.${tier(r)?' '+tier(r):''}`);endTurn(false)}
+function miss(){if(!G)return;if(G.over){renderResult();show('vResult');return}if(!ensureStart())return;snap();resetClock();const r=G.run;say(r===0?'turn':r===1?'one point':`${r} points.${tier(r)?' '+tier(r):''}`);endTurn(false)}
 function undo(){
   if(!undoStack.length){toast('これ以上戻せません');return}
   if(G&&G.over&&G.saved){needAdmin('終わった試合を戻すと、記録が取り消されます。',()=>{const h=store.get('hist',[]);const k=h.findIndex(x=>G.histId?x.id===G.histId:x.date===G.start);if(k>=0){cloudDelGame(h[k].id);h.splice(k,1);store.set('hist',h)}doUndo()});return}
@@ -869,13 +869,13 @@ function openDetail(name){
   $('dBody').innerHTML=`<table class="res dt"><thead><tr><th>台</th><th>試合</th><th>勝ち</th><th>Avg</th><th>HR</th><th>BG</th></tr></thead><tbody>${rows.map((r,k)=>r.g?`<tr class="${k?'':'all'}"><td>${r.lab}</td><td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${avg(r.s,r.i)}</td><td><b class="num">${r.hr}</b><small>${r.hr?ymd(r.hrD):''}</small></td><td><b class="num">${r.bg.toFixed(3)}</b><small>${ymd(r.bgD)}・${r.bgS}</small></td></tr>`:`<tr><td>${r.lab}</td><td colspan="5" class="none">まだ試合なし</td></tr>`).join('')}</tbody></table>`;
   $('mDetail').classList.add('on');
 }
-const TBL=['A','B','C','D','E'];const isGuest=n=>/^ゲスト/.test(n||'');
+const TBL=['A','B','C','D','E'];
 function monthKeys(){const h=store.get('hist',[]).filter(x=>!x.abort);const ks=new Set(h.map(x=>{const d=new Date(x.date);return d.getFullYear()*100+d.getMonth()+1}));const n=new Date();ks.add(n.getFullYear()*100+n.getMonth()+1);return[...ks].sort((a,b)=>b-a)}
 function reportData(key){
   const Y=Math.floor(key/100),M=key%100;
   const h=store.get('hist',[]).filter(x=>{if(x.abort)return false;const d=new Date(x.date);return d.getFullYear()===Y&&d.getMonth()+1===M});
   const rows={};let bg=null,hr=null;
-  for(const x of h)x.p.forEach(p=>{if(isGuest(p.name))return;const r=rows[p.name]||(rows[p.name]={name:p.name,t:Array.from({length:5},()=>({s:0,i:0,g:0})),g:0});
+  for(const x of h)x.p.forEach(p=>{const r=rows[p.name]||(rows[p.name]={name:p.name,t:Array.from({length:5},()=>({s:0,i:0,g:0})),g:0});
     r.g++;if(x.table>=1&&x.table<=5){const c=r.t[x.table-1];c.s+=p.score;c.i+=p.inn;c.g++}
     const a=p.inn?p.score/p.inn:0;if(p.inn&&p.score>=p.target&&(!bg||p.inn<bg.inn||(p.inn===bg.inn&&p.target>bg.target)))bg={a,date:x.date,name:p.name,inn:p.inn,target:p.target,score:p.score};
     const q=p.target?p.hr/p.target:0;if(p.hr&&(!hr||q>hr.q||(q===hr.q&&p.hr>hr.hr)))hr={q,date:x.date,name:p.name,hr:p.hr,target:p.target}});
@@ -983,7 +983,7 @@ function renderMonthly(){
   const Y=+ys.value;
   const data={};
   for(const x of h){const d=new Date(x.date);if(d.getFullYear()!==Y)continue;const m=d.getMonth();
-    for(const p of x.p){if(isGuest(p.name))continue;const r=data[p.name]||(data[p.name]={m:Array.from({length:12},()=>({s:0,i:0,g:0})),s:0,i:0,g:0});
+    for(const p of x.p){const r=data[p.name]||(data[p.name]={m:Array.from({length:12},()=>({s:0,i:0,g:0})),s:0,i:0,g:0});
       r.m[m].s+=p.score;r.m[m].i+=p.inn;r.m[m].g++;r.s+=p.score;r.i+=p.inn;r.g++}}
   const names=Object.keys(data);
   if(!names.length){$('mTable').innerHTML=`<tr><td class="none" style="text-align:left">${Y}年の試合記録はまだありません。</td></tr>`;return}
