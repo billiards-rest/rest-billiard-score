@@ -61,7 +61,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 /* scoreboard */
 #vGame{padding:8px}
 .sb{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.42fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto auto;gap:8px;height:calc(100dvh - 16px);min-height:340px}
-.pp{position:relative;border-radius:12px;color:var(--blk);display:grid;grid-template-rows:27% minmax(0,1fr) auto;overflow:hidden;border:3px solid transparent;transition:filter .25s,border-color .25s,box-shadow .25s;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.pp{position:relative;touch-action:none;border-radius:12px;color:var(--blk);display:grid;grid-template-rows:27% minmax(0,1fr) auto;overflow:hidden;border:3px solid transparent;transition:filter .25s,border-color .25s,box-shadow .25s;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .pp.c0{background:var(--cream)}.pp.c1{background:var(--must)}
 .pp.idle{cursor:pointer}
 .pp.act{border-color:var(--cy);box-shadow:0 0 0 3px rgba(143,227,240,.35),0 0 32px rgba(143,227,240,.35);cursor:pointer}
@@ -1038,7 +1038,11 @@ async function full(){try{if(document.fullscreenElement)await document.exitFulls
 $('bStart').onclick=startGame;
 function toggleClock(){if(!G||G.over||!G.clock)return;if(G.started===false){if(!ensureStart())return;clkPaused=true;pausedLeft=G.clock}if(clkPaused){shotStart=Date.now()-(G.clock-pausedLeft)*1000;clkPaused=false}else{pausedLeft=clockLeft();clkPaused=true}clkN=-1;tickClock()}
 $('clk').onclick=toggleClock;$('bSS').onclick=e=>{e.stopPropagation();toggleClock()};
-[0,1].forEach(i=>$('pp'+i).addEventListener('click',e=>{if(!G)return;if(e.target.closest('.tgc')){if(!G.over)openTgt(i);return}if(e.target.closest('.nm')){if(!G.over)openPick(i,true);return}if(G.over)return;if(G.turn===i)point();else miss()}));
+let lastTap=0,tapHandled=0;
+function panelTap(i){if(!G||G.over)return;const n=performance.now();if(n-lastTap<180)return;lastTap=n;if(G.turn===i)point();else miss()}
+[0,1].forEach(i=>{const el=$('pp'+i);
+  el.addEventListener('pointerdown',e=>{if(!e.isPrimary||e.button>0)return;if(e.target.closest('.tgc,.nm'))return;e.preventDefault();tapHandled=performance.now();panelTap(i)});
+  el.addEventListener('click',e=>{if(!G)return;if(e.target.closest('.tgc')){if(!G.over)openTgt(i);return}if(e.target.closest('.nm')){if(!G.over)openPick(i,true);return}if(performance.now()-tapHandled<800)return;panelTap(i)})});
 $('tgM').onclick=()=>{$('tgIn').value=Math.max(1,(+$('tgIn').value||1)-1)};$('tgP').onclick=()=>{$('tgIn').value=(+$('tgIn').value||0)+1};
 $('tgNo').onclick=()=>$('mTgt').classList.remove('on');
 $('tgOk').onclick=()=>{const v=Math.max(1,+$('tgIn').value||1);$('mTgt').classList.remove('on');const p=G.p[tgSide];if(v===p.target)return;if(v<=p.score){toast('今の得点より大きい数にしてください');return}snap();p.target=v;save();renderGame();toast(`${p.name} の持ち点を ${v} 点にしました`)};
