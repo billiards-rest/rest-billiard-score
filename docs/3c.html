@@ -236,6 +236,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .hint2{font-size:13px;opacity:.7;margin:8px 0 14px}
 .mlink{display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:14px;font-weight:700;text-decoration:none}
 .cloudst{font-weight:700}.cloudst.ok{color:#9be22d}
+#vGame,#vGame *,.modal button,.tabs,.mbtn{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000;color:#fff;padding:12px 20px;border-radius:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 @media(max-width:760px){.pl{grid-template-columns:minmax(0,1fr)}.opts{grid-template-columns:minmax(0,1fr)}}
@@ -1076,6 +1077,7 @@ $('bFull').onclick=full;
 document.addEventListener('keydown',e=>{if(!$('vGame').classList.contains('on')||e.target.tagName==='INPUT')return;if(e.key===' '||e.key==='ArrowUp'){e.preventDefault();point()}else if(e.key==='Enter'||e.key==='ArrowRight'){e.preventDefault();miss()}else if(e.key==='Backspace'){e.preventDefault();undo()}else if(e.key==='-'){minus()}});
 
 /* ---- start ---- */
+['contextmenu','selectstart'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest('#vGame'))e.preventDefault()}));
 try{if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 renderCloud();startCloud();
 renderSetup();
