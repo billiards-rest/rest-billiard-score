@@ -239,6 +239,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .mlink{display:inline-flex;align-items:center;min-height:48px;padding:0 18px;border-radius:14px;font-weight:700;text-decoration:none}
 .cloudst{font-weight:700}.cloudst.ok{color:#9be22d}
 #vGame,#vGame *,.modal button,.tabs,.mbtn{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000;color:#fff;padding:12px 20px;border-radius:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 @media(max-width:760px){.pl{grid-template-columns:minmax(0,1fr)}.opts{grid-template-columns:minmax(0,1fr)}}
@@ -315,7 +316,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
   <nav class="tabs">
     <button class="tab on" data-tab="vSetup" id="tMatch">試合</button>
     <button class="tab" data-tab="vPlayers">選手</button>
-    <button class="tab" data-tab="vMonthly">月別Avg</button>
+    <button class="tab" data-tab="vMonthly">Avg</button>
     <button class="tab" data-tab="vReport">月報</button>
     <button class="tab" data-tab="vHist">履歴</button>
     <button class="tab" data-tab="vSettings">設定</button>
@@ -397,10 +398,11 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 
 <section class="view" id="vMonthly">
   <div class="card mcard">
-    <h2>月別アベレージ</h2>
-    <p style="margin:0">試合の記録から、選手ごとに毎月のアベレージ（得点 ÷ イニング）を自動で集計します。中止した試合は入りません。各月でいちばん高い人には色がつきます。</p>
-    <div class="mbar"><label>年<select id="mYear"></select></label><label>並び順<select id="mSort"><option value="year">年間Avgの高い順</option><option value="last">最新月のAvgの高い順</option><option value="name">名前順</option></select></label></div>
-    <div class="scroll"><table class="mt" id="mTable"></table></div>
+    <h2>アベレージ</h2>
+    <p style="margin:0">試合の記録から、アベレージ（得点 ÷ イニング）を自動で集計します。年を選んで、年間の一覧（台別）と月ごとのAvgを切り替えて見られます。中止した試合は入りません。</p>
+    <div class="mbar"><label>年<select id="mYear"></select></label><label>表示<select id="mView"><option value="year">年間の一覧（台別Avg・BG賞・HR賞）</option><option value="month">月ごとのAvg</option></select></label><label>並び順<select id="mSort"><option value="year">年間Avgの高い順</option><option value="last">最新月のAvgの高い順</option><option value="name">名前順</option></select></label></div>
+    <div class="scroll" id="mWrap"><table class="mt" id="mTable"></table></div>
+    <div class="scroll" id="yWrap"><div id="yBody"></div><div class="tools"><button class="pri" id="yXlsx">年間の一覧をExcelで保存</button><button class="sec" id="yCopy">表をコピー（メールに貼り付け）</button></div></div>
   </div>
 </section>
 
@@ -500,7 +502,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 <div class="modal" id="mMenu"><div class="card"><h2 style="font-size:26px">設定・メニュー</h2><div class="tools" style="flex-direction:column">
   <div class="mgrid">
     <button class="mbtn" data-go="vPlayers">選手</button>
-    <button class="mbtn" data-go="vMonthly">月別Avg</button>
+    <button class="mbtn" data-go="vMonthly">Avg</button>
     <button class="mbtn" data-go="vReport">月報</button>
     <button class="mbtn" data-go="vHist">履歴</button>
     <button class="mbtn" data-go="vSettings">設定</button>
@@ -879,8 +881,8 @@ function openDetail(name){
 const TBL=['A','B','C','D','E'];
 function monthKeys(){const h=store.get('hist',[]).filter(x=>!x.abort);const ks=new Set(h.map(x=>{const d=new Date(x.date);return d.getFullYear()*100+d.getMonth()+1}));const n=new Date();ks.add(n.getFullYear()*100+n.getMonth()+1);return[...ks].sort((a,b)=>b-a)}
 function reportData(key){
-  const Y=Math.floor(key/100),M=key%100;
-  const h=store.get('hist',[]).filter(x=>{if(x.abort)return false;const d=new Date(x.date);return d.getFullYear()===Y&&d.getMonth()+1===M});
+  const Y=key<10000?key:Math.floor(key/100),M=key<10000?0:key%100;
+  const h=store.get('hist',[]).filter(x=>{if(x.abort)return false;const d=new Date(x.date);return d.getFullYear()===Y&&(!M||d.getMonth()+1===M)});
   const rows={};let bg=null,hr=null;
   for(const x of h)x.p.forEach(p=>{const r=rows[p.name]||(rows[p.name]={name:p.name,t:Array.from({length:5},()=>({s:0,i:0,g:0})),g:0});
     r.g++;if(x.table>=1&&x.table<=5){const c=r.t[x.table-1];c.s+=p.score;c.i+=p.inn;c.g++}
@@ -894,7 +896,7 @@ function reportHTML(d){
   const td='border:1px solid #9aa9c2;padding:4px 8px;font-size:13px;text-align:center';
   const tn='border:1px solid #9aa9c2;padding:4px 8px;font-size:13px;text-align:left;font-weight:bold;background:#eef2f8';
   const md2=t=>{const x=new Date(t);return`${x.getMonth()+1}/${x.getDate()}`};
-  let t=`<div style="font-family:sans-serif;color:#0b1c38"><h2 style="font-style:italic;color:#1f3a6e;margin:0 0 8px;font-size:24px">${d.Y}年${d.M}月　Average</h2><table style="border-collapse:collapse"><tr><th style="${th}">NAME</th><th style="${th}">持ち点</th>${TBL.map(k=>`<th style="${th}">${k}</th><th style="${th}">ゲーム数</th>`).join('')}<th style="${th}">総ゲーム数</th></tr>`;
+  let t=`<div style="font-family:sans-serif;color:#0b1c38"><h2 style="font-style:italic;color:#1f3a6e;margin:0 0 8px;font-size:24px">${d.Y}年${d.M?d.M+'月':'（年間）'}　Average</h2><table style="border-collapse:collapse"><tr><th style="${th}">NAME</th><th style="${th}">持ち点</th>${TBL.map(k=>`<th style="${th}">${k}</th><th style="${th}">ゲーム数</th>`).join('')}<th style="${th}">総ゲーム数</th></tr>`;
   if(!d.list.length)t+=`<tr><td style="${td}" colspan="13">この月の試合はまだありません</td></tr>`;
   d.list.forEach((r,k)=>{const bgc=k%2?'#f4f7fb':'#ffffff';t+=`<tr style="background:${bgc}"><td style="${tn}">${esc(r.name)}</td><td style="${td};font-weight:bold">${regT(r.name)}</td>${r.t.map(c=>c.g?`<td style="${td}">${(c.s/c.i).toFixed(2)}</td><td style="${td}">${c.g}</td>`:`<td style="${td}">-</td><td style="${td}">-</td>`).join('')}<td style="${td};font-weight:bold">${r.g}</td></tr>`});
   t+='</table><br>';
@@ -904,7 +906,7 @@ function reportHTML(d){
   return t+`<p style="font-size:12px;color:#666">REST 3C Score　（${d.games}試合・数字はアベレージと台ごとのゲーム数／BG賞＝持ち点に最も少ないイニングで到達、HR賞＝持ち点に対するハイランの割合が最も高い）</p></div>`;
 }
 function reportText(d){
-  const L=[`【REST スリークッション ${d.Y}年${d.M}月 Average】`,'NAME / 持ち点 / A B C D E（Avg・ゲーム数）/ 総ゲーム数'];
+  const L=[`【REST スリークッション ${d.Y}年${d.M?d.M+'月':'（年間）'} Average】`,'NAME / 持ち点 / A B C D E（Avg・ゲーム数）/ 総ゲーム数'];
   d.list.forEach(r=>L.push(`${r.name}（${regT(r.name)}）　${r.t.map((c,i)=>`${TBL[i]}:${c.g?(c.s/c.i).toFixed(2)+'('+c.g+')':'-'}`).join(' ')}　計${r.g}`));
   const md2=t=>{const x=new Date(t);return`${x.getMonth()+1}/${x.getDate()}`};
   L.push('',d.bg?`BG賞：${md2(d.bg.date)} ${d.bg.name}　持ち点${d.bg.target}を${d.bg.inn}イニングで達成`:'BG賞：-');
@@ -943,7 +945,7 @@ function reportXlsx(d){
   const X=v=>String(v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const col=n=>{let s='';n++;while(n){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
   const rows={};const put=(r,c,v,st)=>{(rows[r]=rows[r]||{})[c]={v,st}};const hts={};const merges=[];
-  put(1,0,`${d.Y}年${d.M}月　Average`,1);merges.push('A1:M1');hts[1]=30;
+  put(1,0,`${d.Y}年${d.M?d.M+'月':'（年間）'}　Average`,1);merges.push('A1:M1');hts[1]=30;
   ['NAME','持ち点',...TBL.flatMap(k=>[k,'ゲーム数']),'総ゲーム数'].forEach((h,i)=>put(3,i,h,2));
   d.list.forEach((r,k)=>{const R=4+k,z=k%2;put(R,0,r.name,z?4:3);put(R,1,regT(r.name),z?10:9);
     r.t.forEach((c,i)=>{put(R,2+i*2,c.g?+(c.s/c.i).toFixed(2):'-',c.g?(z?8:7):(z?6:5));put(R,3+i*2,c.g?c.g:'-',z?6:5)});put(R,12,r.g,z?10:9);hts[R]=20});
@@ -961,7 +963,7 @@ function reportXlsx(d){
   const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="0.000"/></numFmts><fonts count="7"><font><sz val="10"/>${FN}</font><font><b/><i/><sz val="18"/><color rgb="FF1F3A6E"/>${FN}</font><font><b/><sz val="10"/>${FN}</font><font><sz val="9"/>${FN}</font><font><sz val="12"/>${FN}</font><font><sz val="8"/><color rgb="FF666666"/>${FN}</font><font><b/><sz val="11"/>${FN}</font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDCE6F1"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FF7F8FA6"/></left><right style="thin"><color rgb="FF7F8FA6"/></right><top style="thin"><color rgb="FF7F8FA6"/></top><bottom style="thin"><color rgb="FF7F8FA6"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="16">`+
   [[0,0,0,0,''],[0,1,0,0,'center'],[0,2,0,1,'center'],[0,2,0,1,'left'],[0,2,2,1,'left'],[0,0,0,1,'center'],[0,0,2,1,'center'],[2,0,0,1,'center'],[2,0,2,1,'center'],[0,2,0,1,'center'],[0,2,2,1,'center'],[0,6,0,1,'center'],[0,3,0,1,'center'],[0,4,0,1,'center'],[164,4,0,1,'center'],[0,5,0,0,'']].map(([nf,f,fi,b,h])=>`<xf numFmtId="${nf}" fontId="${f}" fillId="${fi}" borderId="${b}" xfId="0"${nf?' applyNumberFormat="1"':''} applyFont="1"${fi?' applyFill="1"':''}${b?' applyBorder="1"':''}${h?` applyAlignment="1"><alignment horizontal="${h}" vertical="center"/></xf>`:'/>'}`).join('')+
   `</cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
-  const sn=`${d.Y}年${d.M}月`;
+  const sn=d.M?`${d.Y}年${d.M}月`:`${d.Y}年`;
   return zipStore([
     ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
     ['_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
@@ -988,6 +990,8 @@ function renderMonthly(){
   const ys=$('mYear'),cur=+ys.value||now;
   ys.innerHTML=years.map(y=>`<option value="${y}" ${y===cur?'selected':''}>${y}年</option>`).join('');
   const Y=+ys.value;
+  const yv=$('mView').value==='year';$('mWrap').hidden=yv;$('yWrap').hidden=!yv;$('mSort').closest('label').hidden=yv;
+  if(yv){$('yBody').innerHTML=reportHTML(reportData(Y));return}
   const data={};
   for(const x of h){const d=new Date(x.date);if(d.getFullYear()!==Y)continue;const m=d.getMonth();
     for(const p of x.p){const r=data[p.name]||(data[p.name]={m:Array.from({length:12},()=>({s:0,i:0,g:0})),s:0,i:0,g:0});
@@ -1004,7 +1008,11 @@ function renderMonthly(){
 }
 $('dClose').onclick=()=>$('mDetail').classList.remove('on');
 $('mTable').addEventListener('click',e=>{const b=e.target.closest('[data-detail]');if(b)openDetail(b.dataset.detail)});
-$('mYear').onchange=renderMonthly;$('mSort').onchange=renderMonthly;
+$('mYear').onchange=renderMonthly;$('mSort').onchange=renderMonthly;$('mView').onchange=renderMonthly;
+$('yXlsx').onclick=async()=>{const d=reportData(+$('mYear').value);const name=`REST3C_${d.Y}_年間.xlsx`;let blob;try{blob=reportXlsx(d)}catch(e){toast('Excelを作れませんでした');return}
+  if(cdl){try{await cdl.save({filename:name,data:blob});toast(`${name} を保存しました`);return}catch(e){toast('保存をやめました');return}}
+  if(!window.claude&&dlLink(name,blob)){toast(`${name} を保存しました`);return}toast('この画面ではファイル保存ができません')};
+$('yCopy').onclick=async()=>{const d=reportData(+$('mYear').value);try{await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([reportHTML(d)],{type:'text/html'}),'text/plain':new Blob([reportText(d)],{type:'text/plain'})})]);toast('表をコピーしました')}catch(e){try{await navigator.clipboard.writeText(reportText(d));toast('文字だけでコピーしました')}catch(e2){toast('コピーできませんでした')}}};
 function renderHist(sel){
   const h=store.get('hist',[]);
   if(!h.length){$('hList').innerHTML='<div class="empty">まだ試合がありません。</div>';$('hStats').innerHTML='';return}
