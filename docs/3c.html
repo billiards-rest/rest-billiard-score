@@ -61,11 +61,12 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 /* scoreboard */
 #vGame{padding:8px}
 .sb{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.42fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto auto;gap:8px;height:calc(100dvh - 16px);min-height:340px}
-.pp{position:relative;touch-action:none;border-radius:12px;color:var(--blk);display:grid;grid-template-rows:27% minmax(0,1fr) auto;overflow:hidden;border:3px solid transparent;transition:filter .25s,border-color .25s,box-shadow .25s;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.pp{position:relative;touch-action:none;border-radius:12px;color:var(--blk);display:grid;grid-template-rows:27% minmax(0,1fr) auto;overflow:hidden;border:3px solid transparent;user-select:none;-webkit-user-select:none}
 .pp.c0{background:var(--cream)}.pp.c1{background:var(--must)}
 .pp.idle{cursor:pointer}
 .pp.act{border-color:var(--cy);box-shadow:0 0 0 3px rgba(143,227,240,.35),0 0 32px rgba(143,227,240,.35);cursor:pointer}
-.pp.idle{filter:brightness(.55) saturate(.75)}
+.pp.idle::after{content:"";position:absolute;inset:0;background:rgba(5,12,28,.45);pointer-events:none;z-index:2}
+.fxl.hit{background:rgba(255,255,255,.22)}
 .pp.win{border-color:var(--y);box-shadow:0 0 0 3px rgba(242,194,48,.5),0 0 40px rgba(242,194,48,.5)}
 .pp.act:active .sc{transform:scale(.97)}
 .top{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:minmax(0,1.25fr) minmax(0,1fr);border-bottom:3px solid var(--blk);min-height:0}
@@ -693,7 +694,8 @@ let ctts=null,cdl=null;
 const CV={airy:'Claude（airy・やわらかい）',glassy:'Claude（glassy・すっきり）',buttery:'Claude（buttery・なめらか）',rounded:'Claude（rounded・まるい）'};
 const voiceChoice=()=>store.get('voiceName',ctts?'claude:airy':'');
 let clkVoice=store.get('clkVoice',true);
-function say(t,kind){t=String(t).replace(/\d+/g,m=>nw(+m));if(kind==='clock'?!clkVoice:!voice)return;
+function say(t,kind){setTimeout(()=>sayNow(t,kind),0)}
+function sayNow(t,kind){t=String(t).replace(/\d+/g,m=>nw(+m));if(kind==='clock'?!clkVoice:!voice)return;
   const ch=voiceChoice();
   if(ctts&&ch.startsWith('claude:')){try{ctts.speak(t,{voice:ch.slice(7),language:'en',rate:1.05}).catch(e=>{if(e&&e.code==='not_granted'){ctts=null;fillVoices()}if(e&&(e.code==='not_granted'||e.code==='rate_limited'))sysSay(t)})}catch(e){sysSay(t)}return}
   sysSay(t)}
@@ -778,7 +780,7 @@ function finish(){
   const entry={id:gid(),date:G.start,end:G.end,w:r.w,how:r.how,limit:G.limit,table:G.table||0,abort:!!G.abort,p:G.p.map(p=>({name:p.name,target:p.target,score:p.score,inn:p.inn,hr:p.hr}))};h.unshift(entry);G.histId=entry.id;
   store.set('hist',h.slice(0,5000));cloudPutGame(entry);
   G.saved=true;save();
-  if(G.abort){renderResult();show('vResult')}else{show('vGame');renderGame()}
+  renderGame();renderResult();show('vResult');
 }
 
 /* ---- render ---- */
@@ -1038,7 +1040,7 @@ $('bStart').onclick=startGame;
 function toggleClock(){if(!G||G.over||!G.clock)return;if(G.started===false){if(!ensureStart())return;clkPaused=true;pausedLeft=G.clock}if(clkPaused){shotStart=Date.now()-(G.clock-pausedLeft)*1000;clkPaused=false}else{pausedLeft=clockLeft();clkPaused=true}clkN=-1;tickClock()}
 $('clk').onclick=toggleClock;$('bSS').onclick=e=>{e.stopPropagation();toggleClock()};
 let lastTap=0,tapHandled=0;
-function panelTap(i){if(!G||G.over)return;const n=performance.now();if(n-lastTap<180)return;lastTap=n;if(G.turn===i)point();else miss()}
+function panelTap(i){if(!G||G.over)return;const n=performance.now();if(n-lastTap<90)return;lastTap=n;const el=$('fx'+i);el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),90);if(G.turn===i)point();else miss()}
 [0,1].forEach(i=>{const el=$('pp'+i);
   el.addEventListener('pointerdown',e=>{if(!e.isPrimary||e.button>0)return;if(e.target.closest('.tgc,.nm'))return;e.preventDefault();tapHandled=performance.now();panelTap(i)});
   el.addEventListener('click',e=>{if(!G)return;if(e.target.closest('.tgc')){if(!G.over)openTgt(i);return}if(e.target.closest('.nm')){if(!G.over)openPick(i,true);return}if(performance.now()-tapHandled<800)return;panelTap(i)})});
