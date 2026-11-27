@@ -427,7 +427,6 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
         </select>
       </label>
       <label class="chk"><input type="checkbox" id="oEq" checked>裏撞き有</label>
-      <label class="chk"><input type="checkbox" id="oClkAuto">ショットクロックを自動でスタート（点が入った・交代したとき）</label>
       </div></div>
       <div class="sgrp"><h3>記録の共有</h3><div class="sdark"><p id="cloudSt" class="cloudst" style="margin:0;grid-column:1/-1"></p></div></div>
       <div class="sgrp"><h3>管理者</h3><div class="sdark">
@@ -740,7 +739,7 @@ function swapOrder(){if(!canOrder()){toast('先攻・後攻の交代は、1イ�
 function swapBall(){if(!G||G.over)return;snap();G.ballSwap=!G.ballSwap;save();renderGame();
   toast(`${G.p[0].name}：${ballOf(0)?'黄玉':'白玉'}　${G.p[1].name}：${ballOf(1)?'黄玉':'白玉'}`)}
 let clkLast=-1,shotStart=Date.now(),clkPaused=false,pausedLeft=0,clkTold=false,clkN=-1;
-function resetClock(){shotStart=Date.now();clkTold=false;clkN=-1;if(store.get('clkAuto',true)){clkPaused=false}else{clkPaused=true;pausedLeft=G&&G.clock||40}tickClock()}
+function resetClock(){shotStart=Date.now();clkTold=false;clkN=-1;clkPaused=true;pausedLeft=G&&G.clock||40;tickClock()}
 function clockLeft(){const L=G&&G.clock||0;if(!L)return 0;if(clkPaused)return pausedLeft;return Math.max(0,L-Math.floor((Date.now()-shotStart)/1000))}
 function tickClock(){const c=document.getElementById('clk');if(!c||!G)return;const L=G.clock||0;
   
@@ -1061,7 +1060,6 @@ $('oClkVoice').checked=clkVoice;$('oClkVoice').onchange=e=>{clkVoice=e.target.ch
 $('oVoice').onchange=e=>{voice=e.target.checked;store.set('voice',voice);renderMute();if(voice)say('Nice run!')};
 $('bVoiceTest').onclick=()=>{const was=voice;voice=true;say('Three points. Nice run!');voice=was};
 $('oClock').onchange=e=>{setup.clock=+e.target.value;store.set('setup2',setup);if(G&&!G.over){G.clock=setup.clock;save();resetClock()}};
-$('oClkAuto').checked=store.get('clkAuto',true);$('oClkAuto').onchange=e=>store.set('clkAuto',e.target.checked);
 $('oEq').onchange=e=>{setup.eq=e.target.checked;store.set('setup2',setup);if(G&&!G.started){G.eq=setup.eq;save()}};
 $('oLimit').onchange=e=>{setup.limit=+e.target.value;store.set('setup2',setup);if(G&&!G.started){G.limit=setup.limit;save()}};
 $('oTable').onchange=e=>{if(lockInfo())return;setup.table=+e.target.value;store.set('setup2',setup)};
