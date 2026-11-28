@@ -140,7 +140,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .end{background:#000;color:#fff;font-family:"Inter Tight";font-size:clamp(20px,2.8vw,34px);line-height:1.15;border-radius:10px}
 .end:active{background:#1d2b45}
 .end.res{background:var(--y);color:var(--blk);border-color:var(--y)}
-.small{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:8px;min-height:0}
+.small{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:8px;min-height:0}
 .small button{border-radius:10px;font-family:"Inter Tight","Zen Kaku Gothic New";font-size:clamp(16px,1.9vw,24px);line-height:1.15;padding:4px;min-height:44px;color:#fff}
 .b-minus{background:var(--r)}#bUndo{grid-column:1/-1}.b-back{background:#1b2740}.b-sheet{background:#0b3f8c}.b-menu{background:#000}
 /* result & history & modals */
@@ -266,6 +266,8 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .ss.go{background:#9be22d;color:var(--blk)}
 .homeb{display:inline-flex;align-items:center;gap:6px;background:var(--y);color:var(--blk);text-decoration:none;font-weight:900;border-radius:12px;padding:0 14px;min-height:44px;white-space:nowrap;font-size:15px}
 .homeb.sm{flex:none;min-height:0;height:clamp(32px,4.4vh,44px);border-radius:8px;padding:0 10px;font-family:"Inter Tight";font-size:clamp(13px,1.5vw,16px)}
+.b-home{background:var(--y);color:var(--blk)!important;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:"Inter Tight";font-weight:900;border-radius:10px;min-height:44px}
+body.solo .homeb,body.solo #bHome{display:none!important}body.solo .small{grid-template-columns:repeat(2,minmax(0,1fr))}
 .mute{flex:none;min-height:0;height:clamp(32px,4.4vh,44px);width:clamp(44px,5vw,60px);padding:0;border-radius:8px;background:#1b2740;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.2)}
 .mute svg{width:60%;height:auto}
 .mute.off{background:var(--r);border-color:var(--r)}
@@ -375,13 +377,14 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
       <button class="cell end res" id="bMiss" hidden>Result</button>
       <div class="small">
         <button class="cell b-back" id="bUndo">戻す</button>
+        <a class="cell b-home" id="bHome" href="./" title="REST Billiard Scoreのメイン画面へ"><svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg><span>REST</span></a>
         <button class="cell b-sheet" id="bSheet">Avg</button>
         <button class="cell b-menu" id="bMenu">設定</button>
       </div>
     </div>
     <div class="pp c1" id="pp1" role="button" aria-label="後攻に1点"></div>
     <div class="fxl" id="fx0"></div><div class="fxl" id="fx1"></div>
-    <div class="clk" id="clk" role="button" aria-label="ショットクロック（タップで一時停止）"><a class="homeb sm" id="bHome" href="./" title="REST Billiard Scoreのメイン画面へ"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg><span>REST</span></a><button class="mute" id="bMute" aria-label="ショットクロックの音声のON/OFF"></button><button class="ss" id="bSS">STOP</button><span class="clab">SHOT<br>CLOCK</span><div class="segs" id="segs"></div><b class="num" id="clkN">40</b></div>
+    <div class="clk" id="clk" role="button" aria-label="ショットクロック（タップで一時停止）"><button class="mute" id="bMute" aria-label="ショットクロックの音声のON/OFF"></button><button class="ss" id="bSS">STOP</button><span class="clab">SHOT<br>CLOCK</span><div class="segs" id="segs"></div><b class="num" id="clkN">40</b></div>
     <div class="gs" id="gs"></div>
   </div>
 </section>
@@ -1098,6 +1101,7 @@ $('bFull').onclick=full;
 document.addEventListener('keydown',e=>{if(!$('vGame').classList.contains('on')||e.target.tagName==='INPUT')return;if(e.key===' '||e.key==='ArrowUp'){e.preventDefault();point()}else if(e.key==='Enter'||e.key==='ArrowRight'){e.preventDefault();miss()}else if(e.key==='Backspace'){e.preventDefault();undo()}else if(e.key==='-'){minus()}});
 
 /* ---- start ---- */
+if(!/github\.io$/.test(location.hostname)){document.body.classList.add('solo');}
 ['contextmenu','selectstart'].forEach(ev=>document.addEventListener(ev,e=>{if(e.target.closest&&e.target.closest('#vGame'))e.preventDefault()}));
 try{if('serviceWorker' in navigator&&/github\.io$/.test(location.hostname))navigator.serviceWorker.register('sw.js').catch(()=>{})}catch(e){}
 renderCloud();startCloud();
