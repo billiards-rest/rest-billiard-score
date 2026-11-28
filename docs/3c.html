@@ -879,7 +879,7 @@ function openDetail(name){
   $('dBody').innerHTML=`<table class="res dt"><thead><tr><th>台</th><th>試合</th><th>勝ち</th><th>Avg</th><th>HR</th><th>BG</th></tr></thead><tbody>${rows.map((r,k)=>r.g?`<tr class="${k?'':'all'}"><td>${r.lab}</td><td class="num">${r.g}</td><td class="num">${r.w}</td><td class="num">${avg(r.s,r.i)}</td><td><b class="num">${r.hr}</b><small>${r.hr?ymd(r.hrD):''}</small></td><td><b class="num">${r.bg.toFixed(3)}</b><small>${ymd(r.bgD)}・${r.bgS}</small></td></tr>`:`<tr><td>${r.lab}</td><td colspan="5" class="none">まだ試合なし</td></tr>`).join('')}</tbody></table>`;
   $('mDetail').classList.add('on');
 }
-const TBL=['A','B','C','D','E'];
+const TBL=['A','B','C','D','E'];const noAward=n=>/^\s*(バンド|フリー)/.test(n||'');
 function monthKeys(){const h=store.get('hist',[]).filter(x=>!x.abort);const ks=new Set(h.map(x=>{const d=new Date(x.date);return d.getFullYear()*100+d.getMonth()+1}));const n=new Date();ks.add(n.getFullYear()*100+n.getMonth()+1);return[...ks].sort((a,b)=>b-a)}
 function reportData(key){
   const Y=key<10000?key:Math.floor(key/100),M=key<10000?0:key%100;
@@ -887,8 +887,8 @@ function reportData(key){
   const rows={};let bg=null,hr=null;
   for(const x of h)x.p.forEach(p=>{const r=rows[p.name]||(rows[p.name]={name:p.name,t:Array.from({length:5},()=>({s:0,i:0,g:0})),g:0,s:0,i:0,hr:0,hrD:0,bg:0,bgD:0,up:0});
     r.g++;if(p.score>=p.target)r.up++;r.s+=p.score;r.i+=p.inn;if(p.hr>r.hr){r.hr=p.hr;r.hrD=x.date}if(p.inn&&p.score>=p.target&&(!r.bg||p.inn<r.bg)){r.bg=p.inn;r.bgD=x.date}if(x.table>=1&&x.table<=5){const c=r.t[x.table-1];c.s+=p.score;c.i+=p.inn;c.g++}
-    const a=p.inn?p.score/p.inn:0;if(p.inn&&p.score>=p.target&&(!bg||p.inn<bg.inn||(p.inn===bg.inn&&p.target>bg.target)))bg={a,date:x.date,name:p.name,inn:p.inn,target:p.target,score:p.score};
-    const q=p.target?p.hr/p.target:0;if(p.hr&&(!hr||q>hr.q||(q===hr.q&&p.hr>hr.hr)))hr={q,date:x.date,name:p.name,hr:p.hr,target:p.target}});
+    const noAw=noAward(p.name);const a=p.inn?p.score/p.inn:0;if(!noAw&&p.inn&&p.score>=p.target&&(!bg||p.inn<bg.inn||(p.inn===bg.inn&&p.target>bg.target)))bg={a,date:x.date,name:p.name,inn:p.inn,target:p.target,score:p.score};
+    const q=p.target?p.hr/p.target:0;if(!noAw&&p.hr&&(!hr||q>hr.q||(q===hr.q&&p.hr>hr.hr)))hr={q,date:x.date,name:p.name,hr:p.hr,target:p.target}});
   const list=Object.values(rows).sort((a,b)=>regT(b.name)-regT(a.name)||a.name.localeCompare(b.name,'ja'));
   const top={t:[0,1,2,3,4].map(k=>Math.max(0,...list.map(r=>r.t[k].i?r.t[k].s/r.t[k].i:0))),all:Math.max(0,...list.map(r=>r.i?r.s/r.i:0)),hr:Math.max(0,...list.map(r=>r.hr)),bg:Math.min(Infinity,...list.filter(r=>r.bg).map(r=>r.bg)),up:Math.max(0,...list.map(r=>r.up))};
   return{Y,M,list,bg,hr,games:h.length,top};
@@ -905,7 +905,7 @@ function reportHTML(d){
   const box=(title,heads,vals)=>`<table style="border-collapse:collapse;display:inline-table;margin:0 16px 8px 0;vertical-align:top"><tr><th rowspan="2" style="${th};font-size:15px;padding:8px 14px">${title}</th>${heads.map(x=>`<th style="${th}">${x}</th>`).join('')}</tr><tr>${vals.map(x=>`<td style="${td};font-size:15px;font-weight:bold">${x}</td>`).join('')}</tr></table>`;
   t+=box('BG賞',['日付','達成者','イニング','持ち点'],d.bg?[md2(d.bg.date),esc(d.bg.name),d.bg.inn,d.bg.target]:['-','-','-','-']);
   t+=box('HR賞',['日付','達成者','HR/持ち点','%'],d.hr?[md2(d.hr.date),esc(d.hr.name),`${d.hr.hr}/${d.hr.target}`,d.hr.q.toFixed(3)]:['-','-','-','-']);
-  return t+`<p style="font-size:12px;color:#666">REST 3C Score　（${d.games}試合・数字はアベレージと台ごとのゲーム数／黄色＝各列のAvg1位、緑＝上がり回数1位、赤＝HR1位、青＝BG（持ち点に届いた最少イニング）1位／BG賞＝持ち点に最も少ないイニングで到達、HR賞＝持ち点に対するハイランの割合が最も高い）</p></div>`;
+  return t+`<p style="font-size:12px;color:#666">REST 3C Score　（${d.games}試合・数字はアベレージと台ごとのゲーム数／名前が「バンド」「フリー」で始まる選手はBG賞・HR賞の対象外／黄色＝各列のAvg1位、緑＝上がり回数1位、赤＝HR1位、青＝BG（持ち点に届いた最少イニング）1位／BG賞＝持ち点に最も少ないイニングで到達、HR賞＝持ち点に対するハイランの割合が最も高い）</p></div>`;
 }
 function reportText(d){
   const L=[`【REST スリークッション ${d.Y}年${d.M?d.M+'月':'（年間）'} Average】`,'NAME / 持ち点 / A B C D E（Avg・ゲーム数）/ 総ゲーム数'];
@@ -957,7 +957,7 @@ function reportXlsx(d){
   const box=(r0,title,heads,vals)=>{put(r0,18,title,11);put(r0+1,18,'',11);merges.push(`S${r0}:S${r0+1}`);heads.forEach((h,i)=>put(r0,19+i,h,12));vals.forEach((v,i)=>put(r0+1,19+i,v,typeof v==='number'&&!Number.isInteger(v)?14:13));hts[r0+1]=20};
   box(3,'BG賞',['日付','達成者','イニング','持ち点'],d.bg?[md2(d.bg.date),d.bg.name,d.bg.inn,d.bg.target]:['-','-','-','-']);
   box(6,'HR賞',['日付','達成者','HR/持ち点','%'],d.hr?[md2(d.hr.date),d.hr.name,`${d.hr.hr}/${d.hr.target}`,+d.hr.q.toFixed(3)]:['-','-','-','-']);
-  put(5+Math.max(d.list.length,1),0,`REST 3C Score　${d.games}試合（中止は除く）　黄色＝各列のAvg1位、緑＝上がり回数1位、赤＝HR1位、青＝BG（持ち点に届いた最少イニング）1位／BG賞＝持ち点に最も少ないイニングで到達／HR賞＝持ち点に対するハイランの割合が最も高い`,15);
+  put(5+Math.max(d.list.length,1),0,`REST 3C Score　${d.games}試合（中止は除く）　名前が「バンド」「フリー」で始まる選手はBG賞・HR賞の対象外／黄色＝各列のAvg1位、緑＝上がり回数1位、赤＝HR1位、青＝BG（持ち点に届いた最少イニング）1位／BG賞＝持ち点に最も少ないイニングで到達／HR賞＝持ち点に対するハイランの割合が最も高い`,15);
   const widths=[12,7,7,5.5,7,5.5,7,5.5,7,5.5,7,5.5,10,7,9,6,6,3,8,9,12,10,8];
   const sd=Object.keys(rows).map(Number).sort((a,b)=>a-b).map(r=>`<row r="${r}"${hts[r]?` ht="${hts[r]}" customHeight="1"`:''}>`+Object.keys(rows[r]).map(Number).sort((a,b)=>a-b).map(c=>{const {v,st}=rows[r][c],ref=col(c)+r;
     return typeof v==='number'?`<c r="${ref}" s="${st}"><v>${v}</v></c>`:`<c r="${ref}" s="${st}" t="inlineStr"><is><t xml:space="preserve">${X(v)}</t></is></c>`}).join('')+'</row>').join('');
