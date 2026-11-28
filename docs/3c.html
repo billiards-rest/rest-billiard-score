@@ -195,7 +195,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .prow .meta{font-size:13px;opacity:.7}
 .prow .meta button{min-height:36px;padding:0 10px;font-size:13px;margin-left:6px}
 .prow .del{background:transparent;color:var(--r);border:2px solid var(--r);min-height:44px}
-@media(max-width:600px){.addp,.prow{grid-template-columns:minmax(0,1fr)}header{flex-wrap:wrap}}
+@media(max-width:600px){.addp,.prow{grid-template-columns:minmax(0,1fr)}header{flex-wrap:wrap}header h1{flex:1}.tabs{order:3;width:100%;overflow-x:auto;scrollbar-width:none}.tabs .tab{flex:none;padding:0 12px}}
 .mcard{max-width:1240px}
 .dt td b{display:block;font-size:20px;font-family:"Inter Tight";font-weight:800}
 .dt td small{display:block;font-size:12px;opacity:.6}
@@ -241,6 +241,14 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .cloudst{font-weight:700}.cloudst.ok{color:#9be22d}
 #vGame,#vGame *,.modal button,.tabs,.mbtn{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
+.rptw{overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;padding:0 0 6px}
+.rpt{border-collapse:separate!important;border-spacing:0}
+.rpt th:first-child,.rpt td:first-child{position:sticky;left:0;z-index:1;box-shadow:2px 0 0 #9aa9c2}
+.rpt td:first-child{background:#eef2f8!important}.rpt th:first-child{background:#1f3a6e!important;z-index:2}
+.rpt th,.rpt td{white-space:nowrap}.rpt th br{display:none}
+.swipe{display:none;margin:0 0 6px;font-size:13px;font-weight:700;color:#0b3f8c;text-align:center}
+@media(max-width:900px){.swipe{display:block}}
+#yBody,#rpBody{min-width:0}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000;color:#fff;padding:12px 20px;border-radius:12px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
 .toast.on{opacity:1}
 @media(max-width:760px){.pl{grid-template-columns:minmax(0,1fr)}.opts{grid-template-columns:minmax(0,1fr)}}
@@ -409,7 +417,7 @@ body.solo .homeb,body.solo #bHome{display:none!important}body.solo .small{grid-t
     <p style="margin:0">試合の記録から、アベレージ（得点 ÷ イニング）を自動で集計します。年を選んで、年間の一覧（台別）と月ごとのAvgを切り替えて見られます。中止した試合は入りません。</p>
     <div class="mbar"><label>年<select id="mYear"></select></label><label>表示<select id="mView"><option value="year">年間の一覧（台別Avg・BG賞・HR賞）</option><option value="month">月ごとのAvg</option></select></label><label>並び順<select id="mSort"><option value="year">年間Avgの高い順</option><option value="last">最新月のAvgの高い順</option><option value="name">名前順</option></select></label></div>
     <div class="scroll" id="mWrap"><table class="mt" id="mTable"></table></div>
-    <div class="scroll" id="yWrap"><div id="yBody"></div><div class="tools"><button class="pri" id="yXlsx">年間の一覧をExcelで保存</button><button class="sec" id="yCopy">表をコピー（メールに貼り付け）</button></div></div>
+    <div id="yWrap"><p class="swipe">← 表は横にスライドできます →</p><div id="yBody"></div><div class="tools"><button class="pri" id="yXlsx">年間の一覧をExcelで保存</button><button class="sec" id="yCopy">表をコピー（メールに貼り付け）</button></div></div>
   </div>
 </section>
 
@@ -470,7 +478,7 @@ body.solo .homeb,body.solo #bHome{display:none!important}body.solo .small{grid-t
       <button class="sec" id="rCsvAll">全試合をCSVで保存</button>
     </div>
     <p class="hint2">「表をコピー」を押してから、Gmailなどの本文に貼り付けると、この表がそのまま入ります。中止した試合は入りません。</p>
-    <div class="scroll"><div id="rpBody"></div></div>
+    <p class="swipe">← 表は横にスライドできます →</p><div id="rpBody"></div>
   </div>
 </section>
 
@@ -904,10 +912,10 @@ function reportHTML(d){
   const td='border:1px solid #9aa9c2;padding:4px 8px;font-size:13px;text-align:center';
   const tn='border:1px solid #9aa9c2;padding:4px 8px;font-size:13px;text-align:left;font-weight:bold;background:#eef2f8';
   const md2=t=>{const x=new Date(t);return`${x.getMonth()+1}/${x.getDate()}`};
-  let t=`<div style="font-family:sans-serif;color:#0b1c38"><h2 style="font-style:italic;color:#1f3a6e;margin:0 0 8px;font-size:24px">${d.Y}年${d.M?d.M+'月':'（年間）'}　Average</h2><table style="border-collapse:collapse"><tr><th style="${th}">NAME</th><th style="${th}">持ち点</th>${TBL.map(k=>`<th style="${th}">${k}</th><th style="${thn}">ゲーム<br>数</th>`).join('')}<th style="${th}">総ゲーム数</th><th style="${th}">上がり</th><th style="${th}">全体Avg</th><th style="${th}">HR</th><th style="${th}">BG<br><small>(イニング)</small></th></tr>`;
+  let t=`<div style="font-family:sans-serif;color:#0b1c38"><h2 style="font-style:italic;color:#1f3a6e;margin:0 0 8px;font-size:24px">${d.Y}年${d.M?d.M+'月':'（年間）'}　Average</h2><div class="rptw"><table class="rpt" style="border-collapse:collapse"><tr><th style="${th}">NAME</th><th style="${th}">持ち点</th>${TBL.map(k=>`<th style="${th}">${k}</th><th style="${thn}">ゲーム<br>数</th>`).join('')}<th style="${th}">総ゲーム数</th><th style="${th}">上がり</th><th style="${th}">全体Avg</th><th style="${th}">HR</th><th style="${th}">BG<br><small>(イニング)</small></th></tr>`;
   if(!d.list.length)t+=`<tr><td style="${td}" colspan="17">この期間の試合はまだありません</td></tr>`;
   d.list.forEach((r,k)=>{const bgc=k%2?'#f4f7fb':'#ffffff';t+=`<tr style="background:${bgc}"><td style="${tn}">${esc(r.name)}</td><td style="${td};font-weight:bold">${regT(r.name)}</td>${r.t.map((c,k)=>{if(!c.g)return`<td style="${td}">-</td><td style="${tdn}">-</td>`;const a=c.s/c.i,tp=a>0&&a===d.top.t[k];return`<td style="${td}${tp?';background:#f2c230;font-weight:bold':''}">${a.toFixed(2)}</td><td style="${tdn}">${c.g}</td>`}).join('')}<td style="${td};font-weight:bold">${r.g}</td><td style="${td};font-weight:bold${r.up&&r.up===d.top.up?';background:#9be22d':''}">${r.up||'-'}</td>${(()=>{const a=r.i?r.s/r.i:0,tp=a>0&&a===d.top.all;return`<td style="${td};font-weight:bold${tp?';background:#f2c230':''}">${r.i?a.toFixed(3):'-'}</td>`})()}<td style="${td};font-weight:bold${r.hr&&r.hr===d.top.hr?';background:#e0303a;color:#fff':''}">${r.hr||'-'}</td><td style="${td};font-weight:bold${r.bg&&r.bg===d.top.bg?';background:#0b3f8c;color:#fff':''}">${r.bg||'-'}</td></tr>`});
-  t+='</table><br>';
+  t+='</table></div><br>';
   const box=(title,heads,vals)=>`<table style="border-collapse:collapse;display:inline-table;margin:0 16px 8px 0;vertical-align:top"><tr><th rowspan="2" style="${th};font-size:15px;padding:8px 14px">${title}</th>${heads.map(x=>`<th style="${th}">${x}</th>`).join('')}</tr><tr>${vals.map(x=>`<td style="${td};font-size:15px;font-weight:bold">${x}</td>`).join('')}</tr></table>`;
   t+=box('BG賞',['日付','達成者','イニング','持ち点'],d.bg?[md2(d.bg.date),esc(d.bg.name),d.bg.inn,d.bg.target]:['-','-','-','-']);
   t+=box('HR賞',['日付','達成者','HR/持ち点','%'],d.hr?[md2(d.hr.date),esc(d.hr.name),`${d.hr.hr}/${d.hr.target}`,d.hr.q.toFixed(3)]:['-','-','-','-']);
