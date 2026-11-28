@@ -264,6 +264,8 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 .clk{display:flex;align-items:center;gap:10px;background:#0d1526;border:2px solid var(--cy);border-radius:10px;padding:6px 10px;cursor:pointer;user-select:none;-webkit-user-select:none}
 .ss{flex:none;min-height:0;height:clamp(32px,4.4vh,44px);min-width:clamp(72px,7vw,96px);padding:0 10px;border-radius:8px;font-family:"Inter Tight";font-weight:900;font-size:clamp(14px,1.6vw,18px);letter-spacing:.06em;background:var(--r);color:#fff}
 .ss.go{background:#9be22d;color:var(--blk)}
+.homeb{display:inline-flex;align-items:center;gap:6px;background:var(--y);color:var(--blk);text-decoration:none;font-weight:900;border-radius:12px;padding:0 14px;min-height:44px;white-space:nowrap;font-size:15px}
+.homeb.sm{flex:none;min-height:0;height:clamp(32px,4.4vh,44px);border-radius:8px;padding:0 10px;font-family:"Inter Tight";font-size:clamp(13px,1.5vw,16px)}
 .mute{flex:none;min-height:0;height:clamp(32px,4.4vh,44px);width:clamp(44px,5vw,60px);padding:0;border-radius:8px;background:#1b2740;color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid rgba(255,255,255,.2)}
 .mute svg{width:60%;height:auto}
 .mute.off{background:var(--r);border-color:var(--r)}
@@ -313,6 +315,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
 </head>
 <body>
 <header>
+  <a class="homeb" href="./" title="REST Billiard Scoreのメイン画面へ"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg><span>REST Score</span></a>
   <h1>REST <b>3C</b> Score</h1>
   <nav class="tabs">
     <button class="tab on" data-tab="vSetup" id="tMatch">試合</button>
@@ -378,7 +381,7 @@ input,select{background:#fff;color:#0b1c38;border:2px solid rgba(10,15,28,.15);b
     </div>
     <div class="pp c1" id="pp1" role="button" aria-label="後攻に1点"></div>
     <div class="fxl" id="fx0"></div><div class="fxl" id="fx1"></div>
-    <div class="clk" id="clk" role="button" aria-label="ショットクロック（タップで一時停止）"><button class="mute" id="bMute" aria-label="ショットクロックの音声のON/OFF"></button><button class="ss" id="bSS">STOP</button><span class="clab">SHOT<br>CLOCK</span><div class="segs" id="segs"></div><b class="num" id="clkN">40</b></div>
+    <div class="clk" id="clk" role="button" aria-label="ショットクロック（タップで一時停止）"><a class="homeb sm" id="bHome" href="./" title="REST Billiard Scoreのメイン画面へ"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 3 2 12h3v8h5v-5h4v5h5v-8h3z"/></svg><span>REST</span></a><button class="mute" id="bMute" aria-label="ショットクロックの音声のON/OFF"></button><button class="ss" id="bSS">STOP</button><span class="clab">SHOT<br>CLOCK</span><div class="segs" id="segs"></div><b class="num" id="clkN">40</b></div>
     <div class="gs" id="gs"></div>
   </div>
 </section>
@@ -1038,7 +1041,7 @@ async function full(){try{if(document.fullscreenElement)await document.exitFulls
 /* ---- events ---- */
 $('bStart').onclick=startGame;
 function toggleClock(){if(!G||G.over||!G.clock)return;if(G.started===false){if(!ensureStart())return;clkPaused=true;pausedLeft=G.clock}if(clkPaused){shotStart=Date.now()-(G.clock-pausedLeft)*1000;clkPaused=false}else{pausedLeft=clockLeft();clkPaused=true}clkN=-1;tickClock()}
-$('clk').onclick=toggleClock;$('bSS').onclick=e=>{e.stopPropagation();toggleClock()};
+$('clk').onclick=e=>{if(e.target.closest('#bHome'))return;toggleClock()};$('bSS').onclick=e=>{e.stopPropagation();toggleClock()};
 let lastTap=0,tapHandled=0;
 function panelTap(i){if(!G||G.over)return;const n=performance.now();if(n-lastTap<90)return;lastTap=n;const el=$('fx'+i);el.classList.add('hit');setTimeout(()=>el.classList.remove('hit'),90);if(G.turn===i)point();else miss()}
 [0,1].forEach(i=>{const el=$('pp'+i);
